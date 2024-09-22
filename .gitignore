@@ -1,0 +1,8 @@
+.idea/
+.vs/
+.vscode/
+target/
+src/main/resources/application.yaml
+frontend/.idea
+frontend/node_modules/
+.DS_Store

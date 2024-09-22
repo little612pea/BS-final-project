@@ -1,0 +1,22 @@
+[
+{"category":"Philosophy", "title":"The Republic", "press":"Penguin Classics", "publishYear":"2017", "author":"Plato", "price":"22.00", "stock":"350"},
+{"category":"Fiction", "title":"To Kill a Mockingbird", "press":"HarperCollins", "publishYear":"2015", "author":"Harper Lee", "price":"19.99", "stock":"420"},
+{"category":"Mystery", "title":"The Da Vinci Code", "press":"Anchor", "publishYear":"2009", "author":"Dan Brown", "price":"17.95", "stock":"600"},
+{"category":"Sci-Fi", "title":"Dune", "press":"Chilton Books", "publishYear":"2019", "author":"Frank Herbert", "price":"15.99", "stock":"480"},
+{"category":"Historical Fiction", "title":"The Name of the Rose", "press":"Harvest Books", "publishYear":"2017", "author":"Umberto Eco", "price":"16.95", "stock":"530"},
+{"category":"Self-Help", "title":"The 7 Habits of Highly Effective People", "press":"Simon & Schuster", "publishYear":"2020", "author":"Stephen R. Covey", "price":"24.99", "stock":"390"},
+{"category":"Classic", "title":"Pride and Prejudice", "press":"Wordsworth Editions", "publishYear":"2019", "author":"Jane Austen", "price":"12.99", "stock":"650"},
+{"category":"Fantasy", "title":"The Lord of the Rings", "press":"Mariner Books", "publishYear":"2012", "author":"J.R.R. Tolkien", "price":"22.95", "stock":"720"},
+{"category":"Non-Fiction", "title":"Sapiens: A Brief History of Humankind", "press":"HarperCollins", "publishYear":"2018", "author":"Yuval Noah Harari", "price":"21.99", "stock":"400"},
+{"category":"Psychology", "title":"Thinking, Fast and Slow", "press":"Farrar, Straus and Giroux", "publishYear":"2013", "author":"Daniel Kahneman", "price":"18.00", "stock":"450"},
+{"category":"Biography", "title":"The Diary of a Young Girl", "press":"Bantam Books", "publishYear":"2010", "author":"Anne Frank", "price":"14.99", "stock":"380"},
+{"category":"Poetry", "title":"Leaves of Grass", "press":"Signet Classics", "publishYear":"2018", "author":"Walt Whitman", "price":"11.99", "stock":"270"},
+{"category":"Thriller", "title":"The Girl with the Dragon Tattoo", "press":"Vintage Crime/Black Lizard", "publishYear":"2015", "author":"Stieg Larsson", "price":"16.99", "stock":"560"},
+{"category":"Science", "title":"A Brief History of Time", "press":"Bantam", "publishYear":"2012", "author":"Stephen Hawking", "price":"18.95", "stock":"310"},
+{"category":"Drama", "title":"Hamlet", "press":"Spark Notes", "publishYear":"2014", "author":"William Shakespeare", "price":"9.95", "stock":"330"},
+{"category":"Business", "title":"The Lean Startup", "press":"Crown Business", "publishYear":"2011", "author":"Eric Ries", "price":"17.99", "stock":"520"},
+{"category":"Travel", "title":"In Patagonia", "press":"Penguin Classics", "publishYear":"2008", "author":"Bruce Chatwin", "price":"15.00", "stock":"290"},
+{"category":"Cooking", "title":"The Joy of Cooking", "press":"Scribner", "publishYear":"2019", "author":"Irma S. Rombauer", "price":"35.00", "stock":"240"},
+{"category":"Health", "title":"The Body Keeps the Score", "press":"Penguin Books", "publishYear":"2015", "author":"Bessel van der Kolk M.D.", "price":"16.00", "stock":"220"},
+{"category":"Graphic Novel", "title":"Maus: A Survivor's Tale", "press":"Pantheon", "publishYear":"2020", "author":"shelby Huu","price":"199","stock":"099"}
+]

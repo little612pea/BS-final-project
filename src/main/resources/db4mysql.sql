@@ -2,11 +2,30 @@ drop table if exists `borrow`;
 drop table if exists `card`;
 drop table if exists `book`;
 drop table if exists `users`;
+drop table if exists `goods_tb`;
+drop table if exists `goods_jd`;
+
 
 create table `users` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL
+)engine=innodb charset=utf8mb4;
+
+create table `goods_tb` (
+     title VARCHAR(255) UNIQUE NOT NULL,
+     price VARCHAR(255) UNIQUE NOT NULL,
+     deal VARCHAR(255) NOT NULL,
+     location VARCHAR(255) NOT NULL,
+     shop VARCHAR(255) NOT NULL,
+     isPostFree BOOLEAN
+)engine=innodb charset=utf8mb4;
+
+create table `goods_jd` (
+    title VARCHAR(255) UNIQUE NOT NULL,
+    price VARCHAR(255) UNIQUE NOT NULL,
+    comment VARCHAR(255) NOT NULL,
+    shop VARCHAR(255) NOT NULL
 )engine=innodb charset=utf8mb4;
 
 create table `book` (

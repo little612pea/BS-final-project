@@ -7,9 +7,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from pyquery import PyQuery as pq
 import time
 import random
+import re
 
 KEYWORD = '羽毛球拍'
-MYSQL_TABLE = 'goods'
+MYSQL_TABLE = 'goods_tb'
 
 # MySQL 数据库连接配置
 db_config = {
@@ -82,6 +83,10 @@ def search_goods(start_page, total_pages):
 def page_turning(page_number):
     print('正在翻页: ', page_number)
     try:
+        #mainList-layer-100039800628 > img
+        #warecard_10042020577536 > div.p-img > a > img
+        #warecard_100123376372 > div.p-img > a > img
+        #mainList-layer-100039800628 > img
         # 找到下一页的按钮
         submit = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="sortBarWrap"]/div[1]/div[2]/div[2]/div[8]/div/button[2]')))
         submit.click()
@@ -129,7 +134,13 @@ def get_goods():
         # 定位包邮的位置
         postText = item.find('.subIconWrapper--KnkgUW0R').text()
         result = 1 if "包邮" in postText else 0
-
+        #定位img_url
+        img_url = item.find('.mainPicWrapper--FyazGV69').html()
+        print(img_url)
+        print(type(img_url))
+        pattern = r'<img src="(.*?)" height='
+        if img_url is not None:
+            img_url = re.findall(pattern,img_url)
         # 构建商品信息字典
         product = {
             'title': title,
@@ -137,7 +148,8 @@ def get_goods():
             'deal': deal,
             'location': location,
             'shop': shop,
-            'isPostFree': result
+            'isPostFree': result,
+            'img_url': img_url
         }
         print("product get")
         save_to_mysql(product)
@@ -146,9 +158,9 @@ def get_goods():
 # 在 save_to_mysql 函数中保存数据到 MySQL
 def save_to_mysql(result):
     try:
-        sql = "INSERT INTO {} (price, deal, title, shop, location, postFree) VALUES (%s, %s, %s, %s, %s, %s)".format(MYSQL_TABLE)
+        sql = "INSERT INTO {} (title, price, deal, location, shop, isPostFree, img_url) VALUES (%s, %s, %s, %s, %s, %s, %s)".format(MYSQL_TABLE)
         print("sql语句为:  "  + sql)
-        cursor.execute(sql, (result['price'], result['deal'], result['title'], result['shop'], result['location'], result['isPostFree']))
+        cursor.execute(sql, (result['title'], result['price'], result['deal'], result['location'], result['shop'], result['isPostFree'], result['img_url']))
         conn.commit()
         print('存储到MySQL成功: ', result)
     except Exception as e:

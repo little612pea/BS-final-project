@@ -270,12 +270,16 @@ public class Main {
             String username = register_Info.substring(usernameStartIndex, usernameEndIndex);
             // 解析 password
             int passwordStartIndex = register_Info.indexOf("password") + 11; // 获取 "password" 后的索引位置
-            int passwordEndIndex = register_Info.length() - 3; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+            int passwordEndIndex = register_Info.indexOf(",", passwordStartIndex)-1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
             String password = register_Info.substring(passwordStartIndex, passwordEndIndex);
+            // 解析 email
+            int emailStartIndex = register_Info.indexOf("email") + 8;
+            int emailEndIndex = register_Info.length() - 3;
+            String email = register_Info.substring(emailStartIndex, emailEndIndex);
             //调用register函数
             System.out.printf("username:%s,password:%s\n", username
-                    , password);
-            ApiResult result = RegisterHandler.library.register(username, password);
+                    , password, email);
+            ApiResult result = RegisterHandler.library.register(username, password, email);
             System.out.println("Register result: " + result.toString());
             exchange.getResponseHeaders().set("Content-Type", "text/plain");
             if (result.ok) {

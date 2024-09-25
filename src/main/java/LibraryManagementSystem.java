@@ -174,5 +174,5 @@ public interface LibraryManagementSystem {
      */
     ApiResult resetDatabase();
     ApiResult login(String username, String password);
-    ApiResult register(String username, String password);
+    ApiResult register(String username, String password, String email);
 }

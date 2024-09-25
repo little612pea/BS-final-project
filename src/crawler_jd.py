@@ -7,9 +7,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from pyquery import PyQuery as pq
 import time
 import random
+from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+import re
 
 KEYWORD = '羽毛球拍'
-MYSQL_TABLE = 'goods'
+MYSQL_TABLE = 'goods_jd'
 
 # MySQL 数据库连接配置
 db_config = {
@@ -44,7 +46,7 @@ def search_goods(start_page, total_pages):
     try:
         driver.get('https://www.jd.com/')
         # 强制停止10秒，请在此时手动扫码登陆
-        time.sleep(10)
+        time.sleep(20)
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",
                                {"source": """Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"""})
         # 找到搜索输入框
@@ -64,12 +66,13 @@ def search_goods(start_page, total_pages):
             random_sleep(1, 3)
 
             # 找到输入页面的表单
-            pageInput = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="root"]/div/div[3]/div[1]/div[1]/div[2]/div[4]/div/div/span[3]/input')))
+            pageInput = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[5]/div[2]/div[2]/div[1]/div/div[3]/div/span[2]/input')))
             pageInput.send_keys(start_page)
             # 找到页面跳转的确定按钮，并且点击
-            admit = wait.until(EC.element_to_be_clickable((By.XPATH,'//*[@id="root"]/div/div[3]/div[1]/div[1]/div[2]/div[4]/div/div/button[3]')))
+            admit = wait.until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[5]/div[2]/div[2]/div[1]/div/div[3]/div/span[2]/a')))
             admit.click()
         get_goods()
+
 
         for i in range(start_page + 1, start_page + total_pages):
             page_turning(i)
@@ -82,14 +85,43 @@ def search_goods(start_page, total_pages):
 def page_turning(page_number):
     print('正在翻页: ', page_number)
     try:
-        # 找到下一页的按钮
-        submit = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="sortBarWrap"]/div[1]/div[2]/div[2]/div[8]/div/button[2]')))
-        submit.click()
-        # 判断页数是否相等
-        wait.until(EC.text_to_be_present_in_element((By.XPATH, '//*[@id="sortBarWrap"]/div[1]/div[2]/div[2]/div[8]/div/span/em'), str(page_number)))
+        current_url = driver.current_url
+        print(current_url)
+        parsed_url = urlparse(current_url)
+        query_params = parse_qs(parsed_url.query)
+
+        # 检查 'page' 和 's' 参数是否存在，并进行转换和更新
+        if 'page' in query_params:
+            try:
+                new_page = int(query_params['page'][0]) + 2
+            except ValueError:
+                new_page = 1
+            query_params['page'] = str(new_page)
+        else:
+            query_params['page'] = '1'  # 如果参数不存在，设置默认值
+
+        if 's' in query_params:
+            try:
+                new_s = int(query_params['s'][0]) + 60
+            except ValueError:
+                new_s = 1
+            query_params['s'] = str(new_s)
+        else:
+            query_params['s'] = '1'  # 如果参数不存在，设置默认值
+
+        new_query = urlencode(query_params, doseq=True)
+        new_url = urlunparse(parsed_url._replace(query=new_query))
+        print(new_url)
+
+        # 尝试导航到新的 URL
+        try:
+            driver.get(new_url)
+        except Exception as e:
+            print(f"Error navigating to {new_url}: {e}")
         get_goods()
     except TimeoutException:
         page_turning(page_number)
+
 
 
 # 强制等待的方法，在timeS到timeE的时间之间随机等待
@@ -117,12 +149,18 @@ def get_goods():
         comment = item.find('.p-commit').text()
         # 定位店名
         shop = item.find('.p-shop').text()
+        # 定位图片url
+        img_url = item.find('.p-img').html()
+        print(img_url)
+        pattern = r'data-lazy-img="(.*?)" source-data-lazy-img=""'
+        img_url = re.findall(pattern,img_url)
         # 构建商品信息字典
         product = {
             'title': title,
             'price': price,
             'comment': comment,
             'shop': shop,
+            'img_url':img_url
         }
         save_to_mysql(product)
 
@@ -130,9 +168,9 @@ def get_goods():
 # 在 save_to_mysql 函数中保存数据到 MySQL
 def save_to_mysql(result):
     try:
-        sql = "INSERT INTO {} (title,price,comment,shop) VALUES (%s, %s, %s, %s)".format(MYSQL_TABLE)
+        sql = "INSERT INTO {} (title,price,comment,shop,img_url) VALUES (%s, %s, %s, %s, %s)".format(MYSQL_TABLE)
         print("sql语句为:  "  + sql)
-        cursor.execute(sql, (result['price'], result['deal'], result['title'], result['shop'], result['location'], result['isPostFree']))
+        cursor.execute(sql, (result['title'], result['price'], result['comment'], result['shop'], result['img_url']))
         conn.commit()
         print('存储到MySQL成功: ', result)
     except Exception as e:

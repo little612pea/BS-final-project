@@ -1,8 +1,9 @@
 import json
 from time import sleep
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 
-browser = webdriver.Firefox()
+browser = webdriver.Chrome()
 browser.maximize_window()
 browser.implicitly_wait(2)
 
@@ -13,22 +14,22 @@ browser.get(url)
 before_login = browser.get_cookies()
 
 # 定位，点击“请登录”
-browser.find_element_by_class_name("link-login").click()
+browser.find_element(By.CLASS_NAME,"link-login").click()
 sleep(5)
-# 定位，点击“账户登录”
-browser.find_element_by_link_text("账户登录").click()
-sleep(5)
+# # 定位，点击“账户登录”
+# browser.find_element(By.LINK_TEXT,"账户登录").click()
+# sleep(5)
 # 定位，输入账号
-username = browser.find_element_by_id("loginname")
+username = browser.find_element(By.ID,"loginname")
 username.clear()
 username.send_keys(input("用户名："))
 # 定位，输入密码
-password = browser.find_element_by_id("nloginpwd")
+password = browser.find_element(By.ID,"nloginpwd")
 password.clear()
 password.send_keys(input("密码："))
 sleep(5)
 # 定位，点击登录
-browser.find_element_by_id("loginsubmit").click()
+browser.find_element(By.ID,"loginsubmit").click()
 
 sleep(20)
 

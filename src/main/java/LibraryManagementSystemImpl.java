@@ -43,7 +43,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         }
     }
 
-    public ApiResult register(String username, String password) {
+    public ApiResult register(String username, String password, String email) {
         // 检查用户名是否已存在
         String checkSql = "SELECT * FROM users WHERE username = ?";
         try (PreparedStatement statement = this.connector.getConn().prepareStatement(checkSql)) {
@@ -58,10 +58,11 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         }
 
         // 插入新用户
-        String insertSql = "INSERT INTO users (username, password) VALUES (?, ?)";
+        String insertSql = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
         try (PreparedStatement statement = this.connector.getConn().prepareStatement(insertSql)) {
             statement.setString(1, username);
             statement.setString(2, password);
+            statement.setString(3, email);
             int affectedRows = statement.executeUpdate();
             if (affectedRows > 0) {
                 commit(connector.getConn());

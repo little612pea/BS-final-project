@@ -6,6 +6,7 @@ import SpaceVue from "@/components/Space.vue";
 import LoginVue from '@/components/Login.vue'
 import HomeVue from "@/components/Home.vue";
 import RegisterVue from "@/components/Register.vue";
+import PersonalDiaVue from "@/components/PersonalDia.vue"; // 个人信息弹窗
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,8 +36,16 @@ const router = createRouter({
           component: BorrowVue,
         },
         {
-          path: '/home/space', // 第三个tab
+          path: '/home/space',
+          name: 'space',
           component: SpaceVue,
+          children: [
+            {
+              path: '/home/space/info/',
+              name:'info',
+              component: PersonalDiaVue
+            }
+          ]
         }
       ]
     },

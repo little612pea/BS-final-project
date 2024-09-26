@@ -9,7 +9,7 @@ import router from './router'
 import store from './store'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-import 'element-ui/lib/theme-chalk/index.css';
+// import 'element-ui/lib/theme-chalk/index.css';
 
 
 const app = createApp(App)

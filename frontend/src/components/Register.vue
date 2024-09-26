@@ -13,11 +13,16 @@
           <el-form-item label="确认密码:">
             <el-input show-password v-model="form.password_confirm" type="password" placeholder="请再次输入密码"></el-input>
           </el-form-item>
-          <el-form-item label="邮  箱:">
-            <el-input v-model="form.email" placeholder="请输入邮箱"></el-input>
-          </el-form-item>
+            <el-form-item label="邮箱" >
+              <el-input v-model="form.email"></el-input>
+              <el-button type="primary" @click="send_code">获取验证码</el-button>
+            </el-form-item>
+            <el-form-item label="验证码">
+              <el-input v-model="form.code"></el-input>
+              <el-button type="primary" @click="verify_email">验证邮箱</el-button>
+            </el-form-item>
         </el-form>
-        <el-button type="primary" round @click="register" class="btn">注册</el-button>
+        <el-button :disabled="reg_disable" type="primary" round @click="register" class="btn">立即注册</el-button>
       </div>
   </div>
 </template>
@@ -71,9 +76,9 @@ h2 {
 
 
 <script>
-import axios from 'axios'
+import axios from 'axios';
 import {ElMessage} from "element-plus";
-
+//邮件
 export default {
   data () {
     return {
@@ -81,15 +86,43 @@ export default {
         username: '',
         password: '',
         password_confirm: '',
-        email:''
+        email:'',
+        code:'',
+        veri_code:''
       },
+      reg_disable: true,
       isnull: false
     };
   },
 
   methods: {
-    togglePasswordVisibility() {
-      this.passwordType = this.passwordType === 'password' ? 'text' : 'password';
+    send_code(){
+      //邮件正则
+      const EmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (EmailRegex.test(this.form.email)) {
+        axios.get('/register', {
+          params: {
+            email:this.form.email
+          }
+        }).then(res => {
+          this.form.veri_code =  res.data
+          ElMessage.success("验证码发送成功") // 显示消息提醒
+        }).catch(err => {
+          ElMessage.error("验证码发送失败")
+        })
+      } else {
+        console.log('邮件格式不正确')
+      }
+    },
+    verify_email(){
+        if(this.form.veri_code.toString() === this.form.code.toString()){
+          ElMessage.success("邮箱验证成功") // 显示消息提醒
+          //使能注册按钮
+          this.reg_disable = false;
+        }
+        else{
+          ElMessage.error("邮箱验证失败，验证码错误") // 显示消息提醒
+        }
     },
     register() {
       if (this.form.username === '') {

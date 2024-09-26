@@ -1,13 +1,13 @@
 <template>
-  <div class="bg">
-    <div id="login">
-      <h2>登录页面</h2>
+  <div class="container">
+    <div id="register" class="login-box">
+      <h2>用户登录</h2>
       <el-form ref="form" :model="form" label-width="20%">
         <el-form-item label="用户名:">
           <el-input v-model="form.username"></el-input>
         </el-form-item>
         <el-form-item label="密  码:">
-          <el-input v-model="form.password" type="password"></el-input>
+          <el-input show-password v-model="form.password" type="password"></el-input>
         </el-form-item>
       </el-form>
       <el-button type="primary" round @click="login" class="btn">登录</el-button>
@@ -66,36 +66,50 @@ export default {
 }
 </script>
 
-<style scoped>
-.bg {
+<style>
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
-  background: url('../assets/img/login_bg.jpg');
+  background: url('../assets/img/zju.jpg');
   background-size: 100% 100%;
 }
-#login {
-  height: 250px;
-  width: 350px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.25);
-  background: #ffffff;
-  opacity: 0.85;
+
+.overlay {
   position: absolute;
-  top: 20%;
-  left: 40%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明的黑色遮罩 */
+}
+
+.login-box {
+  position: relative;
+  z-index: 2;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.8); /* 半透明背景 */
+  backdrop-filter: blur(10px); /* 模糊效果 */
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 添加阴影 */
+  width: 400px;
+}
+
+h2 {
   text-align: center;
-  display: flex;
-  flex-direction: column;/*横向*/
-  padding: 30px;
+  margin-bottom: 20px;
+  color: #333;
 }
-#login h2 {
-  padding-bottom: 30px;
-}
+
 .btn {
-  width: 60%;
-  margin: auto;
+  display: block;
+  width: 100%;
+  margin-top: 30px;
 }
 .reg {
   color: red;

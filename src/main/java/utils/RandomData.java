@@ -1,6 +1,6 @@
 package utils;
 
-import entities.Book;
+import entities.Product;
 import org.apache.commons.lang3.RandomUtils;
 
 import java.util.Arrays;
@@ -12,7 +12,7 @@ public final class RandomData {
 
     public static final List<String> categories = Arrays.asList("Computer Science", "Nature", "Philosophy",
             "History", "Autobiography", "Magazine", "Dictionary", "Novel", "Horror", "Others");
-    public static final List<String> press = Arrays.asList("Press-A", "Press-B", "Press-C", "Press-D",
+    public static final List<String> shop = Arrays.asList("Press-A", "Press-B", "Press-C", "Press-D",
             "Press-E", "Press-F", "Press-G", "Press-H");
     public static final List<String> authors = Arrays.asList("Nonehyo", "DouDou", "Coco", "Yuuku", "SoonWhy",
             "Fubuki", "Authentic", "Immortal", "ColaOtaku", "Erica", "ZaiZai", "DaDa", "Hgs");
@@ -24,8 +24,8 @@ public final class RandomData {
             "Management", "Civil Engineering", "Architecture", "Environmental Science",
             "English Language", "General Education", "Ideological & Political");
 
-    public static Book randomBook() {
-        return new Book(randomCategory(), randomTitle(), randomPress(), randomPublishYear(),
+    public static Product randomProduct() {
+        return new Product(randomCategory(), randomTitle(), randomPress(), randomPublishYear(),
                 randomAuthor(), randomPrice(), randomStock());
     }
 
@@ -34,7 +34,7 @@ public final class RandomData {
     }
 
     public static String randomPress() {
-        return press.get(new Random().nextInt(press.size()));
+        return shop.get(new Random().nextInt(shop.size()));
     }
 
     public static String randomAuthor() {
@@ -45,8 +45,8 @@ public final class RandomData {
         return titles.get(new Random().nextInt(titles.size()));
     }
 
-    public static int randomPublishYear() {
-        return RandomUtils.nextInt(2000, 2023);
+    public static String randomPublishYear() {
+        return String.valueOf(RandomUtils.nextInt(1990, 2023));
     }
 
     public static double randomPrice() {

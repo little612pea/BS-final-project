@@ -1,18 +1,18 @@
 IF OBJECT_ID('dbo.borrow', 'U') IS NOT NULL DROP TABLE dbo.borrow;
-IF OBJECT_ID('dbo.book', 'U') IS NOT NULL DROP TABLE dbo.book;
+IF OBJECT_ID('dbo.product', 'U') IS NOT NULL DROP TABLE dbo.product;
 IF OBJECT_ID('dbo.card', 'U') IS NOT NULL DROP TABLE dbo.card;
 
-create table book (
-    book_id int not null identity,
-    category varchar(63) not null,
+create table product (
+    productId int not null identity,
+    comment varchar(63) not null,
     title varchar(63) not null,
-    press varchar(63) not null,
-    publish_year int not null,
-    author varchar(63) not null,
+    shop varchar(63) not null,
+    deal int not null,
+    img_url varchar(63) not null,
     price decimal(7, 2) not null default 0.00,
-    stock int not null default 0,
-    primary key (book_id),
-    unique (category, press, author, title, publish_year)
+    source int not null default 0,
+    primary key (productId),
+    unique (comment, shop, img_url, title, deal)
 );
 
 create table card (
@@ -27,10 +27,10 @@ create table card (
 
 create table borrow (
     card_id int not null,
-    book_id int not null,
+    productId int not null,
     borrow_time bigint not null,
     return_time bigint not null default 0,
-    primary key (card_id, book_id, borrow_time),
+    primary key (card_id, productId, borrow_time),
     foreign key (card_id) references card(card_id) on delete cascade on update cascade,
-    foreign key (book_id) references book(book_id) on delete cascade on update cascade
+    foreign key (productId) references product(productId) on delete cascade on update cascade
 );

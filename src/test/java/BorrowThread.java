@@ -24,8 +24,8 @@ public class BorrowThread extends Thread {
         try {
             System.out.printf("Thread %d begin to wait signal\n", id);
             semaphore.acquire();
-            System.out.printf("Thread %d start to borrow book\n", id);
-            if (library.borrowBook(borrow).ok) {
+            System.out.printf("Thread %d start to borrow product\n", id);
+            if (library.borrowProduct(borrow).ok) {
                 successOps.incrementAndGet();
             }
         } catch (InterruptedException e) {

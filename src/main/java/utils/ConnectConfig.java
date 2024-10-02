@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URL;
 import java.util.Map;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public final class ConnectConfig {
 
@@ -18,11 +20,15 @@ public final class ConnectConfig {
     private final DatabaseType type;
 
     public ConnectConfig() throws FileNotFoundException, NullPointerException, ClassNotFoundException {
-        URL res = ConnectConfig.class.getClassLoader().getResource("application.yaml");
-        if (res == null) {
-            throw new NullPointerException();
+        InputStream inputStream = ConnectConfig.class.getClassLoader().getResourceAsStream("application.yaml");
+        if (inputStream == null) {
+            throw new NullPointerException("application.yaml not found in classpath");
         }
-        BufferedReader br = new BufferedReader(new FileReader(res.getPath()));
+
+        // 使用 InputStreamReader 和 BufferedReader 包装 InputStream
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+
+        // 通过 SnakeYAML 解析 YAML 配置文件
         Yaml yaml = new Yaml();
         Map<String, Object> objectMap = yaml.load(br);
         /* initialize all configures */

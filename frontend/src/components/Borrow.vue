@@ -22,32 +22,32 @@
             :default-sort="{ prop: 'borrowTime', order: 'ascending' }" :table-layout="'auto'"
             style="width: 100%; margin-left: 50px; margin-top: 30px; margin-right: 50px; max-width: 80vw;">
             <el-table-column prop="cardID" label="借书证ID" />
-            <el-table-column prop="bookID" label="图书ID" sortable />
+            <el-table-column prop="productId" label="商品ID" sortable />
             <el-table-column prop="borrowTime" label="借出时间" sortable />
             <el-table-column prop="returnTime" label="归还时间" sortable />
           <!-- 添加还书按钮,fitlerTableData的类型为数组，通过row.cardID获取借书证ID -->
-          <!--如何将row的值传给borrowBookInfo:可以通过borrowBookInfo.cardID=row.cardID获取借书证ID-->
+          <!--如何将row的值传给borrowProductInfo:可以通过borrowProductInfo.cardID=row.cardID获取借书证ID-->
             <el-table-column label="操作">
                 <template #default="scope">
-                    <el-button type="primary" size="small" @click="this.borrowBookInfo.cardID = scope.row.cardID, this.borrowBookInfo.bookID = scope.row.bookID, this.borrowBookInfo.unix_borrowTime = scope.row.unix_borrowTime, borrowBookVisible = true"
+                    <el-button type="primary" size="small" @click="this.borrowProductInfo.cardID = scope.row.cardID, this.borrowProductInfo.productId = scope.row.productId, this.borrowProductInfo.unix_borrowTime = scope.row.unix_borrowTime, borrowProductVisible = true"
                      >还书</el-button>
                 </template>
             </el-table-column>
         </el-table>
 
         <!-- 还书对话框 -->
-        <el-dialog v-model="borrowBookVisible" title="还书" width="30%" align-center>
+        <el-dialog v-model="borrowProductVisible" title="还书" width="30%" align-center>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
-                确认归还图书？
+                确认归还商品？
             </div>
-          <!-- 列出图书信息,包括借书卡号,姓名,借书时间,书名 -->
+          <!-- 列出商品信息,包括借书卡号,姓名,借书时间,书名 -->
           <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
-                <p>借书卡号：{{borrowBookInfo.cardID}}</p>
-                <p>图书ID：{{borrowBookInfo.bookID}}</p>
+                <p>借书卡号：{{borrowProductInfo.cardID}}</p>
+                <p>商品ID：{{borrowProductInfo.productId}}</p>
             </div>
             <div style="margin-top: 20px; text-align: center;">
-                <el-button type="primary" @click="ReturnBook">确认</el-button>
-                <el-button @click="borrowBookVisible = false">取消</el-button>
+                <el-button type="primary" @click="ReturnProduct">确认</el-button>
+                <el-button @click="borrowProductVisible = false">取消</el-button>
             </div>
         </el-dialog>
     </el-scrollbar>
@@ -64,7 +64,7 @@ export default {
             isShow: false, // 结果表格展示状态
             tableData: [{ // 列表项
                 cardID: 1,
-                bookID: 1,
+                productId: 1,
                 borrowTime: "",
                 unix_borrowTime: 0,
                 returnTime: "",
@@ -73,8 +73,8 @@ export default {
             toQuery: '', // 待查询内容(对某一借书证号进行查询)
             toSearch: '', // 待搜索内容(对查询到的结果进行搜索)
             Search,
-            borrowBookVisible: false, // 还书对话框显示状态
-            borrowBookInfo: { // 还书信息
+            borrowProductVisible: false, // 还书对话框显示状态
+            borrowProductInfo: { // 还书信息
                 id: 0,
                 cardID: 0,
                 unix_borrowTime: 0,
@@ -86,7 +86,7 @@ export default {
             return this.tableData.filter(
                 (tuple) =>
                     (this.toSearch == '') || // 搜索框为空，即不搜索
-                    tuple.bookID == this.toSearch || // 图书号与搜索要求一致
+                    tuple.productId == this.toSearch || // 商品号与搜索要求一致
                     tuple.borrowTime.toString().includes(this.toSearch) || // 借出时间包含搜索要求
                     tuple.returnTime.toString().includes(this.toSearch) // 归还时间包含搜索要求
             )
@@ -94,23 +94,23 @@ export default {
     },
     methods: {
         // 还书操作：
-        ReturnBook() {
+        ReturnProduct() {
           console.log("row:")
             axios.post('/home/borrow/',
                 {
-                    cardID: this.borrowBookInfo.cardID,
-                    bookID: this.borrowBookInfo.bookID,
-                    borrowTime:this.borrowBookInfo.unix_borrowTime
-                }) // 向/borrow发出DELETE请求，参数为cardID=row.cardID, bookID=row.bookID
-               // 向/borrow发出DELETE请求，参数为cardID=row.cardID, bookID=row.bookID
+                    cardID: this.borrowProductInfo.cardID,
+                    productId: this.borrowProductInfo.productId,
+                    borrowTime:this.borrowProductInfo.unix_borrowTime
+                }) // 向/borrow发出DELETE请求，参数为cardID=row.cardID, productId=row.productId
+               // 向/borrow发出DELETE请求，参数为cardID=row.cardID, productId=row.productId
                 .then(response => {
-                  ElMessage.success("图书归还成功") // 显示消息提醒
-                  this.borrowBookVisible = false
-                  this.QueryBorrows() // 重新查询图书以刷新页面
+                  ElMessage.success("商品归还成功") // 显示消息提醒
+                  this.borrowProductVisible = false
+                  this.QueryBorrows() // 重新查询商品以刷新页面
                 })
                 .catch(error=>{
-                  ElMessage.error("图书归还失败,可能本书已经被归还了")
-                  this.borrowBookVisible = false
+                  ElMessage.error("商品归还失败,可能本书已经被归还了")
+                  this.borrowProductVisible = false
                   this.QueryBorrows()
                 })
         },

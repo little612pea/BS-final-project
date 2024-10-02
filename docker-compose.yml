@@ -1,0 +1,23 @@
+version: '3'
+services:
+  frontend:
+    build:
+      context: ./
+      dockerfile: frontend/dist/Dockerfile
+    ports:
+      - "88:80"
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./
+      dockerfile: src/Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

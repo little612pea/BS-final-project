@@ -1,4 +1,4 @@
-import entities.Book;
+import entities.Product;
 import entities.Borrow;
 import entities.Card;
 import org.apache.commons.lang3.RandomUtils;
@@ -10,18 +10,18 @@ import java.util.*;
 
 public class MyLibrary {
 
-    public List<Book> books;
+    public List<Product> products;
     public List<Card> cards;
     public List<Borrow> borrows;
 
-    public MyLibrary(List<Book> books, List<Card> cards, List<Borrow> borrows) {
-        this.books = books;
+    public MyLibrary(List<Product> products, List<Card> cards, List<Borrow> borrows) {
+        this.products = products;
         this.cards = cards;
         this.borrows = borrows;
     }
 
-    public int nBooks() {
-        return books.size();
+    public int nProducts() {
+        return products.size();
     }
 
     public int nCards() {
@@ -32,15 +32,15 @@ public class MyLibrary {
         return borrows.size();
     }
 
-    public static MyLibrary createLibrary(LibraryManagementSystem library, int nBooks,
+    public static MyLibrary createLibrary(LibraryManagementSystem library, int nProducts,
                                           int nCards, int nBorrows) {
-        /* create books */
-        Set<Book> bookSet = new HashSet<>();
-        while (bookSet.size() < nBooks) {
-            bookSet.add(RandomData.randomBook());
+        /* create products */
+        Set<Product> productSet = new HashSet<>();
+        while (productSet.size() < nProducts) {
+            productSet.add(RandomData.randomProduct());
         }
-        List<Book> bookList = new ArrayList<>(bookSet);
-        ApiResult res = library.storeBook(bookList);
+        List<Product> productList = new ArrayList<>(productSet);
+        ApiResult res = library.storeProduct(productList);
         Assert.assertTrue(res.ok);
         /* create cards */
         List<Card> cardList = new ArrayList<>();
@@ -59,24 +59,24 @@ public class MyLibrary {
             mills.add(RandomData.randomTime());
         }
         for (int i = 0; i < nBorrows;) {
-            Book b = bookList.get(RandomUtils.nextInt(0, nBooks));
-            if (b.getStock() == 0) {
+            Product b = productList.get(RandomUtils.nextInt(0, nProducts));
+            if (b.getSource() == 0) {
                 continue;
             }
             i++;
             Card c = cardList.get(RandomUtils.nextInt(0, nCards));
             Borrow r = new Borrow();
             r.setCardId(c.getCardId());
-            r.setBookId(b.getBookId());
+            r.setProductId(b.getProductId());
             r.setBorrowTime(mills.poll());
             r.setReturnTime(mills.poll());
             System.out.printf("%d\n",i);
             System.out.print(r);
-            Assert.assertTrue(library.borrowBook(r).ok);
-            Assert.assertTrue(library.returnBook(r).ok);
+            Assert.assertTrue(library.borrowProduct(r).ok);
+            Assert.assertTrue(library.returnProduct(r).ok);
             borrowList.add(r);
         }
-        return new MyLibrary(bookList, cardList, borrowList);
+        return new MyLibrary(productList, cardList, borrowList);
     }
 
 }

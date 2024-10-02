@@ -1,8 +1,8 @@
-import entities.Book;
+import entities.Product;
 import entities.Borrow;
 import entities.Card;
 import queries.ApiResult;
-import queries.BookQueryConditions;
+import queries.ProductQueryConditions;
 
 import java.sql.PreparedStatement;
 import java.util.List;
@@ -23,73 +23,73 @@ import java.util.List;
  */
 public interface LibraryManagementSystem {
 
-    /* Interface for books */
+    /* Interface for products */
 
     /**
-     * register a book to database.
+     * register a product to database.
      *
      * Note that:
-     *      (1) book_id should be stored to book after successfully
+     *      (1) productId should be stored to product after successfully
      *          completing this operation.
-     *      (2) you should not register this book if the book already
+     *      (2) you should not register this product if the product already
      *          exists in the library system.
      *
-     * @param book all attributes of the book
+     * @param product all attributes of the product
      */
-    ApiResult storeBook(Book book);
+    ApiResult storeProduct(Product product);
 
     /**
-     * increase the book's inventory by bookId & deltaStock.
+     * increase the product's inventory by productId & deltaStock.
      *
      * Note that:
-     *      (1) you need to check the correctness of book_id
+     *      (1) you need to check the correctness of productId
      *      (2) deltaStock can be negative, but make sure that
-     *          the result of book.stock + deltaStock is not negative!
+     *          the result of product.source + deltaStock is not negative!
      *
-     * @param bookId book's book_id
-     * @param deltaStock increase count to book's stock, must be greater
+     * @param productId product's productId
+     * @param deltaStock increase count to product's source, must be greater
      */
-    ApiResult incBookStock(int bookId, int deltaStock);
+    ApiResult incProductStock(int productId, int deltaStock);
 
     /**
-     * batch store books.
+     * batch store products.
      *
      * Note that:
-     *      (1) you should not call the interface storeBook()
+     *      (1) you should not call the interface storeProduct()
      *          multiple times to achieve this function!!!
      *          hint: use {@link PreparedStatement#executeBatch()}
      *          and {@link PreparedStatement#addBatch()}
-     *      (2) if one of the books fails to import, all operations
+     *      (2) if one of the products fails to import, all operations
      *          should be rolled back using rollback() function provided
      *          by JDBC!!!
      *      (3) when binding params to SQL, you are required to avoid
      *          the risk of SQL injection attack!!!
      *
-     * @param books list of books to be stored
+     * @param products list of products to be stored
      */
-    ApiResult storeBook(List<Book> books);
+    ApiResult storeProduct(List<Product> products);
 
     /**
-     * remove this book from library system.
+     * remove this product from library system.
      *
-     * Note that if someone has not returned this book,
-     * the book should not be removed!
+     * Note that if someone has not returned this product,
+     * the product should not be removed!
      *
-     * @param bookId the book to be removed
+     * @param productId the product to be removed
      */
-    ApiResult removeBook(int bookId);
+    ApiResult removeProduct(int productId);
 
     /**
-     * modify a book's information by book_id.book_id.
+     * modify a product's information by productId.productId.
      *
-     * Note that you should not modify its book_id and stock!
+     * Note that you should not modify its productId and source!
      *
-     * @param book the book to be modified
+     * @param product the product to be modified
      */
-    ApiResult modifyBookInfo(Book book);
+    ApiResult modifyProductInfo(Product product);
 
     /**
-     * query books according to different query conditions.
+     * query products according to different query conditions.
      *
      * Note that:
      *      (1) you should let the DBMS to filter records
@@ -97,39 +97,39 @@ public interface LibraryManagementSystem {
      *          filter records in your API.
      *      (2) when binding params to SQL, you also need to avoid
      *          the risk of SQL injection attack.
-     *      (3) [*] if all else is equal, sort by book_id in
+     *      (3) [*] if all else is equal, sort by productId in
      *          ascending order!
      *
      * @param conditions query conditions
      *
      * @return query results should be returned by ApiResult.payload
-     *         and should be an instance of {@link queries.BookQueryResults}
+     *         and should be an instance of {@link queries.ProductQueryResults}
      */
-    ApiResult queryBook(BookQueryConditions conditions);
+    ApiResult queryProduct(ProductQueryConditions conditions);
 
-    /* Interface for borrow & return books */
+    /* Interface for borrow & return products */
 
     /**
-     * a user borrows one book with the specific card.
+     * a user borrows one product with the specific card.
      * the borrow operation will success iff there are
-     * enough books in stock & the user has not borrowed
-     * the book or has returned it.
+     * enough products in source & the user has not borrowed
+     * the product or has returned it.
      *
      * @param borrow borrow information, include borrower &
-     *               book's id & time
+     *               product's id & time
      */
-    ApiResult borrowBook(Borrow borrow);
+    ApiResult borrowProduct(Borrow borrow);
 
     /**
-     * A user return one book with specific card.
+     * A user return one product with specific card.
      *
-     * @param borrow borrow information, include borrower & book's id & return time
+     * @param borrow borrow information, include borrower & product's id & return time
      */
-    ApiResult returnBook(Borrow borrow);
+    ApiResult returnProduct(Borrow borrow);
 
     /**
      * list all borrow histories for a specific card.
-     * the returned records should be sorted by borrow_time DESC, book_id ASC
+     * the returned records should be sorted by borrow_time DESC, productId ASC
      *
      * @param cardId show which card's borrow history
      * @return query results should be returned by ApiResult.payload
@@ -151,7 +151,7 @@ public interface LibraryManagementSystem {
     /**
      * simply remove a card.
      *
-     * Note that if there exists any un-returned books under this user,
+     * Note that if there exists any un-returned products under this user,
      * this card should not be removed.
      *
      * @param cardId card to be removed

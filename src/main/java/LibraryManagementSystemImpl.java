@@ -1,4 +1,4 @@
-import entities.Book;
+import entities.Product;
 import entities.Borrow;
 import entities.Card;
 import javafx.util.Pair;
@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import queries.ApiResult;
 import java.util.Comparator;
-import queries.BookQueryConditions;
-import queries.BookQueryResults;
+import queries.ProductQueryConditions;
+import queries.ProductQueryResults;
 import queries.SortOrder;
 
 
@@ -75,22 +75,23 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             return new ApiResult(false, "Database error");
         }
     }
+
     @Override
-    public ApiResult storeBook(Book book) {
-        String insertSQL = "INSERT INTO book VALUES (null, ?, ?, ?, ?, ?, ?, ?)";
+    public ApiResult storeProduct(Product product) {
+        String insertSQL = "INSERT INTO product VALUES (null, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = this.connector.getConn().prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
             // 设置参数
-            statement.setString(1, book.getCategory());
-            statement.setString(2, book.getTitle());
-            statement.setString(3, book.getPress());
-            statement.setInt(4, book.getPublishYear());
-            statement.setString(5, book.getAuthor());
-            statement.setDouble(6,book.getPrice());
-            statement.setInt(7,book.getStock());
+            statement.setString(1, product.getComment());
+            statement.setString(2, product.getTitle());
+            statement.setString(3, product.getShop());
+            statement.setString(4, product.getDeal());
+            statement.setString(5, product.getImg());
+            statement.setDouble(6,product.getPrice());
+            statement.setInt(7,product.getSource());
             // 执行插入
-            if(isBookDuplicate(book)){
-                System.out.println("duplicate books");
-                return new ApiResult(false,"duplicate books,no rows affected.");
+            if(isProductDuplicate(product)){
+                System.out.println("duplicate products");
+                return new ApiResult(false,"duplicate products,no rows affected.");
             }
             else{
                 int affectedRows = statement.executeUpdate();
@@ -100,9 +101,9 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                         if (rs.next()) {
                             int id = rs.getInt(1);
                             //System.out.println(id);
-                            book.setBookId(id);
+                            product.setProductId(id);
                             commit(connector.getConn());
-                            return new ApiResult(true,id); // 获取生成的 book_id
+                            return new ApiResult(true,id); // 获取生成的 productId
 
                         } else {
                             System.out.println("Creating user failed, no ID obtained.");
@@ -122,15 +123,15 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
 
     }
 
-    private boolean isBookDuplicate(Book book) throws SQLException {
+    private boolean isProductDuplicate(Product product) throws SQLException {
         Connection conn = this.connector.getConn();
-        String checkSql = "SELECT * FROM book WHERE category = ? AND title = ? AND press = ? AND publish_year = ? AND author = ?";
+        String checkSql = "SELECT * FROM product WHERE comment = ? AND title = ? AND shop = ? AND deal = ? AND img_url = ?";
         try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
-            stmt.setString(1, book.getCategory());
-            stmt.setString(2, book.getTitle());
-            stmt.setString(3, book.getPress());
-            stmt.setInt(4, book.getPublishYear());
-            stmt.setString(5, book.getAuthor());
+            stmt.setString(1, product.getComment());
+            stmt.setString(2, product.getTitle());
+            stmt.setString(3, product.getShop());
+            stmt.setString(4, product.getDeal());
+            stmt.setString(5, product.getImg());
             try (ResultSet rs = stmt.executeQuery()) {
                 // 如果查询有结果，则表示书籍重复
                 return rs.next(); // 只需要检查是否有至少一行数据，因为我们已经通过所有关键列进行了查询
@@ -139,22 +140,22 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     }
 
     @Override
-    public ApiResult incBookStock(int bookId, int deltaStock) {
-        try(PreparedStatement ps=connector.getConn().prepareStatement("select * from book where book_id=?" )){
-            ps.setInt(1,bookId);
+    public ApiResult incProductStock(int productId, int deltaStock) {
+        try(PreparedStatement ps=connector.getConn().prepareStatement("select * from product where productId=?" )){
+            ps.setInt(1,productId);
             ResultSet rs=ps.executeQuery();
             if(!rs.next()){
                 return new ApiResult(false, "fail");
             }
             else{
-                if(rs.getInt("stock")+deltaStock<0){
-                    System.out.println("stock is not enough");
+                if(rs.getInt("source")+deltaStock<0){
+                    System.out.println("source is not enough");
                     return new ApiResult(false, "fail");
                 }
                 else{
-                    try(PreparedStatement ps1=connector.getConn().prepareStatement("update book set stock=stock+? where book_id=?" )){
+                    try(PreparedStatement ps1=connector.getConn().prepareStatement("update product set source=source+? where productId=?" )){
                         ps1.setInt(1,deltaStock);
-                        ps1.setInt(2,bookId);
+                        ps1.setInt(2,productId);
 
                         if(ps1.executeUpdate()>0){
                             commit(connector.getConn());
@@ -173,12 +174,12 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
 
 
     @Override
-    public ApiResult storeBook(List<Book> books) {
+    public ApiResult storeProduct(List<Product> products) {
         Connection conn = this.connector.getConn();
         int flag=0;
-        for(int i=0;i<books.size();i++){
-            for(int j=i+1;j<books.size();j++){
-                if (books.get(i).equals(books.get(j))) {
+        for(int i=0;i<products.size();i++){
+            for(int j=i+1;j<products.size();j++){
+                if (products.get(i).equals(products.get(j))) {
                     flag = 1;
                     break;
                 }
@@ -188,8 +189,8 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         try {
             // 开始事务
             conn.setAutoCommit(false);
-            for (Book book : books) {
-                ApiResult result = storeBook(book);
+            for (Product product : products) {
+                ApiResult result = storeProduct(product);
                 // 如果任何一本书入库失败，则中断循环并回滚事务
                 if (!result.ok) {
                     conn.rollback(); // 回滚事务
@@ -198,22 +199,22 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             }
             // 如果所有书籍都成功入库，则提交事务
             commit(connector.getConn());
-            return new ApiResult(true, "All books stored successfully.");
+            return new ApiResult(true, "All products stored successfully.");
         } catch (SQLException e) {
             // 处理数据库异常，回滚事务
-            System.out.println("Error occurred while storing books: " + e.getMessage());
+            System.out.println("Error occurred while storing products: " + e.getMessage());
             return new ApiResult(false, "Database error occurred: " + e.getMessage());
         }
     }
 
     @Override
-    public ApiResult removeBook(int bookId) {
+    public ApiResult removeProduct(int productId) {
         Connection conn = this.connector.getConn();
 
-        String select_stock_sql = "SELECT * FROM borrow WHERE book_id = ?"; // 查询是否有未归还的书
-        String delete_book_sql = "DELETE FROM book WHERE book_id = ?";
-        try (PreparedStatement ps = connector.getConn().prepareStatement("select * from book where book_id = ?")) {
-            ps.setInt(1, bookId);
+        String select_stock_sql = "SELECT * FROM borrow WHERE productId = ?"; // 查询是否有未归还的书
+        String delete_product_sql = "DELETE FROM product WHERE productId = ?";
+        try (PreparedStatement ps = connector.getConn().prepareStatement("select * from product where productId = ?")) {
+            ps.setInt(1, productId);
             ResultSet rs = ps.executeQuery();
             if(!rs.next()) {
                 return new ApiResult(false, "fail");
@@ -222,7 +223,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             return new ApiResult(false, "fail");
         }
         try (PreparedStatement stmt = conn.prepareStatement(select_stock_sql)) {
-            stmt.setInt(1, bookId);
+            stmt.setInt(1, productId);
             ResultSet rs = stmt.executeQuery();
 
             while(rs.next()) {
@@ -234,8 +235,8 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             return new ApiResult(false, "删除书籍时出现错误: " + e.getMessage());
         }
 
-        try (PreparedStatement dstmt = conn.prepareStatement(delete_book_sql)) {
-            dstmt.setInt(1, bookId);
+        try (PreparedStatement dstmt = conn.prepareStatement(delete_product_sql)) {
+            dstmt.setInt(1, productId);
             int rowsAffected = dstmt.executeUpdate();
 
             if (rowsAffected > 0) {
@@ -248,15 +249,15 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         }
     }
     @Override
-    public ApiResult modifyBookInfo(Book book) {
-        try(PreparedStatement ps = connector.getConn().prepareStatement("update book set category=?,title=?,press=?,publish_year=?,author=?,price=? where book_id=?")){
-            ps.setString(1,book.getCategory());
-            ps.setString(2,book.getTitle());
-            ps.setString(3,book.getPress());
-            ps.setInt(4,book.getPublishYear());
-            ps.setString(5,book.getAuthor());
-            ps.setDouble(6,book.getPrice());
-            ps.setInt(7,book.getBookId());
+    public ApiResult modifyProductInfo(Product product) {
+        try(PreparedStatement ps = connector.getConn().prepareStatement("update product set comment=?,title=?,shop=?,deal=?,img_url=?,price=? where productId=?")){
+            ps.setString(1,product.getComment());
+            ps.setString(2,product.getTitle());
+            ps.setString(3,product.getShop());
+            ps.setString(4,product.getDeal());
+            ps.setString(5,product.getImg());
+            ps.setDouble(6,product.getPrice());
+            ps.setInt(7,product.getProductId());
             if(ps.executeUpdate()==0){
                 System.out.println("fail here 1");
                 return new ApiResult(false, "fail");
@@ -273,8 +274,8 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         return new ApiResult(true, "success");
     }
     @Override
-    public ApiResult queryBook(BookQueryConditions conditions) {
-        String query = "SELECT * FROM book";
+    public ApiResult queryProduct(ProductQueryConditions conditions) {
+        String query = "SELECT * FROM product";
         //String whereClause = buildWhereClause(conditions);
         Pair<String, List<Object>> whereClauseAndParameters = buildWhereClause(conditions);
         String whereClause = (String) whereClauseAndParameters.getKey();
@@ -290,62 +291,62 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
 
             System.out.println("here is the sql query:"+ps);
             ResultSet rs = ps.executeQuery();
-            List<Book> ResultList = new ArrayList<Book>();
+            List<Product> ResultList = new ArrayList<Product>();
 
             while (rs.next()) {
-                Book newbook = new Book();
-                newbook.setBookId(rs.getInt("book_id"));
-                newbook.setCategory(rs.getString("category"));
-                newbook.setTitle(rs.getString("title"));
-                newbook.setPress(rs.getString("press"));
-                newbook.setPublishYear(rs.getInt("publish_year"));
-                newbook.setAuthor(rs.getString("author"));
-                newbook.setPrice(rs.getDouble("price"));
-                newbook.setStock(rs.getInt("stock"));
-                ResultList.add(newbook);
+                Product newproduct = new Product();
+                newproduct.setProductId(rs.getInt("productId"));
+                newproduct.setComment(rs.getString("comment"));
+                newproduct.setTitle(rs.getString("title"));
+                newproduct.setShop(rs.getString("shop"));
+                newproduct.setDeal(rs.getString("deal"));
+                newproduct.setImg(rs.getString("img_url"));
+                newproduct.setPrice(rs.getDouble("price"));
+                newproduct.setSource(rs.getInt("source"));
+                ResultList.add(newproduct);
 
             }
-            Comparator<Book> cmp = conditions.getSortBy().getComparator();
+            Comparator<Product> cmp = conditions.getSortBy().getComparator();
             if (conditions.getSortOrder() == SortOrder.DESC) {
                 cmp = cmp.reversed();
             }
-            Comparator<Book> comparator = cmp;
-            Comparator<Book> sortComparator = cmp.thenComparingInt(Book::getBookId);
+            Comparator<Product> comparator = cmp;
+            Comparator<Product> sortComparator = cmp.thenComparingInt(Product::getProductId);
             ResultList.sort(sortComparator);
-            BookQueryResults Results = new BookQueryResults(ResultList);
+            ProductQueryResults Results = new ProductQueryResults(ResultList);
             commit(connector.getConn());
             return new ApiResult(true, "success ", Results);
         } catch (SQLException e) {
             return new ApiResult(false,"error!");
         }
     }
-    private Pair buildWhereClause(BookQueryConditions conditions) {
+    private Pair buildWhereClause(ProductQueryConditions conditions) {
         StringBuilder where = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
         where.append(" WHERE 1=1");
-        if (conditions.getCategory() != null) {
-            where.append(" AND category = ?");
-            parameters.add(conditions.getCategory());
+        if (conditions.getComment() != null) {
+            where.append(" AND comment = ?");
+            parameters.add(conditions.getComment());
         }
         if (conditions.getTitle() != null) {
             where.append(" AND title LIKE ?");
             parameters.add("%" + conditions.getTitle() + "%");
         }
-        if (conditions.getPress() != null) {
-            where.append(" AND press LIKE ?");
-            parameters.add("%" + conditions.getPress() + "%");
+        if (conditions.getShop() != null) {
+            where.append(" AND shop LIKE ?");
+            parameters.add("%" + conditions.getShop() + "%");
         }
         if (conditions.getMinPublishYear() != null) {
-            where.append(" AND publish_year >= ?");
+            where.append(" AND deal >= ?");
             parameters.add(conditions.getMinPublishYear());
         }
         if (conditions.getMaxPublishYear() != null) {
-            where.append(" AND publish_year <= ?");
+            where.append(" AND deal <= ?");
             parameters.add(conditions.getMaxPublishYear());
         }
-        if (conditions.getAuthor() != null) {
-            where.append(" AND author LIKE ?");
-            parameters.add("%" + conditions.getAuthor() + "%");
+        if (conditions.getImg() != null) {
+            where.append(" AND img_url LIKE ?");
+            parameters.add("%" + conditions.getImg() + "%");
         }
         if (conditions.getMinPrice() != null) {
             where.append(" AND price >= ?");
@@ -358,11 +359,11 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         // 返回带有占位符的SQL语句和对应的参数列表
         return new Pair<>(where.toString(), parameters);
     }
-    private String buildOrderByClause(BookQueryConditions conditions) {
+    private String buildOrderByClause(ProductQueryConditions conditions) {
         return " ORDER BY " + conditions.getSortBy() + " " + conditions.getSortOrder();
     }
     @Override
-    public ApiResult borrowBook(Borrow borrow) {
+    public ApiResult borrowProduct(Borrow borrow) {
         Connection conn = connector.getConn();
         try {
             //conn.setAutoCommit(false);
@@ -384,16 +385,16 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             }
 
 
-            String lookfor_sql = "SELECT * FROM borrow WHERE card_id=? AND book_id=?";
+            String lookfor_sql = "SELECT * FROM borrow WHERE card_id=? AND productId=?";
             try (PreparedStatement stmt = conn.prepareStatement(lookfor_sql)) {
                 stmt.setInt(1, borrow.getCardId());
-                stmt.setInt(2, borrow.getBookId());
+                stmt.setInt(2, borrow.getProductId());
                 try (ResultSet rs = stmt.executeQuery()) {
                     while(rs.next()){
                         if(rs.getLong("return_time")==0){
                             conn.rollback();
-                            System.out.println("you have already rented this book");
-                            return new ApiResult(false,"you have already rented this book");
+                            System.out.println("you have already rented this product");
+                            return new ApiResult(false,"you have already rented this product");
                         }
                     }
                 }
@@ -408,37 +409,37 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             }
 
             // 检查书是否存在并且库存充足并锁定
-            try (PreparedStatement ps1 = conn.prepareStatement("SELECT * FROM book WHERE book_id = ? FOR UPDATE")) {
-                ps1.setInt(1, borrow.getBookId());
+            try (PreparedStatement ps1 = conn.prepareStatement("SELECT * FROM product WHERE productId = ? FOR UPDATE")) {
+                ps1.setInt(1, borrow.getProductId());
                 try (ResultSet rs1 = ps1.executeQuery()) {
                     if (!rs1.next()) {
-                        System.out.println("The book does not exist");
-                        return new ApiResult(false, "The book does not exist");
+                        System.out.println("The product does not exist");
+                        return new ApiResult(false, "The product does not exist");
                     }
-                    if (rs1.getInt("stock") == 0) {
-                        System.out.println("The book is out of stock");
-                        return new ApiResult(false, "The book is out of stock");
+                    if (rs1.getInt("source") == 0) {
+                        System.out.println("The product is out of source");
+                        return new ApiResult(false, "The product is out of source");
                     }
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
                 conn.rollback();
-                System.out.println("Error occurred while checking the book");
-                return new ApiResult(false, "Error occurred while checking the book");
+                System.out.println("Error occurred while checking the product");
+                return new ApiResult(false, "Error occurred while checking the product");
             }
 
             // 借书操作
             String borrow_sql = "INSERT INTO borrow VALUES (?, ?, ?, ?)";
             try (PreparedStatement bstmt = conn.prepareStatement(borrow_sql)) {
                 bstmt.setInt(1, borrow.getCardId());
-                bstmt.setInt(2, borrow.getBookId());
+                bstmt.setInt(2, borrow.getProductId());
                 bstmt.setLong(3, borrow.getBorrowTime());
                 bstmt.setLong(4, 0);
                 //commit(connector.getConn());
                 if (bstmt.executeUpdate() > 0) {
                     // 更新书的库存
-                    try (PreparedStatement ps4 = conn.prepareStatement("UPDATE book SET stock = stock - 1 WHERE book_id = ?")) {
-                        ps4.setInt(1, borrow.getBookId());
+                    try (PreparedStatement ps4 = conn.prepareStatement("UPDATE product SET source = source - 1 WHERE productId = ?")) {
+                        ps4.setInt(1, borrow.getProductId());
                         ps4.executeUpdate();
                     }
                     //conn.commit();
@@ -449,8 +450,8 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             } catch (SQLException e) {
                 e.printStackTrace();
                 conn.rollback();
-                System.out.println("Error occurred while borrowing the book");
-                return new ApiResult(false, "Error occurred while borrowing the book");
+                System.out.println("Error occurred while borrowing the product");
+                return new ApiResult(false, "Error occurred while borrowing the product");
             }
             System.out.println("Error 3");
             return new ApiResult(false, "Error occurred");
@@ -465,11 +466,11 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
 
 
     @Override
-    public ApiResult returnBook(Borrow borrow) {
+    public ApiResult returnProduct(Borrow borrow) {
         //检查是否有这条借书记录
-        try (PreparedStatement ps2 = connector.getConn().prepareStatement("select * from borrow where card_id=? and book_id=? and borrow_time=? ")) {
+        try (PreparedStatement ps2 = connector.getConn().prepareStatement("select * from borrow where card_id=? and productId=? and borrow_time=? ")) {
             ps2.setInt(1, borrow.getCardId());
-            ps2.setInt(2, borrow.getBookId());
+            ps2.setInt(2, borrow.getProductId());
             ps2.setLong(3, borrow.getBorrowTime());
             ResultSet rs2 = ps2.executeQuery();
             if (!rs2.next()) {
@@ -480,14 +481,14 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             return new ApiResult(false, "fail");
         }
         //检查是否已经归还
-        try (PreparedStatement ps2 = connector.getConn().prepareStatement("select * from borrow where card_id=? and book_id=? and borrow_time=? ")) {
+        try (PreparedStatement ps2 = connector.getConn().prepareStatement("select * from borrow where card_id=? and productId=? and borrow_time=? ")) {
             ps2.setInt(1, borrow.getCardId());
-            ps2.setInt(2, borrow.getBookId());
+            ps2.setInt(2, borrow.getProductId());
             ps2.setLong(3, borrow.getBorrowTime());
             ResultSet rs2 = ps2.executeQuery();
             if (rs2.next()) {
                 if (rs2.getLong("return_time") != 0) {
-                    System.out.println("The book has been returned");
+                    System.out.println("The product has been returned");
                     return new ApiResult(false, "fail");
                 }
         }
@@ -495,32 +496,32 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             return new ApiResult(false, "fail");
         }
         //更新borrow表
-        try (PreparedStatement ps3 = connector.getConn().prepareStatement("update borrow set return_time=? where card_id=? and book_id=? and borrow_time=? ")) {
+        try (PreparedStatement ps3 = connector.getConn().prepareStatement("update borrow set return_time=? where card_id=? and productId=? and borrow_time=? ")) {
             borrow.resetReturnTime();
             ps3.setLong(1, borrow.getReturnTime());
             ps3.setInt(2, borrow.getCardId());
-            ps3.setInt(3, borrow.getBookId());
+            ps3.setInt(3, borrow.getProductId());
             ps3.setLong(4, borrow.getBorrowTime());
             ps3.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Error occurred while returning the book");
+            System.out.println("Error occurred while returning the product");
             return new ApiResult(false, "fail");
         }
-        //更新book表
-        try (PreparedStatement ps1 = connector.getConn().prepareStatement("select * from book where book_id=?")) {
-            ps1.setInt(1, borrow.getBookId());
+        //更新product表
+        try (PreparedStatement ps1 = connector.getConn().prepareStatement("select * from product where productId=?")) {
+            ps1.setInt(1, borrow.getProductId());
             ResultSet rs1 = ps1.executeQuery();
             if (!rs1.next()) {
-                System.out.println("The book does not exist");
+                System.out.println("The product does not exist");
                 return new ApiResult(false, "fail");
             }
             //更新库存
-            //incBookStock(bookId, int deltaStock);
+            //incProductStock(productId, int deltaStock);
         }
         catch (Exception e){
             return new ApiResult(false, "fail");
         }
-        return incBookStock(borrow.getBookId(), 1);
+        return incProductStock(borrow.getProductId(), 1);
 
     }
 
@@ -538,25 +539,25 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             while (rs.next()) {
                 //   count++;
                 // System.out.println (count);
-                Book newbook = new Book();
+                Product newproduct = new Product();
                 Borrow newborrow = new Borrow();
-                newborrow.setBookId(rs.getInt("book_id"));
+                newborrow.setProductId(rs.getInt("productId"));
                 newborrow.setCardId(rs.getInt("card_id"));
                 newborrow.setBorrowTime(rs.getLong("borrow_time"));
                 newborrow.setReturnTime(rs.getLong("return_time"));
-                try (PreparedStatement ps1 = connector.getConn().prepareStatement("select * from book where book_id=?")) {
-                    ps1.setInt(1, rs.getInt("book_id"));
+                try (PreparedStatement ps1 = connector.getConn().prepareStatement("select * from product where productId=?")) {
+                    ps1.setInt(1, rs.getInt("productId"));
                     ResultSet rs2 = ps1.executeQuery();
                     while (rs2.next()) {
-                        newbook.setBookId(rs2.getInt("book_id"));
-                        newbook.setCategory(rs2.getString("category"));
-                        newbook.setTitle(rs2.getString("title"));
-                        newbook.setPress(rs2.getString("press"));
-                        newbook.setPublishYear(rs2.getInt("publish_year"));
-                        newbook.setAuthor(rs2.getString("author"));
-                        newbook.setPrice(rs2.getDouble("price"));
-                        newbook.setStock(rs2.getInt("stock") - 1);
-                        BorrowHistories.Item newitem = new BorrowHistories.Item(cardId, newbook, newborrow);
+                        newproduct.setProductId(rs2.getInt("productId"));
+                        newproduct.setComment(rs2.getString("comment"));
+                        newproduct.setTitle(rs2.getString("title"));
+                        newproduct.setShop(rs2.getString("shop"));
+                        newproduct.setDeal(rs2.getString("deal"));
+                        newproduct.setImg(rs2.getString("img_url"));
+                        newproduct.setPrice(rs2.getDouble("price"));
+                        newproduct.setSource(rs2.getInt("source") - 1);
+                        BorrowHistories.Item newitem = new BorrowHistories.Item(cardId, newproduct, newborrow);
                         resultlist.add(newitem);
                     }
                 }
@@ -564,7 +565,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
 
             }
             Comparator<BorrowHistories.Item> byBorrowTime = Comparator.comparing(BorrowHistories.Item::getBorrowTime).reversed();
-            Comparator<BorrowHistories.Item> byId = Comparator.comparing(BorrowHistories.Item::getBookId);
+            Comparator<BorrowHistories.Item> byId = Comparator.comparing(BorrowHistories.Item::getProductId);
             Comparator<BorrowHistories.Item> byBorrowTimeAndId = byBorrowTime.thenComparing(byId);
             resultlist.sort(byBorrowTimeAndId);
             BorrowHistories result=new BorrowHistories(resultlist);
@@ -723,10 +724,10 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             Statement stmt = conn.createStatement();
             DBInitializer initializer = connector.getConf().getType().getDbInitializer();
             stmt.addBatch(initializer.sqlDropBorrow());
-            stmt.addBatch(initializer.sqlDropBook());
+            stmt.addBatch(initializer.sqlDropProduct());
             stmt.addBatch(initializer.sqlDropCard());
             stmt.addBatch(initializer.sqlCreateCard());
-            stmt.addBatch(initializer.sqlCreateBook());
+            stmt.addBatch(initializer.sqlCreateProduct());
             stmt.addBatch(initializer.sqlCreateBorrow());
             stmt.executeBatch();
             commit(conn);

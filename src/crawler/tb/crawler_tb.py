@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import pymysql
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -7,13 +8,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from pyquery import PyQuery as pq
 import time
 import random
-import re
+import json
 
-KEYWORD = '羽毛球拍'
-MYSQL_TABLE = 'goods_tb'
-
+product_list = []
+MYSQL_TABLE = 'product'
 # MySQL 数据库连接配置
 db_config = {
+    # 'host': 'host.docker.internal',
     'host': 'localhost',
     'port': 3306,
     'user': 'root',
@@ -39,36 +40,44 @@ driver.maximize_window()
 # 如果一直到等待时间都没满足则会捕获TimeoutException异常
 wait = WebDriverWait(driver, 15)
 
+
 # 打开页面后会强制停止10秒，请在此时手动扫码登陆
-def search_goods(start_page, total_pages):
-    print('正在搜索: ')
+def search_goods(start_page, total_pages, keyword):
+    # print('正在搜索: ')
     try:
         driver.get('https://www.taobao.com')
-        # 强制停止10秒，请在此时手动扫码登陆
-        time.sleep(10)
+        driver.delete_all_cookies()
+        # 加载 cookies信息
+        with open("D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\cookies_tb.txt", "r") as f:
+            cookies = json.load(f)
+        for cookie in cookies:
+            driver.add_cookie(cookie)
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",
-                           {"source": """Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"""})
+                               {"source": """Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"""})
         # 找到搜索输入框
         input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#q")))
         # 找到“搜索”按钮
-        submit = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'#J_TSearchForm > div.search-button > button')))
-        input.send_keys(KEYWORD)
+        submit = wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, '#J_TSearchForm > div.search-button > button')))
+        input.send_keys(keyword)
         submit.click()
         # 搜索商品后会再强制停止10秒，如有滑块请手动操作
         time.sleep(10)
 
         # 如果不是从第一页开始爬取，就滑动到底部输入页面然后跳转
-        if start_page != 1 :
+        if start_page != 1:
             # 滑动到页面底端
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             # 滑动到底部后停留1-3s
             random_sleep(1, 3)
 
             # 找到输入页面的表单
-            pageInput = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="root"]/div/div[3]/div[1]/div[1]/div[2]/div[4]/div/div/span[3]/input')))
+            pageInput = wait.until(EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="root"]/div/div[3]/div[1]/div[1]/div[2]/div[4]/div/div/span[3]/input')))
             pageInput.send_keys(start_page)
             # 找到页面跳转的确定按钮，并且点击
-            admit = wait.until(EC.element_to_be_clickable((By.XPATH,'//*[@id="root"]/div/div[3]/div[1]/div[1]/div[2]/div[4]/div/div/button[3]')))
+            admit = wait.until(EC.element_to_be_clickable(
+                (By.XPATH, '//*[@id="root"]/div/div[3]/div[1]/div[1]/div[2]/div[4]/div/div/button[3]')))
             admit.click()
         get_goods()
 
@@ -76,24 +85,31 @@ def search_goods(start_page, total_pages):
             page_turning(i)
     except TimeoutException:
         print("search_goods: error")
-    return search_goods()
 
 
 # 进行翻页处理
 def page_turning(page_number):
-    print('正在翻页: ', page_number)
+    # 滑动到页面底端
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    # 等待页面完全加载
+    random_sleep(1, 3)
     try:
-        #mainList-layer-100039800628 > img
-        #warecard_10042020577536 > div.p-img > a > img
-        #warecard_100123376372 > div.p-img > a > img
-        #mainList-layer-100039800628 > img
-        # 找到下一页的按钮
-        submit = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="sortBarWrap"]/div[1]/div[2]/div[2]/div[8]/div/button[2]')))
-        submit.click()
-        # 判断页数是否相等
-        wait.until(EC.text_to_be_present_in_element((By.XPATH, '//*[@id="sortBarWrap"]/div[1]/div[2]/div[2]/div[8]/div/span/em'), str(page_number)))
+        # 找到“下一页”按钮并滚动到其可见区域
+        next_button = wait.until(EC.presence_of_element_located(
+            (By.XPATH, '//*[@id="sortBarWrap"]/div[1]/div[2]/div[2]/div[8]/div/button[2]')))
+        driver.execute_script("arguments[0].scrollIntoView(true);", next_button)
+
+        # 再次滑动以确保完全显示
+        random_sleep(1, 2)
+
+        driver.execute_script("arguments[0].click()", next_button)
+
+        # 确认翻页是否成功，等待页码变为指定页数
+        wait.until(EC.text_to_be_present_in_element(
+            (By.XPATH, '//*[@id="sortBarWrap"]/div[1]/div[2]/div[2]/div[8]/div/span/em'), str(page_number)))
         get_goods()
     except TimeoutException:
+        # 如果超时，则递归调用，重试翻页
         page_turning(page_number)
 
 
@@ -104,10 +120,18 @@ def random_sleep(timeS, timeE):
     time.sleep(random_sleep_time)
 
 
-#获取每一页的商品信息；
+# 获取每一页的商品信息；
 def get_goods():
     # 获取商品前固定等待2-4秒
     random_sleep(2, 4)
+    sroll_cnt = 0
+    while True:
+        if sroll_cnt < 5:
+            driver.execute_script('window.scrollBy(0, 1000)')
+            time.sleep(0.2)
+            sroll_cnt += 1
+        else:
+            break
     html = driver.page_source
     doc = pq(html)
     # print(doc)
@@ -116,10 +140,9 @@ def get_goods():
     for item in items:
         # 定位商品标题
         title = item.find('.title--F6pvp_RZ').text()
-        print(title)
+        # print(title)
         # 定位价格
         price_int = item.find('.priceInt--j47mhkXk').text()
-        print(price_int)
         price_float = item.find('.priceFloat--zPTqSZZJ').text()
         if price_int and price_float:
             price = float(f"{price_int}{price_float}")
@@ -134,51 +157,46 @@ def get_goods():
         # 定位包邮的位置
         postText = item.find('.subIconWrapper--KnkgUW0R').text()
         result = 1 if "包邮" in postText else 0
-        #定位img_url
-        img_url = item.find('.mainPicWrapper--FyazGV69').html()
-        print(img_url)
-        print(type(img_url))
-        pattern = r'<img src="(.*?)" height='
-        if img_url is not None:
-            img_url = re.findall(pattern,img_url)
+        # 定位img_url
+        img_url = item.find('.mainPic--CuSfUC4j').attr('src')
+        if img_url == None:
+            img_url = item.find('.mainPic--ZzRJ1jkn').attr('src')
         # 构建商品信息字典
         product = {
             'title': title,
             'price': price,
             'deal': deal,
-            'location': location,
             'shop': shop,
-            'isPostFree': result,
-            'img_url': img_url
+            'img_url': img_url,
+            'source': 0
         }
-        print("product get")
+        product_list.append(product)
+        # print(product)
         save_to_mysql(product)
 
 
 # 在 save_to_mysql 函数中保存数据到 MySQL
 def save_to_mysql(result):
-    try:
-        sql = "INSERT INTO {} (title, price, deal, location, shop, isPostFree, img_url) VALUES (%s, %s, %s, %s, %s, %s, %s)".format(MYSQL_TABLE)
-        print("sql语句为:  "  + sql)
-        cursor.execute(sql, (result['title'], result['price'], result['deal'], result['location'], result['shop'], result['isPostFree'], result['img_url']))
-        conn.commit()
-        print('存储到MySQL成功: ', result)
-    except Exception as e:
-        print('存储到MYsql出错: ', result, e)
+    sql = "INSERT INTO {} (title, price, deal, shop, img_url,source) VALUES (%s, %s, %s, %s, %s, %s)".format(
+        MYSQL_TABLE)
+    # print("sql语句为:  "  + sql)
+    cursor.execute(sql, (
+    result['title'], result['price'], result['deal'],  result['shop'],
+    result['img_url'], result['source']))
+    conn.commit()
+    # print('存储到MySQL成功: ', result)
 
 
 # 在 main 函数开始时连接数据库
-def main():
-    try:
-        pageStart = int(input("输入您想开始爬取的页面数: "))
-        pageAll = int(input("输入您想爬取的总页面数: "))
-        search_goods(pageStart, pageAll)
-    except Exception as e:
-        print('main函数报错: ', e)
-    finally:
-        cursor.close()
-        conn.close()
+def get_data(keyword):
+    pageStart = 1
+    pageAll = 5
+    search_goods(pageStart, pageAll, keyword)
+    print(product_list)
+    cursor.close()
+    conn.close()
+    return json.dumps(product_list, ensure_ascii=False)
 
-#启动爬虫
+
 if __name__ == '__main__':
-    main()
+    get_data("手机")

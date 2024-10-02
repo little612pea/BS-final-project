@@ -1,6 +1,6 @@
 package queries;
 
-import entities.Book;
+import entities.Product;
 import entities.Borrow;
 
 import java.util.List;
@@ -9,12 +9,12 @@ public class BorrowHistories {
 
     public static class Item {
         private int cardId;
-        private int bookId;
-        private String category;
+        private int productId;
+        private String comment;
         private String title;
-        private String press;
-        private int publishYear;
-        private String author;
+        private String shop;
+        private String deal;
+        private String img_url;
         private double price;
         private long borrowTime;
         private long returnTime;
@@ -22,15 +22,15 @@ public class BorrowHistories {
         public Item() {
         }
 
-        public Item(int cardId, Book book, Borrow borrow) {
+        public Item(int cardId, Product product, Borrow borrow) {
             this.cardId = cardId;
-            this.bookId = book.getBookId();
-            this.category = book.getCategory();
-            this.title = book.getTitle();
-            this.press = book.getPress();
-            this.publishYear = book.getPublishYear();
-            this.author = book.getAuthor();
-            this.price = book.getPrice();
+            this.productId = product.getProductId();
+            this.comment = product.getComment();
+            this.title = product.getTitle();
+            this.shop = product.getShop();
+            this.deal = product.getDeal();
+            this.img_url = product.getImg();
+            this.price = product.getPrice();
             this.borrowTime = borrow.getBorrowTime();
             this.returnTime = borrow.getReturnTime();
         }
@@ -38,12 +38,12 @@ public class BorrowHistories {
         @Override
         public String toString() {
             return "Item {" + "cardId=" + cardId +
-                    ", bookId=" + bookId +
-                    ", category='" + category + '\'' +
+                    ", productId=" + productId +
+                    ", comment='" + comment + '\'' +
                     ", title='" + title + '\'' +
-                    ", press='" + press + '\'' +
-                    ", publishYear=" + publishYear +
-                    ", author='" + author + '\'' +
+                    ", shop='" + shop + '\'' +
+                    ", deal=" + deal +
+                    ", img_url='" + img_url + '\'' +
                     ", price=" + price +
                     ", borrowTime=" + borrowTime +
                     ", returnTime=" + returnTime +
@@ -58,20 +58,20 @@ public class BorrowHistories {
             this.cardId = cardId;
         }
 
-        public int getBookId() {
-            return bookId;
+        public int getProductId() {
+            return productId;
         }
 
-        public void setBookId(int bookId) {
-            this.bookId = bookId;
+        public void setProductId(int productId) {
+            this.productId = productId;
         }
 
-        public String getCategory() {
-            return category;
+        public String getComment() {
+            return comment;
         }
 
-        public void setCategory(String category) {
-            this.category = category;
+        public void setComment(String comment) {
+            this.comment = comment;
         }
 
         public String getTitle() {
@@ -82,28 +82,28 @@ public class BorrowHistories {
             this.title = title;
         }
 
-        public String getPress() {
-            return press;
+        public String getShop() {
+            return shop;
         }
 
-        public void setPress(String press) {
-            this.press = press;
+        public void setShop(String shop) {
+            this.shop = shop;
         }
 
-        public int getPublishYear() {
-            return publishYear;
+        public String getDeal() {
+            return deal;
         }
 
-        public void setPublishYear(int publishYear) {
-            this.publishYear = publishYear;
+        public void setDeal(String deal) {
+            this.deal = deal;
         }
 
-        public String getAuthor() {
-            return author;
+        public String getImg() {
+            return img_url;
         }
 
-        public void setAuthor(String author) {
-            this.author = author;
+        public void setImg(String img_url) {
+            this.img_url = img_url;
         }
 
         public double getPrice() {

@@ -1,3 +1,7 @@
+import json
+import time
+from time import sleep
+from selenium import webdriver
 import pymysql
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -9,12 +13,14 @@ import time
 import random
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 import re
+import sys
 
-KEYWORD = '羽毛球拍'
-MYSQL_TABLE = 'goods_jd'
+product_list=[]
+MYSQL_TABLE = 'product'
 
 # MySQL 数据库连接配置
 db_config = {
+    # 'host': 'host.docker.internal',
     'host': 'localhost',
     'port': 3306,
     'user': 'root',
@@ -40,53 +46,59 @@ driver.maximize_window()
 # 如果一直到等待时间都没满足则会捕获TimeoutException异常
 wait = WebDriverWait(driver, 15)
 
+
 # 打开页面后会强制停止10秒，请在此时手动扫码登陆
-def search_goods(start_page, total_pages):
-    print('正在搜索: ')
+def search_goods(start_page, total_pages,keyword):
+    # print('正在搜索: ')
     try:
         driver.get('https://www.jd.com/')
         # 强制停止10秒，请在此时手动扫码登陆
-        time.sleep(20)
+        driver.delete_all_cookies()
+        # 加载 cookies信息
+        with open("D:\\home\\BS\\BS-final-project\\src\\crawler\\jd\\cookies_jd.txt", "r") as f:
+            cookies = json.load(f)
+        for cookie in cookies:
+            driver.add_cookie(cookie)
+        # 验证是否登录成功
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",
                                {"source": """Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"""})
         # 找到搜索输入框
         input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#key")))
         # 找到“搜索”按钮
-        submit = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'#search > div > div.form > button')))
-        input.send_keys(KEYWORD)
+        submit = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#search > div > div.form > button')))
+        input.send_keys(keyword)
         submit.click()
         # 搜索商品后会再强制停止10秒，如有滑块请手动操作
         time.sleep(10)
 
         # 如果不是从第一页开始爬取，就滑动到底部输入页面然后跳转
-        if start_page != 1 :
+        if start_page != 1:
             # 滑动到页面底端
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             # 滑动到底部后停留1-3s
             random_sleep(1, 3)
 
             # 找到输入页面的表单
-            pageInput = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[5]/div[2]/div[2]/div[1]/div/div[3]/div/span[2]/input')))
+            pageInput = wait.until(EC.presence_of_element_located(
+                (By.XPATH, '/html/body/div[5]/div[2]/div[2]/div[1]/div/div[3]/div/span[2]/input')))
             pageInput.send_keys(start_page)
             # 找到页面跳转的确定按钮，并且点击
-            admit = wait.until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[5]/div[2]/div[2]/div[1]/div/div[3]/div/span[2]/a')))
+            admit = wait.until(EC.element_to_be_clickable(
+                (By.XPATH, '/html/body/div[5]/div[2]/div[2]/div[1]/div/div[3]/div/span[2]/a')))
             admit.click()
         get_goods()
-
-
         for i in range(start_page + 1, start_page + total_pages):
             page_turning(i)
     except TimeoutException:
         print("search_goods: error")
-    return search_goods()
 
 
 # 进行翻页处理
 def page_turning(page_number):
-    print('正在翻页: ', page_number)
+    # print('正在翻页: ', page_number)
     try:
         current_url = driver.current_url
-        print(current_url)
+        # print(current_url)
         parsed_url = urlparse(current_url)
         query_params = parse_qs(parsed_url.query)
 
@@ -111,7 +123,7 @@ def page_turning(page_number):
 
         new_query = urlencode(query_params, doseq=True)
         new_url = urlunparse(parsed_url._replace(query=new_query))
-        print(new_url)
+        # print(new_url)
 
         # 尝试导航到新的 URL
         try:
@@ -123,7 +135,6 @@ def page_turning(page_number):
         page_turning(page_number)
 
 
-
 # 强制等待的方法，在timeS到timeE的时间之间随机等待
 def random_sleep(timeS, timeE):
     # 生成一个S到E之间的随机等待时间
@@ -131,7 +142,7 @@ def random_sleep(timeS, timeE):
     time.sleep(random_sleep_time)
 
 
-#获取每一页的商品信息；
+# 获取每一页的商品信息；
 def get_goods():
     # 获取商品前固定等待2-4秒
     random_sleep(2, 4)
@@ -150,45 +161,45 @@ def get_goods():
         # 定位店名
         shop = item.find('.p-shop').text()
         # 定位图片url
-        img_url = item.find('.p-img').html()
-        print(img_url)
+        img = item.find('.p-img').html()
         pattern = r'data-lazy-img="(.*?)" source-data-lazy-img=""'
-        img_url = re.findall(pattern,img_url)
+        img_url = re.findall(pattern, img)
+        if img_url[0] == "done":
+            pattern = r'source-data-lazy-img="" src="(.*?)"/>'
+            img_url = re.findall(pattern, img)
         # 构建商品信息字典
         product = {
             'title': title,
             'price': price,
             'comment': comment,
             'shop': shop,
-            'img_url':img_url
+            'img_url': img_url,
+            'source': 1
         }
+
+        product_list.append(product)
+        # print(product)
         save_to_mysql(product)
 
 
 # 在 save_to_mysql 函数中保存数据到 MySQL
 def save_to_mysql(result):
-    try:
-        sql = "INSERT INTO {} (title,price,comment,shop,img_url) VALUES (%s, %s, %s, %s, %s)".format(MYSQL_TABLE)
-        print("sql语句为:  "  + sql)
-        cursor.execute(sql, (result['title'], result['price'], result['comment'], result['shop'], result['img_url']))
-        conn.commit()
-        print('存储到MySQL成功: ', result)
-    except Exception as e:
-        print('存储到MYsql出错: ', result, e)
+    # try:
+    sql = "INSERT INTO {} (title,price,comment,shop,img_url,source) VALUES (%s, %s, %s, %s, %s, %s)".format(MYSQL_TABLE)
+    # print("sql语句为:  " + sql)
+    cursor.execute(sql, (result['title'], result['price'], result['comment'], result['shop'], result['img_url'], result['source']))
+    conn.commit()
+    # print('存储到MySQL成功: ', result)
+    # except Exception as e:
+    #     print('存储到MYsql出错: ', result, e)
 
+def get_data(keyword):
+    pageStart = 1
+    pageAll = 5
+    search_goods(pageStart, pageAll, keyword)
+    # cursor.close()
+    # conn.close()
+    return json.dumps(product_list, ensure_ascii=False)
 
-# 在 main 函数开始时连接数据库
-def main():
-    try:
-        pageStart = int(input("输入您想开始爬取的页面数: "))
-        pageAll = int(input("输入您想爬取的总页面数: "))
-        search_goods(pageStart, pageAll)
-    except Exception as e:
-        print('main函数报错: ', e)
-    finally:
-        cursor.close()
-        conn.close()
-
-#启动爬虫
 if __name__ == '__main__':
-    main()
+    get_data("手机")

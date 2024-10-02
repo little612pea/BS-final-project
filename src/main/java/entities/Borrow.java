@@ -4,28 +4,28 @@ import java.util.Date;
 
 public final class Borrow {
     private int cardId;
-    private int bookId;
+    private int productId;
     /* Note: we use unix time stamp to represent borrow time & return time */
     private long borrowTime;
-    private long returnTime; // set to 0 if the user has not returned the book
+    private long returnTime; // set to 0 if the user has not returned the product
 
     public Borrow() {
     }
 
-    public Borrow(Book book, Card card) {
-        this.bookId = book.getBookId();
+    public Borrow(Product product, Card card) {
+        this.productId = product.getProductId();
         this.cardId = card.getCardId();
     }
 
-    public Borrow(int bookId, int cardId) {
-        this.bookId = bookId;
+    public Borrow(int productId, int cardId) {
+        this.productId = productId;
         this.cardId = cardId;
     }
 
     @Override
     public String toString() {
         return "Borrow {" + "cardId=" + cardId +
-                ", bookId=" + bookId +
+                ", productId=" + productId +
                 ", borrowTime=" + borrowTime +
                 ", returnTime=" + returnTime +
                 '}';
@@ -57,12 +57,12 @@ public final class Borrow {
         this.cardId = cardId;
     }
 
-    public int getBookId() {
-        return bookId;
+    public int getProductId() {
+        return productId;
     }
 
-    public void setBookId(int bookId) {
-        this.bookId = bookId;
+    public void setProductId(int productId) {
+        this.productId = productId;
     }
 
     public long getBorrowTime() {

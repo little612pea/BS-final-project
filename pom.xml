@@ -3,21 +3,69 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
+    <packaging>jar</packaging>
     <groupId>org.zjucsdb</groupId>
-    <artifactId>LibraryManagementSystem</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>bs-final-project</artifactId>
+    <version>1.0</version>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
                 <configuration>
                     <source>8</source>
                     <target>8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <!-- 指定主类 -->
+                            <mainClass>Main</mainClass>  <!-- 请将 Main 替换为你的主类完整包名，例如 com.example.Main -->
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Exclude signature files -->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory> <!-- 资源文件的路径 -->
+                <includes>
+                    <include>**/*.yaml</include> <!-- 包含所有 yaml 文件 -->
+                    <include>**/*.sql</include>
+                </includes>
+            </resource>
+        </resources>
     </build>
 
     <dependencies>
@@ -28,7 +76,11 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.31</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <version>14-ea+7</version>
+        </dependency>
         <!-- JDBC for MySQL -->
         <!-- https://mvnrepository.com/artifact/org.opengauss/opengauss-jdbc -->
         <dependency>
@@ -77,8 +129,9 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.33</version>
+            <version>1.23</version>
         </dependency>
+
 
         <dependency>
             <groupId>org.apache.commons</groupId>

@@ -1,5 +1,5 @@
 import com.mysql.cj.log.Log;
-import entities.Book;
+import entities.Product;
 import entities.Borrow;
 import entities.Card;
 import queries.*;
@@ -46,15 +46,17 @@ public class Main {
             /* do somethings */
             CardHandler cardHandler = new CardHandler();
             BorrowHandler borrowHandler = new BorrowHandler();
-            BookHandler bookHandler = new BookHandler();
+            ProductHandler productHandler = new ProductHandler();
             LoginHandler loginHandler = new LoginHandler();
             RegisterHandler registerHandler = new RegisterHandler();
+            SearchHandeler searchHandeler = new SearchHandeler();
             HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
             server.createContext("/home/card", cardHandler);
             server.createContext("/home/borrow", borrowHandler);
-            server.createContext("/home/book", bookHandler);
+            server.createContext("/home/product", productHandler);
             server.createContext("/login", loginHandler);
             server.createContext("/register", registerHandler);
+            server.createContext("/search", searchHandeler);
             server.setExecutor(null);
             server.start();
             log.info("Server is listening on port 8000.");
@@ -65,13 +67,13 @@ public class Main {
             if (line != null) {
                 System.out.println("Read line: " + line);
             }
-            server.stop(0);
+//            server.stop(0);
             // release database connection handler
-            if (connector.release()) {
-                log.info("Success to release connection.");
-            } else {
-                log.warning("Failed to release connection.");
-            }
+//            if (connector.release()) {
+//                log.info("Success to release connection.");
+//            } else {
+//                log.warning("Failed to release connection.");
+//            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -102,7 +104,7 @@ public class Main {
                 // connect to database
                 connector = new DatabaseConnector(connectConfig);
                 library = new LibraryManagementSystemImpl(connector);
-                System.out.println("Successfully init class BookTest.");
+                System.out.println("Successfully init class ProductTest.");
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
@@ -215,7 +217,7 @@ public class Main {
                 // connect to database
                 connector = new DatabaseConnector(connectConfig);
                 library = new LibraryManagementSystemImpl(connector);
-                System.out.println("Successfully init class BookTest.");
+                System.out.println("Successfully init class ProductTest.");
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
@@ -439,7 +441,7 @@ public class Main {
                 // connect to database
                 connector = new DatabaseConnector(connectConfig);
                 library = new LibraryManagementSystemImpl(connector);
-                System.out.println("Successfully init class BookTest.");
+                System.out.println("Successfully init class ProductTest.");
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
@@ -655,7 +657,7 @@ public class Main {
                 // connect to database
                 connector = new DatabaseConnector(connectConfig);
                 library = new LibraryManagementSystemImpl(connector);
-                System.out.println("Successfully init class BookTest.");
+                System.out.println("Successfully init class ProductTest.");
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
@@ -721,8 +723,8 @@ public class Main {
                 String iso_borrowTime = new java.text.SimpleDateFormat("yyyy.MM.dd HH:mm").format(new java.util.Date(o2.getBorrowTime()));
                 String iso_returnTime = new java.text.SimpleDateFormat("yyyy.MM.dd HH:mm").format(new java.util.Date(o2.getReturnTime()));
                 if (o2.getReturnTime() == 0)
-                    iso_returnTime = "book unreturned";
-                response += "{\"cardID\": " + o2.getCardId() + ", \"bookID\": " + o2.getBookId() + ", \"borrowTime\": \"" + iso_borrowTime + "\", \"unix_borrowTime\": " + o2.getBorrowTime() + ", \"returnTime\": \"" + iso_returnTime + "\", \"unix_returnTime\": " + o2.getReturnTime() + "}";
+                    iso_returnTime = "product unreturned";
+                response += "{\"cardID\": " + o2.getCardId() + ", \"productId\": " + o2.getProductId() + ", \"borrowTime\": \"" + iso_borrowTime + "\", \"unix_borrowTime\": " + o2.getBorrowTime() + ", \"returnTime\": \"" + iso_returnTime + "\", \"unix_returnTime\": " + o2.getReturnTime() + "}";
                 if (i != resBorrowHistories.getCount() - 1)
                     response += ",";
                 //将unix时间戳转换为2024.03.04 21:48格式：
@@ -758,49 +760,49 @@ public class Main {
             System.out.println("Received POST request data: " + requestBodyBuilder.toString());
             //调用数据库操作：
             // 1. 解析请求体，获取卡片信息
-            String return_book_info = requestBodyBuilder.toString();
-            Borrow book_to_return = new Borrow();
-            // 格式为Received POST request data: {"cardID":1,"bookID":1,"borrowTime":"2024.04.11 14:28"}
+            String return_product_info = requestBodyBuilder.toString();
+            Borrow product_to_return = new Borrow();
+            // 格式为Received POST request data: {"cardID":1,"productId":1,"borrowTime":"2024.04.11 14:28"}
             // 解析 cardID
-            int cardIDStartIndex = return_book_info.indexOf("cardID") + 8; // 获取 "cardID" 后的索引位置
-            int cardIDEndIndex = return_book_info.indexOf(",", cardIDStartIndex); // 获取第一个逗号的位置
-            int cardID = Integer.parseInt(return_book_info.substring(cardIDStartIndex, cardIDEndIndex));
+            int cardIDStartIndex = return_product_info.indexOf("cardID") + 8; // 获取 "cardID" 后的索引位置
+            int cardIDEndIndex = return_product_info.indexOf(",", cardIDStartIndex); // 获取第一个逗号的位置
+            int cardID = Integer.parseInt(return_product_info.substring(cardIDStartIndex, cardIDEndIndex));
             System.out.println("Received cardID: " + cardID);
-            book_to_return.setCardId(cardID);
+            product_to_return.setCardId(cardID);
 
-            // 解析 bookID
-            int bookIDStartIndex = return_book_info.indexOf("bookID") + 8; // 获取 "bookID" 后的索引位置
-            int bookIDEndIndex = return_book_info.indexOf(",", bookIDStartIndex); // 获取第一个逗号的位置
-            int bookID = Integer.parseInt(return_book_info.substring(bookIDStartIndex, bookIDEndIndex));
-            System.out.println("Received bookID: " + bookID);
-            book_to_return.setBookId(bookID);
+            // 解析 productId
+            int productIDStartIndex = return_product_info.indexOf("productId") + 8; // 获取 "productId" 后的索引位置
+            int productIDEndIndex = return_product_info.indexOf(",", productIDStartIndex); // 获取第一个逗号的位置
+            int productId = Integer.parseInt(return_product_info.substring(productIDStartIndex, productIDEndIndex));
+            System.out.println("Received productId: " + productId);
+            product_to_return.setProductId(productId);
 
             // 解析 borrowTime
-            int borrowTimeStartIndex = return_book_info.indexOf("borrowTime") + 12; // 获取 "borrowTime" 后的索引位置'
-            int borrowTimeEndIndex = return_book_info.length()-1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-            long borrowTime = Long.parseLong(return_book_info.substring(borrowTimeStartIndex, borrowTimeEndIndex));
+            int borrowTimeStartIndex = return_product_info.indexOf("borrowTime") + 12; // 获取 "borrowTime" 后的索引位置'
+            int borrowTimeEndIndex = return_product_info.length()-1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+            long borrowTime = Long.parseLong(return_product_info.substring(borrowTimeStartIndex, borrowTimeEndIndex));
             //将String转换为long类型:
             System.out.println("Received borrowTime: " + borrowTime);
-            book_to_return.setBorrowTime(borrowTime);
-            book_to_return.setReturnTime(0);
-            //打印book_to_return:
-            System.out.printf("cardID:%d,bookID:%d,borrowTime:%s\n", book_to_return.getCardId(), book_to_return.getBookId(), borrowTime);
-            //调用returnBook函数
-            ApiResult result = BorrowHandler.library.returnBook(book_to_return);
+            product_to_return.setBorrowTime(borrowTime);
+            product_to_return.setReturnTime(0);
+            //打印product_to_return:
+            System.out.printf("cardID:%d,productId:%d,borrowTime:%s\n", product_to_return.getCardId(), product_to_return.getProductId(), borrowTime);
+            //调用returnProduct函数
+            ApiResult result = BorrowHandler.library.returnProduct(product_to_return);
             exchange.getResponseHeaders().set("Content-Type", "text/plain");
             if(result.ok){
-                System.out.println("Return book successfully");
+                System.out.println("Return product successfully");
                 exchange.sendResponseHeaders(200, 0);
                 // 剩下三个和GET一样
                 OutputStream outputStream = exchange.getResponseBody();
-                outputStream.write("Book returned successfully".getBytes());
+                outputStream.write("Product returned successfully".getBytes());
                 outputStream.close();
             }else{
-                System.out.println("Return book failed");
+                System.out.println("Return product failed");
                 exchange.sendResponseHeaders(400, 0);
                 // 剩下三个和GET一样
                 OutputStream outputStream = exchange.getResponseBody();
-                outputStream.write("Book return failed".getBytes());
+                outputStream.write("Product return failed".getBytes());
                 outputStream.close();
             }
         }
@@ -821,7 +823,7 @@ public class Main {
         }
     }
 
-    static class BookHandler implements HttpHandler {
+    static class ProductHandler implements HttpHandler {
         private static DatabaseConnector connector = null;
         private static LibraryManagementSystem library = null;
         private static ConnectConfig connectConfig = null;
@@ -845,7 +847,7 @@ public class Main {
                 // connect to database
                 connector = new DatabaseConnector(connectConfig);
                 library = new LibraryManagementSystemImpl(connector);
-                System.out.println("Successfully init class BookTest.");
+                System.out.println("Successfully init class ProductTest.");
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
@@ -896,37 +898,37 @@ public class Main {
             URI requestedUri = exchange.getRequestURI();
             // 解析查询字符串
             String query = requestedUri.getRawQuery();
-            System.out.println("query: " + query);
+            System.out.println("query to fetch from db: " + query);
             String response = "[";
             if(query==null){
-                ApiResult result = BookHandler.library.queryBook(new BookQueryConditions());
-                BookQueryResults resBookList = (BookQueryResults) result.payload;
-                System.out.println(resBookList.getCount());
-                for (int i = 0; i < resBookList.getCount(); i++) {
-                    Book o2 = resBookList.getResults().get(i);
-                    response += "{\"id\": " + o2.getBookId()+ ", \"category\": \"" +o2.getCategory()+ "\", \"title\": \""+o2.getTitle()+ "\", \"press\": \""+o2.getPress()+ "\", \"publishYear\": "+o2.getPublishYear()+ ", \"author\": \""+o2.getAuthor()+ "\", \"price\": "+o2.getPrice()+ ", \"stock\": "+o2.getStock()+"}";
-                    if (i != resBookList.getCount() - 1)
+                ApiResult result = ProductHandler.library.queryProduct(new ProductQueryConditions());
+                ProductQueryResults resProductList = (ProductQueryResults) result.payload;
+                System.out.println(resProductList.getCount());
+                for (int i = 0; i < resProductList.getCount(); i++) {
+                    Product o2 = resProductList.getResults().get(i);
+                    response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": "+o2.getDeal()+ ", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": "+o2.getSource()+"}";
+                    if (i != resProductList.getCount() - 1)
                         response += ",";
-                    //{\"id\": " + o2.getBookId() + ", \"name\": \"" + o2.getName() + "\", \"department\": \"" + o2.getDepar response.append("{\"id\": ").append(o2.getBookId()).append(", \"name\": \"").append(o2.getName()).append("\", \"department\": \"").append(o2.getDepartment()).append("\", \"type\": \"").append(o2.getType()).append("\"}");
+                    //{\"id\": " + o2.getProductId() + ", \"name\": \"" + o2.getName() + "\", \"department\": \"" + o2.getDepar response.append("{\"id\": ").append(o2.getProductId()).append(", \"name\": \"").append(o2.getName()).append("\", \"department\": \"").append(o2.getDepartment()).append("\", \"type\": \"").append(o2.getType()).append("\"}");
                 }
                 response += "]";
             }
-            else if(query.contains("title") && query.contains("category")){
+            else if(query.contains("title") && query.contains("comment")){
                 System.out.println("multi condition query:");
-                // 格式为：category=shelbyHU&title=shelbyHU&press=shelbyHU&minPublishYear=1145&maxPublishYear=14&author=shelbyHU&minPrice=1&maxPrice=919
-                BookQueryConditions bookQueryConditions = new BookQueryConditions();
+                // 格式为：category=shelbyHU&title=shelbyHU&shop=shelbyHU&minPublishYear=1145&maxPublishYear=14&img_url=shelbyHU&minPrice=1&maxPrice=919
+                ProductQueryConditions productQueryConditions = new ProductQueryConditions();
                 //将query中可能的中文编码转化为utf-8格式:
                 query = URLDecoder.decode(query, "UTF-8");
                 // 输出解码后的字符串
                 System.out.println(query); // 输出： 原码
-                // 解析 category
-                int categoryStartIndex = query.indexOf("category") + 9; // 获取 "category" 后的索引位置
+                // 解析 comment
+                int categoryStartIndex = query.indexOf("comment") + 9; // 获取 "comment" 后的索引位置
                 int categoryEndIndex = query.indexOf("&", categoryStartIndex); // 获取第一个逗号的位置
-                String category;
+                String comment;
                 if(categoryStartIndex!=categoryEndIndex){
-                    category = query.substring(categoryStartIndex, categoryEndIndex);
-                    System.out.println(category);
-                    bookQueryConditions.setCategory(category);
+                    comment = query.substring(categoryStartIndex, categoryEndIndex);
+                    System.out.println(comment);
+                    productQueryConditions.setComment(comment);
                 }
                 // 解析 title
                 int titleStartIndex = query.indexOf("title") + 6; // 获取 "title" 后的索引位置
@@ -935,16 +937,16 @@ public class Main {
                 if(titleStartIndex!=titleEndIndex){
                     title = query.substring(titleStartIndex, titleEndIndex);
                     System.out.println(title);
-                    bookQueryConditions.setTitle(title);
+                    productQueryConditions.setTitle(title);
                 }
-                // 解析 press
-                int pressStartIndex = query.indexOf("press") + 6; // 获取 "press" 后的索引位置
+                // 解析 shop
+                int pressStartIndex = query.indexOf("shop") + 6; // 获取 "shop" 后的索引位置
                 int pressEndIndex = query.indexOf("&", pressStartIndex); // 获取第一个逗号的位置
-                String press;
+                String shop;
                 if(pressStartIndex!=pressEndIndex){
-                    press = query.substring(pressStartIndex, pressEndIndex);
-                    System.out.println(press);
-                    bookQueryConditions.setPress(press);
+                    shop = query.substring(pressStartIndex, pressEndIndex);
+                    System.out.println(shop);
+                    productQueryConditions.setShop(shop);
                 }
                 // 解析 minPublishYear
                 int minPublishYearStartIndex = query.indexOf("minPublishYear") + 15; // 获取 "minPublishYear" 后的索引位置
@@ -953,7 +955,7 @@ public class Main {
                 if(minPublishYearStartIndex!=minPublishYearEndIndex){
                     minPublishYear = Integer.parseInt(query.substring(minPublishYearStartIndex, minPublishYearEndIndex));
                     System.out.println(minPublishYear);
-                    bookQueryConditions.setMinPublishYear(minPublishYear);
+                    productQueryConditions.setMinPublishYear(minPublishYear);
                 }
                 // 解析 maxPublishYear
                 int maxPublishYearStartIndex = query.indexOf("maxPublishYear") + 15; // 获取 "maxPublishYear" 后的索引位置
@@ -962,16 +964,16 @@ public class Main {
                 if(maxPublishYearStartIndex!=maxPublishYearEndIndex){
                     maxPublishYear = Integer.parseInt(query.substring(maxPublishYearStartIndex, maxPublishYearEndIndex));
                     System.out.println(maxPublishYear);
-                    bookQueryConditions.setMaxPublishYear(maxPublishYear);
+                    productQueryConditions.setMaxPublishYear(maxPublishYear);
                 }
-                // 解析 author
-                int authorStartIndex = query.indexOf("author") + 7; // 获取 "author" 后的索引位置
+                // 解析 img_url
+                int authorStartIndex = query.indexOf("img_url") + 7; // 获取 "img_url" 后的索引位置
                 int authorEndIndex = query.indexOf("&", authorStartIndex); // 获取第一个逗号的位置
-                String author;
+                String img_url;
                 if(authorStartIndex!=authorEndIndex){
-                    author = query.substring(authorStartIndex, authorEndIndex);
-                    System.out.println(author);
-                    bookQueryConditions.setAuthor(author);
+                    img_url = query.substring(authorStartIndex, authorEndIndex);
+                    System.out.println(img_url);
+                    productQueryConditions.setImg(img_url);
                 }
                 // 解析 minPrice
                 int minPriceStartIndex = query.indexOf("minPrice") + 9; // 获取 "minPrice" 后的索引位置
@@ -980,7 +982,7 @@ public class Main {
                 if(minPriceStartIndex!=minPriceEndIndex){
                     minPrice = Integer.parseInt(query.substring(minPriceStartIndex, minPriceEndIndex));
                     System.out.println(minPrice);
-                    bookQueryConditions.setMinPrice(minPrice);
+                    productQueryConditions.setMinPrice(minPrice);
                 }
                 // 解析 maxPrice
                 int maxPriceStartIndex = query.indexOf("maxPrice") + 9; // 获取 "maxPrice" 后的索引位置
@@ -989,17 +991,17 @@ public class Main {
                 if(maxPriceStartIndex!=maxPriceEndIndex){
                     maxPrice = Integer.parseInt(query.substring(maxPriceStartIndex, maxPriceEndIndex));
                     System.out.println(maxPrice);
-                    bookQueryConditions.setMaxPrice(maxPrice);
+                    productQueryConditions.setMaxPrice(maxPrice);
                 }
-                //打印bookQueryConditions:
-                System.out.printf("category:%s,title:%s,press:%s,minPublishYear:%d,maxPublishYear:%d,author:%s,minPrice:%f,maxPrice:%f\n", bookQueryConditions.getCategory(), bookQueryConditions.getTitle(), bookQueryConditions.getPress(), bookQueryConditions.getMinPublishYear(), bookQueryConditions.getMaxPublishYear(), bookQueryConditions.getAuthor(), bookQueryConditions.getMinPrice(), bookQueryConditions.getMaxPrice());
-                ApiResult result = BookHandler.library.queryBook(bookQueryConditions);
-                BookQueryResults resBookList = (BookQueryResults) result.payload;
-                System.out.println(resBookList.getCount());
-                for (int i = 0; i < resBookList.getCount(); i++) {
-                    Book o2 = resBookList.getResults().get(i);
-                    response += "{\"id\": " + o2.getBookId()+ ", \"category\": \"" +o2.getCategory()+ "\", \"title\": \""+o2.getTitle()+ "\", \"press\": \""+o2.getPress()+ "\", \"publishYear\": "+o2.getPublishYear()+ ", \"author\": \""+o2.getAuthor()+ "\", \"price\": "+o2.getPrice()+ ", \"stock\": "+o2.getStock()+"}";
-                    if (i != resBookList.getCount() - 1)
+                //打印productQueryConditions:
+                System.out.printf("comment:%s,title:%s,shop:%s,minPublishYear:%d,maxPublishYear:%d,img_url:%s,minPrice:%f,maxPrice:%f\n", productQueryConditions.getComment(), productQueryConditions.getTitle(), productQueryConditions.getShop(), productQueryConditions.getMinPublishYear(), productQueryConditions.getMaxPublishYear(), productQueryConditions.getImg(), productQueryConditions.getMinPrice(), productQueryConditions.getMaxPrice());
+                ApiResult result = ProductHandler.library.queryProduct(productQueryConditions);
+                ProductQueryResults resProductList = (ProductQueryResults) result.payload;
+                System.out.println(resProductList.getCount());
+                for (int i = 0; i < resProductList.getCount(); i++) {
+                    Product o2 = resProductList.getResults().get(i);
+                    response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": "+o2.getDeal()+ ", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": "+o2.getSource()+"}";
+                    if (i != resProductList.getCount() - 1)
                         response += ",";
                 }
                 response += "]";
@@ -1030,145 +1032,145 @@ public class Main {
             System.out.println("Received POST request data here here~~~: " + requestBodyBuilder.toString());
             //调用数据库操作：
             // 1. 解析请求体，获取卡片信息
-            String book_Info = requestBodyBuilder.toString();
-            //如果book_Info有id字段，调用updateBook函数，否则调用createBook函数：
-            if(book_Info.contains("text/plain")){
+            String product_Info = requestBodyBuilder.toString();
+            //如果product_Info有id字段，调用updateProduct函数，否则调用createProduct函数：
+            if(product_Info.contains("text/plain")){
                 System.out.println("3 here");
-                // 解析 book_Info：格式为 text/plain:[{"category":"cate","title":"bookname","press":"pub","publishYear":"2024","author":"author","price":"123","stock":"321"},{"category":"cate","title":"bookname","press":"pub","publishYear":"2024","author":"author","price":"123","stock":"321"}]
-                int bookInfoStartIndex = book_Info.indexOf("[{") + 1; // 获取第一个 `[` 的索引位置
-                int bookInfoEndIndex = book_Info.indexOf("]"); // 获取最后一个 `]` 的索引位置
-                String bookInfo = book_Info.substring(bookInfoStartIndex, bookInfoEndIndex);
-                System.out.println(bookInfo);
-                String[] bookInfos = bookInfo.split("},");
-                //计算bookInfos的长度，一共有多少本书：
-                int book_num = bookInfos.length;
-                System.out.println(book_num);
-                int book_count = 0;
-                List<Book> new_books = new ArrayList<>();
-                for (String bookInfo1 : bookInfos) {
-                    Book book_to_create = new Book();
-                    //格式为：{"category":"cate","title":"bookname","press":"pub","publishYear":"2024","author":"author","price":"123","stock":"321"}
-                    // 解析 category
-                    int categoryStartIndex = bookInfo1.indexOf("category") + 11; // 获取 "category" 后的索引位置
-                    int categoryEndIndex = bookInfo1.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
-                    String category = bookInfo1.substring(categoryStartIndex, categoryEndIndex - 1);
-                    System.out.println(category);
-                    book_to_create.setCategory(category);
+                // 解析 product_Info：格式为 text/plain:[{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"},{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}]
+                int productInfoStartIndex = product_Info.indexOf("[{") + 1; // 获取第一个 `[` 的索引位置
+                int productInfoEndIndex = product_Info.indexOf("]"); // 获取最后一个 `]` 的索引位置
+                String productInfo = product_Info.substring(productInfoStartIndex, productInfoEndIndex);
+                System.out.println(productInfo);
+                String[] productInfos = productInfo.split("},");
+                //计算productInfos的长度，一共有多少本书：
+                int product_num = productInfos.length;
+                System.out.println(product_num);
+                int product_count = 0;
+                List<Product> new_products = new ArrayList<>();
+                for (String productInfo1 : productInfos) {
+                    Product product_to_create = new Product();
+                    //格式为：{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}
+                    // 解析 comment
+                    int categoryStartIndex = productInfo1.indexOf("comment") + 11; // 获取 "comment" 后的索引位置
+                    int categoryEndIndex = productInfo1.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
+                    String comment = productInfo1.substring(categoryStartIndex, categoryEndIndex - 1);
+                    System.out.println(comment);
+                    product_to_create.setComment(comment);
                     // 解析 title
-                    int titleStartIndex = bookInfo1.indexOf("title") + 8; // 获取 "title" 后的索引位置
-                    int titleEndIndex = bookInfo1.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-                    String title = bookInfo1.substring(titleStartIndex, titleEndIndex - 1);
+                    int titleStartIndex = productInfo1.indexOf("title") + 8; // 获取 "title" 后的索引位置
+                    int titleEndIndex = productInfo1.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
+                    String title = productInfo1.substring(titleStartIndex, titleEndIndex - 1);
                     System.out.println(title);
-                    book_to_create.setTitle(title);
-                    // 解析 press
-                    int pressStartIndex = bookInfo1.indexOf("press") + 8; // 获取 "press" 后的索引位置
-                    int pressEndIndex = bookInfo1.indexOf(",", pressStartIndex - 1); // 获取第一个逗号的位置
-                    String press = bookInfo1.substring(pressStartIndex, pressEndIndex - 1);
-                    System.out.println(press);
-                    book_to_create.setPress(press);
-                    // 解析 publishYear
-                    int publishYearStartIndex = bookInfo1.indexOf("publishYear") + 14; // 获取 "publishYear" 后的索引位置
-                    int publishYearEndIndex = bookInfo1.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
-                    int publishYear = Integer.parseInt(bookInfo1.substring(publishYearStartIndex, publishYearEndIndex - 1));
-                    System.out.println(publishYear);
-                    book_to_create.setPublishYear(publishYear);
-                    // 解析 author
-                    int authorStartIndex = bookInfo1.indexOf("author") + 9; // 获取 "author" 后的索引位置
-                    int authorEndIndex = bookInfo1.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
-                    String author = bookInfo1.substring(authorStartIndex, authorEndIndex - 1);
-                    System.out.println(author);
-                    book_to_create.setAuthor(author);
+                    product_to_create.setTitle(title);
+                    // 解析 shop
+                    int pressStartIndex = productInfo1.indexOf("shop") + 8; // 获取 "shop" 后的索引位置
+                    int pressEndIndex = productInfo1.indexOf(",", pressStartIndex - 1); // 获取第一个逗号的位置
+                    String shop = productInfo1.substring(pressStartIndex, pressEndIndex - 1);
+                    System.out.println(shop);
+                    product_to_create.setShop(shop);
+                    // 解析 deal
+                    int publishYearStartIndex = productInfo1.indexOf("deal") + 14; // 获取 "deal" 后的索引位置
+                    int publishYearEndIndex = productInfo1.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
+                    String deal = productInfo1.substring(publishYearStartIndex, publishYearEndIndex - 1);
+                    System.out.println(deal);
+                    product_to_create.setDeal(deal);
+                    // 解析 img_url
+                    int authorStartIndex = productInfo1.indexOf("img_url") + 9; // 获取 "img_url" 后的索引位置
+                    int authorEndIndex = productInfo1.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
+                    String img_url = productInfo1.substring(authorStartIndex, authorEndIndex - 1);
+                    System.out.println(img_url);
+                    product_to_create.setImg(img_url);
                     // 解析 price
-                    int priceStartIndex = bookInfo1.indexOf("price") + 8; // 获取 "price" 后的索引位置
-                    int priceEndIndex = bookInfo1.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-                    double price = Double.parseDouble(bookInfo1.substring(priceStartIndex, priceEndIndex - 1));
+                    int priceStartIndex = productInfo1.indexOf("price") + 8; // 获取 "price" 后的索引位置
+                    int priceEndIndex = productInfo1.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
+                    double price = Double.parseDouble(productInfo1.substring(priceStartIndex, priceEndIndex - 1));
                     System.out.println(price);
-                    book_to_create.setPrice(price);
-                    // 解析 stock
-                    int stockStartIndex = bookInfo1.indexOf("stock") + 8; // 获取 "stock" 后的索引位置
-                    int stockEndIndex = bookInfo1.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                    if(book_count==book_num-1){
-                        stockEndIndex = bookInfo1.length() - 2;
+                    product_to_create.setPrice(price);
+                    // 解析 source
+                    int stockStartIndex = productInfo1.indexOf("source") + 8; // 获取 "source" 后的索引位置
+                    int stockEndIndex = productInfo1.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+                    if(product_count==product_num-1){
+                        stockEndIndex = productInfo1.length() - 2;
                     }
-                    int stock = Integer.parseInt(bookInfo1.substring(stockStartIndex, stockEndIndex));
-                    System.out.println(stock);
-                    book_to_create.setStock(stock);
-                    //调用createBook函数
-                    System.out.printf("category:%s,title:%s,press:%s,publishYear:%d,author:%s,price:%f,stock:%d\n", category, title, press, publishYear, author, price, stock);
-                    //ApiResult result = BookHandler.library.storeBook(book_to_create);
-                    //System.out.println("Create book result: " + result.toString());
-                    new_books.add(book_to_create);
-                    book_count++;
+                    int source = Integer.parseInt(productInfo1.substring(stockStartIndex, stockEndIndex));
+                    System.out.println(source);
+                    product_to_create.setSource(source);
+                    //调用createProduct函数
+                    System.out.printf("comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", comment, title, shop, deal, img_url, price, source);
+                    //ApiResult result = ProductHandler.library.storeProduct(product_to_create);
+                    //System.out.println("Create product result: " + result.toString());
+                    new_products.add(product_to_create);
+                    product_count++;
                 }
-                //打印new_books:
-                System.out.println("new_books:");
-                for (Book new_book : new_books) {
-                    System.out.printf("category:%s,title:%s,press:%s,publishYear:%d,author:%s,price:%f,stock:%d\n", new_book.getCategory(), new_book.getTitle(), new_book.getPress(), new_book.getPublishYear(), new_book.getAuthor(), new_book.getPrice(), new_book.getStock());
+                //打印new_products:
+                System.out.println("new_products:");
+                for (Product new_product : new_products) {
+                    System.out.printf("comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", new_product.getComment(), new_product.getTitle(), new_product.getShop(), new_product.getDeal(), new_product.getImg(), new_product.getPrice(), new_product.getSource());
                 }
-                ApiResult result = BookHandler.library.storeBook(new_books);
-                System.out.println("store multi book result: " + result.toString());
+                ApiResult result = ProductHandler.library.storeProduct(new_products);
+                System.out.println("store multi product result: " + result.toString());
                 if (result.ok) {
                     exchange.sendResponseHeaders(200, 0);
-                    System.out.println("Store all books successfully");
+                    System.out.println("Store all products successfully");
                 } else {
                     exchange.sendResponseHeaders(400, 0);
-                    System.out.println("Store book failed");
+                    System.out.println("Store product failed");
                 }
             }
-            else if(book_Info.contains("id") && book_Info.contains("category")&& book_Info.contains("inc")){
+            else if(product_Info.contains("id") && product_Info.contains("comment")&& product_Info.contains("inc")){
 
-                //调用modifyBookInfo函数
+                //调用modifyProductInfo函数
                 System.out.println("1");
-                Book book_to_modify = new Book();
-                int idStartIndex = book_Info.indexOf("id") + 4; // 获取冒号后的索引位置
-                int idEndIndex = book_Info.indexOf(",", idStartIndex); // 获取第一个逗号的位置
-                int id = Integer.parseInt(book_Info.substring(idStartIndex, idEndIndex));
+                Product product_to_modify = new Product();
+                int idStartIndex = product_Info.indexOf("id") + 4; // 获取冒号后的索引位置
+                int idEndIndex = product_Info.indexOf(",", idStartIndex); // 获取第一个逗号的位置
+                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
                 System.out.println(id);
-                book_to_modify.setBookId(id);
-                // 解析 category
-                int categoryStartIndex = book_Info.indexOf("category") + 11; // 获取 "category" 后的索引位置
-                int categoryEndIndex = book_Info.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
-                String category = book_Info.substring(categoryStartIndex, categoryEndIndex-1);
-                System.out.println(category);
-                book_to_modify.setCategory(category);
+                product_to_modify.setProductId(id);
+                // 解析 comment
+                int categoryStartIndex = product_Info.indexOf("comment") + 11; // 获取 "comment" 后的索引位置
+                int categoryEndIndex = product_Info.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
+                String comment = product_Info.substring(categoryStartIndex, categoryEndIndex-1);
+                System.out.println(comment);
+                product_to_modify.setComment(comment);
                 // 解析 title
-                int titleStartIndex = book_Info.indexOf("title") + 8; // 获取 "title" 后的索引位置
-                int titleEndIndex = book_Info.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-                String title = book_Info.substring(titleStartIndex, titleEndIndex-1);
+                int titleStartIndex = product_Info.indexOf("title") + 8; // 获取 "title" 后的索引位置
+                int titleEndIndex = product_Info.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
+                String title = product_Info.substring(titleStartIndex, titleEndIndex-1);
                 System.out.println(title);
-                book_to_modify.setTitle(title);
-                // 解析 press
-                int pressStartIndex = book_Info.indexOf("press") + 8; // 获取 "press" 后的索引位置
-                int pressEndIndex = book_Info.indexOf(",", pressStartIndex-1); // 获取第一个逗号的位置
-                String press = book_Info.substring(pressStartIndex, pressEndIndex-1);
-                System.out.println(press);
-                book_to_modify.setPress(press);
+                product_to_modify.setTitle(title);
+                // 解析 shop
+                int pressStartIndex = product_Info.indexOf("shop") + 8; // 获取 "shop" 后的索引位置
+                int pressEndIndex = product_Info.indexOf(",", pressStartIndex-1); // 获取第一个逗号的位置
+                String shop = product_Info.substring(pressStartIndex, pressEndIndex-1);
+                System.out.println(shop);
+                product_to_modify.setShop(shop);
 
-                // 解析 publishYear
-                int publishYearStartIndex = book_Info.indexOf("publishYear") + 13; // 获取 "publishYear" 后的索引位置
-                int publishYearEndIndex = book_Info.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
-                String publishYearStr = book_Info.substring(publishYearStartIndex, publishYearEndIndex);
+                // 解析 deal
+                int publishYearStartIndex = product_Info.indexOf("deal") + 13; // 获取 "deal" 后的索引位置
+                int publishYearEndIndex = product_Info.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
+                String publishYearStr = product_Info.substring(publishYearStartIndex, publishYearEndIndex);
                 System.out.println(publishYearStr);
                 // 去除前后的引号：
                 if(publishYearStr.charAt(0)=='"'){
                     publishYearStr = publishYearStr.substring(1, publishYearStr.length()-1);
                 }
                 // 转换为int类型：
-                int publishYear = Integer.parseInt(publishYearStr);
-                System.out.println(publishYear);
-                book_to_modify.setPublishYear(publishYear);
+                String deal = publishYearStr;
+                System.out.println(deal);
+                product_to_modify.setDeal(deal);
 
-                // 解析 author
-                int authorStartIndex = book_Info.indexOf("author") + 9; // 获取 "author" 后的索引位置
-                int authorEndIndex = book_Info.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
-                String author = book_Info.substring(authorStartIndex, authorEndIndex-1);
-                System.out.println(author);
-                book_to_modify.setAuthor(author);
+                // 解析 img_url
+                int authorStartIndex = product_Info.indexOf("img_url") + 9; // 获取 "img_url" 后的索引位置
+                int authorEndIndex = product_Info.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
+                String img_url = product_Info.substring(authorStartIndex, authorEndIndex-1);
+                System.out.println(img_url);
+                product_to_modify.setImg(img_url);
 
                 // 解析 price
-                int priceStartIndex = book_Info.indexOf("price") + 7; // 获取 "price" 后的索引位置
-                int priceEndIndex = book_Info.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-                String priceStr = book_Info.substring(priceStartIndex, priceEndIndex);
+                int priceStartIndex = product_Info.indexOf("price") + 7; // 获取 "price" 后的索引位置
+                int priceEndIndex = product_Info.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
+                String priceStr = product_Info.substring(priceStartIndex, priceEndIndex);
                 System.out.println(priceStr);
                 // 去除前后的引号：
                 if(priceStr.charAt(0)=='"'){
@@ -1177,26 +1179,26 @@ public class Main {
                 // 转换为int类型：
                 double price = Double.parseDouble(priceStr);
                 System.out.println(price);
-                book_to_modify.setPrice(price);
+                product_to_modify.setPrice(price);
 
-                // 解析 stock
-                int stockStartIndex = book_Info.indexOf("stock") + 7; // 获取 "stock" 后的索引位置
-                int stockEndIndex = book_Info.indexOf(",", stockStartIndex); // 获取最后一个字符前的索引位置（排除末尾的 `}`）
-                String stockStr = book_Info.substring(stockStartIndex, stockEndIndex);
+                // 解析 source
+                int stockStartIndex = product_Info.indexOf("source") + 7; // 获取 "source" 后的索引位置
+                int stockEndIndex = product_Info.indexOf(",", stockStartIndex); // 获取最后一个字符前的索引位置（排除末尾的 `}`）
+                String stockStr = product_Info.substring(stockStartIndex, stockEndIndex);
                 System.out.println(stockStr);
                 // 去除前后的引号：
                 if(stockStr.charAt(0)=='"'){
                     stockStr = stockStr.substring(1, stockStr.length()-1);
                 }
                 // 转换为int类型：
-                int stock = Integer.parseInt(stockStr);
-                System.out.println(stock);
-                book_to_modify.setStock(stock);
+                int source = Integer.parseInt(stockStr);
+                System.out.println(source);
+                product_to_modify.setSource(source);
 
                 //解析stock_inc
-                int stock_incStartIndex = book_Info.indexOf("inc") + 5; // 获取 "stock_inc" 后的索引位置
-                int stock_incEndIndex = book_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                String stock_incStr = book_Info.substring(stock_incStartIndex, stock_incEndIndex);
+                int stock_incStartIndex = product_Info.indexOf("inc") + 5; // 获取 "stock_inc" 后的索引位置
+                int stock_incEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+                String stock_incStr = product_Info.substring(stock_incStartIndex, stock_incEndIndex);
                 System.out.println("here1"+stock_incStr);
                 // 去除前后的引号：
                 if(stock_incStr.charAt(0)=='"'){
@@ -1205,120 +1207,120 @@ public class Main {
                 // 转换为int类型：
                 int stock_inc = Integer.parseInt(stock_incStr);
                 System.out.println("here2 "+stock_inc);
-                ApiResult inc_result =  BookHandler.library.incBookStock(book_to_modify.getBookId(), stock_inc);
+                ApiResult inc_result =  ProductHandler.library.incProductStock(product_to_modify.getProductId(), stock_inc);
                 if(inc_result.ok){
-                    System.out.println("Increase stock successfully");
-                    System.out.printf("id:%d,category:%s,title:%s,press:%s,publishYear:%d,author:%s,price:%f,stock:%d\n", book_to_modify.getBookId(), book_to_modify.getCategory(), book_to_modify.getTitle(), book_to_modify.getPress(), book_to_modify.getPublishYear(), book_to_modify.getAuthor(), book_to_modify.getPrice(), book_to_modify.getStock());
-                    ApiResult result = BookHandler.library.modifyBookInfo(book_to_modify);
+                    System.out.println("Increase source successfully");
+                    System.out.printf("id:%d,comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", product_to_modify.getProductId(), product_to_modify.getComment(), product_to_modify.getTitle(), product_to_modify.getShop(), product_to_modify.getDeal(), product_to_modify.getImg(), product_to_modify.getPrice(), product_to_modify.getSource());
+                    ApiResult result = ProductHandler.library.modifyProductInfo(product_to_modify);
                     if(result.ok){
-                        System.out.println("Update book successfully");
+                        System.out.println("Update product successfully");
                         exchange.sendResponseHeaders(200, 0);
                     }
                     else{
-                        System.out.println("Update book failed");
+                        System.out.println("Update product failed");
                         exchange.sendResponseHeaders(400, 0);
                     }
                 }
                 else{
-                    System.out.println("Increase stock failed");
+                    System.out.println("Increase source failed");
                     exchange.sendResponseHeaders(400, 0);
                 }
 
             }
-            else if (book_Info.contains("id")&&book_Info.contains("card_id")) {
+            else if (product_Info.contains("id")&&product_Info.contains("card_id")) {
                 System.out.println("2 here");
-                int idStartIndex = book_Info.indexOf("id") + 4; // 获取冒号后的索引位置
-                int idEndIndex = book_Info.indexOf(",", idStartIndex); // 获取第一个逗号的位置
-                int id = Integer.parseInt(book_Info.substring(idStartIndex, idEndIndex));
-                int card_idStartIndex = book_Info.indexOf("card_id") + 10; // 获取 "card_id" 后的索引位置
-                int card_idEndIndex = book_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                int card_id = Integer.parseInt(book_Info.substring(card_idStartIndex, card_idEndIndex-1));
+                int idStartIndex = product_Info.indexOf("id") + 4; // 获取冒号后的索引位置
+                int idEndIndex = product_Info.indexOf(",", idStartIndex); // 获取第一个逗号的位置
+                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
+                int card_idStartIndex = product_Info.indexOf("card_id") + 10; // 获取 "card_id" 后的索引位置
+                int card_idEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+                int card_id = Integer.parseInt(product_Info.substring(card_idStartIndex, card_idEndIndex-1));
                 System.out.printf("id:%d,card_id:%d\n", id, card_id);
-                Borrow book_borrow = new Borrow();
-                book_borrow.setBookId(id);
-                book_borrow.setCardId(card_id);
-                book_borrow.setBorrowTime(new Date().getTime());
-                book_borrow.setReturnTime(0);
-                ApiResult result = BookHandler.library.borrowBook(book_borrow);
+                Borrow product_borrow = new Borrow();
+                product_borrow.setProductId(id);
+                product_borrow.setCardId(card_id);
+                product_borrow.setBorrowTime(new Date().getTime());
+                product_borrow.setReturnTime(0);
+                ApiResult result = ProductHandler.library.borrowProduct(product_borrow);
                 if(result.ok){
-                    System.out.println("Borrow book successfully");
+                    System.out.println("Borrow product successfully");
                     exchange.sendResponseHeaders(200, 0);
                 }else{
-                    System.out.println("Borrow book failed");
+                    System.out.println("Borrow product failed");
                     exchange.sendResponseHeaders(400, 0);
                 }
 
             }
-            else if(book_Info.contains("id")){
-                //调用removeBook函数:
+            else if(product_Info.contains("id")){
+                //调用removeProduct函数:
                 // 解析 id
-                int idStartIndex = book_Info.indexOf(":") + 1; // 获取冒号后的索引位置
-                int idEndIndex = book_Info.indexOf("}", idStartIndex); // 获取第一个逗号的位置
-                int id = Integer.parseInt(book_Info.substring(idStartIndex, idEndIndex));
-                //调用removeBook函数
+                int idStartIndex = product_Info.indexOf(":") + 1; // 获取冒号后的索引位置
+                int idEndIndex = product_Info.indexOf("}", idStartIndex); // 获取第一个逗号的位置
+                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
+                //调用removeProduct函数
                 System.out.printf("id:%d\n", id);
-                ApiResult result = BookHandler.library.removeBook(id);
-                System.out.println("Remove book result: " + result.toString());
+                ApiResult result = ProductHandler.library.removeProduct(id);
+                System.out.println("Remove product result: " + result.toString());
                 if (result.ok) {
                     exchange.sendResponseHeaders(200, 0);
-                    System.out.println("Remove book successfully");
+                    System.out.println("Remove product successfully");
                 } else {
                     exchange.sendResponseHeaders(400, 0);
-                    System.out.println("Remove book failed");
+                    System.out.println("Remove product failed");
                 }
             }
             else {
-                Book book_to_create = new Book();
-                book_to_create.setBookId(0);
-                //格式为：{"category":"cate","title":"bookname","press":"pub","publishYear":"2024","author":"author","price":"123","stock":"321"}
-                // 解析 category
-                int categoryStartIndex = book_Info.indexOf("category") + 11; // 获取 "category" 后的索引位置
-                int categoryEndIndex = book_Info.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
-                String category = book_Info.substring(categoryStartIndex, categoryEndIndex-1);
-                System.out.println(category);
-                book_to_create.setCategory(category);
+                Product product_to_create = new Product();
+                product_to_create.setProductId(0);
+                //格式为：{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}
+                // 解析 comment
+                int categoryStartIndex = product_Info.indexOf("comment") + 11; // 获取 "comment" 后的索引位置
+                int categoryEndIndex = product_Info.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
+                String comment = product_Info.substring(categoryStartIndex, categoryEndIndex-1);
+                System.out.println(comment);
+                product_to_create.setComment(comment);
                 // 解析 title
-                int titleStartIndex = book_Info.indexOf("title") + 8; // 获取 "title" 后的索引位置
-                int titleEndIndex = book_Info.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-                String title = book_Info.substring(titleStartIndex, titleEndIndex-1);
+                int titleStartIndex = product_Info.indexOf("title") + 8; // 获取 "title" 后的索引位置
+                int titleEndIndex = product_Info.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
+                String title = product_Info.substring(titleStartIndex, titleEndIndex-1);
                 System.out.println(title);
-                book_to_create.setTitle(title);
-                // 解析 press
-                int pressStartIndex = book_Info.indexOf("press") + 8; // 获取 "press" 后的索引位置
-                int pressEndIndex = book_Info.indexOf(",", pressStartIndex-1); // 获取第一个逗号的位置
-                String press = book_Info.substring(pressStartIndex, pressEndIndex-1);
-                System.out.println(press);
-                book_to_create.setPress(press);
-                // 解析 publishYear
-                int publishYearStartIndex = book_Info.indexOf("publishYear") + 14; // 获取 "publishYear" 后的索引位置
-                int publishYearEndIndex = book_Info.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
-                int publishYear = Integer.parseInt(book_Info.substring(publishYearStartIndex, publishYearEndIndex-1));
-                System.out.println(publishYear);
-                book_to_create.setPublishYear(publishYear);
-                // 解析 author
-                int authorStartIndex = book_Info.indexOf("author") + 9; // 获取 "author" 后的索引位置
-                int authorEndIndex = book_Info.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
-                String author = book_Info.substring(authorStartIndex, authorEndIndex-1);
-                System.out.println(author);
-                book_to_create.setAuthor(author);
+                product_to_create.setTitle(title);
+                // 解析 shop
+                int pressStartIndex = product_Info.indexOf("shop") + 8; // 获取 "shop" 后的索引位置
+                int pressEndIndex = product_Info.indexOf(",", pressStartIndex-1); // 获取第一个逗号的位置
+                String shop = product_Info.substring(pressStartIndex, pressEndIndex-1);
+                System.out.println(shop);
+                product_to_create.setShop(shop);
+                // 解析 deal
+                int publishYearStartIndex = product_Info.indexOf("deal") + 14; // 获取 "deal" 后的索引位置
+                int publishYearEndIndex = product_Info.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
+                String deal = product_Info.substring(publishYearStartIndex, publishYearEndIndex-1);
+                System.out.println(deal);
+                product_to_create.setDeal(deal);
+                // 解析 img_url
+                int authorStartIndex = product_Info.indexOf("img_url") + 9; // 获取 "img_url" 后的索引位置
+                int authorEndIndex = product_Info.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
+                String img_url = product_Info.substring(authorStartIndex, authorEndIndex-1);
+                System.out.println(img_url);
+                product_to_create.setImg(img_url);
                 // 解析 price
-                int priceStartIndex = book_Info.indexOf("price") + 8; // 获取 "price" 后的索引位置
-                int priceEndIndex = book_Info.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-                double price = Double.parseDouble(book_Info.substring(priceStartIndex, priceEndIndex-1));
+                int priceStartIndex = product_Info.indexOf("price") + 8; // 获取 "price" 后的索引位置
+                int priceEndIndex = product_Info.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
+                double price = Double.parseDouble(product_Info.substring(priceStartIndex, priceEndIndex-1));
                 System.out.println(price);
-                book_to_create.setPrice(price);
-                // 解析 stock
-                int stockStartIndex = book_Info.indexOf("stock") + 8; // 获取 "stock" 后的索引位置
-                int stockEndIndex = book_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`）
-                int stock = Integer.parseInt(book_Info.substring(stockStartIndex, stockEndIndex-1));
-                System.out.println(stock);
-                book_to_create.setStock(stock);
+                product_to_create.setPrice(price);
+                // 解析 source
+                int stockStartIndex = product_Info.indexOf("source") + 8; // 获取 "source" 后的索引位置
+                int stockEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`）
+                int source = Integer.parseInt(product_Info.substring(stockStartIndex, stockEndIndex-1));
+                System.out.println(source);
+                product_to_create.setSource(source);
 
 
-                //调用createBook函数
-                System.out.printf("category:%s,title:%s,press:%s,publishYear:%d,author:%s,price:%f,stock:%d\n", category, title, press, publishYear, author, price, stock);
-                ApiResult result = BookHandler.library.storeBook(book_to_create);
-                System.out.println("Create book result: " + result.toString());
+                //调用createProduct函数
+                System.out.printf("comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", comment, title, shop, deal, img_url, price, source);
+                ApiResult result = ProductHandler.library.storeProduct(product_to_create);
+                System.out.println("Create product result: " + result.toString());
                 exchange.sendResponseHeaders(200, 0);
             }
 
@@ -1331,7 +1333,7 @@ public class Main {
 
             // 剩下三个和GET一样
             OutputStream outputStream = exchange.getResponseBody();
-            outputStream.write("Book created successfully".getBytes());
+            outputStream.write("Product created successfully".getBytes());
             outputStream.close();
         }
 
@@ -1348,6 +1350,118 @@ public class Main {
 
             // 结束请求
             exchange.close();
+        }
+    }
+
+    static class SearchHandeler implements HttpHandler{
+        private static DatabaseConnector connector = null;
+        private static LibraryManagementSystem library = null;
+        private static ConnectConfig connectConfig = null;
+
+        static {
+            try {
+                // parse connection config from "resources/application.yaml"
+                connectConfig = new ConnectConfig();
+                // 调用libraryTest方法
+                LibraryTest();
+                // 调用prepareTest方法
+                prepareTest();
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+
+        public static void LibraryTest() {
+            try {
+                // connect to database
+                connector = new DatabaseConnector(connectConfig);
+                library = new LibraryManagementSystemImpl(connector);
+                System.out.println("Successfully init class ProductTest.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+
+        public static void prepareTest() {
+            boolean connStatus = connector.connect();
+            if (!connStatus) {
+                System.out.println("Failed to connect database.");
+                System.exit(1);
+            }
+            System.out.println("Successfully connect to database.");
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            // 允许所有域的请求，cors处理
+            Headers headers = exchange.getResponseHeaders();
+            headers.add("Access-Control-Allow-Origin", "*");
+            headers.add("Access-Control-Allow-Methods", "GET, POST");
+            headers.add("Access-Control-Allow-Headers", "Content-Type");
+            // 解析请求的方法，看GET还是POST
+            String requestMethod = exchange.getRequestMethod();
+            // 注意判断要用equals方法而不是==啊，java的小坑（
+            if (requestMethod.equals("GET")) {
+                // 处理GET
+                handleGetRequest(exchange);
+            } else if (requestMethod.equals("POST")) {
+                // 处理POST
+                handlePostRequest(exchange);
+            } else if (requestMethod.equals("OPTIONS")) {
+                // 处理OPTIONS
+                handleOptionsRequest(exchange);
+            } else {
+                // 其他请求返回405 Method Not Allowed
+                exchange.sendResponseHeaders(405, -1);
+            }
+        }
+        private static void handleGetRequest(HttpExchange exchange) throws IOException {
+            //System.out.println("GET request received");
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            // 状态码为200，也就是status ok
+            exchange.sendResponseHeaders(200, 0);
+            // 获取输出流，java用流对象来进行io操作
+            OutputStream outputStream = exchange.getResponseBody();
+            // 构建JSON响应数据，这里简化为字符串
+            URI requestedUri = exchange.getRequestURI();
+            // 解析查询字符串
+            String query = requestedUri.getRawQuery();
+            System.out.println("query to search: " + query);
+            String[] parts = query.split("=", 2);
+            String search = parts[1];
+            if (search!=null) {
+                try {
+//                    String[] args1 = new String[]{"/usr/bin/python3.9", "/app/python-scripts/crawler.py", search};//第二个为python脚本所在位置，后面的为所传参数（得是字符串类型）
+                    String[] args1 = new String[]{"C:\\Users\\23828\\anaconda3\\python.exe", "D:\\home\\BS\\BS-final-project\\src\\crawler\\crawler.py", search};//第二个为python脚本所在位置，后面的为所传参数（得是字符串类型）
+                    Process proc = Runtime.getRuntime().exec(args1);// 执行py文件
+
+                    BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream(), "gb2312"));//解决中文乱码，参数可传中文
+                    // 读取输出
+                    StringBuilder output = new StringBuilder();
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        output.append(line);
+                    }
+                    in.close();
+
+                    // 处理输出（解析JSON）
+                    String jsonOutput = output.toString();
+                    System.out.println("Received JSON: " + jsonOutput);
+                    outputStream.write(jsonOutput.getBytes());
+                    // 流一定要close！！！小心泄漏
+                    outputStream.close();
+                    proc.waitFor();
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            else{
+                System.out.println("No search content");
+                //返回数据库的内容：
+                ApiResult result = SearchHandeler.library.queryProduct(new ProductQueryConditions());
+            }
         }
     }
 }

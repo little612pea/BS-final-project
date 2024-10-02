@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import BookVue from '@/components/Book.vue'
+import ProductVue from '@/components/Product.vue'
 import CardVue from '@/components/Card.vue'
 import BorrowVue from '@/components/Borrow.vue'
 import SpaceVue from "@/components/Space.vue";
@@ -20,12 +20,12 @@ const router = createRouter({
       component: HomeVue,
       children: [ // 子路由
         {
-          path: '/home/book', // 首页默认加载的tab
-          component: BookVue,
+          path: '/home/product', // 首页默认加载的tab
+          component: ProductVue,
         },
         {
-          path: '/home/book', // 第一个tab
-          component: BookVue,
+          path: '/home/product', // 第一个tab
+          component: ProductVue,
         },
         {
           path: '/home/card', // 第二个tab

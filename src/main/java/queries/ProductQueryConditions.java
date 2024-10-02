@@ -1,6 +1,6 @@
 package queries;
 
-import entities.Book;
+import entities.Product;
 
 /**
  * Note: (1) all non-null attributes should be used as query
@@ -11,43 +11,43 @@ import entities.Book;
  *           minA=null, maxA=y ==> A <= y
  *           minA=x, maxA=null ==> A >= x
  * */
-public class BookQueryConditions {
+public class ProductQueryConditions {
     /* Note: use exact matching */
-    private String category;
+    private String comment;
     /* Note: use fuzzy matching */
     private String title;
     /* Note: use fuzzy matching */
-    private String press;
+    private String shop;
     private Integer minPublishYear;
     private Integer maxPublishYear;
     /* Note: use fuzzy matching */
-    private String author;
+    private String img_url;
     private Double minPrice;
     private Double maxPrice;
     /* sort by which field */
-    private Book.SortColumn sortBy;
+    private Product.SortColumn sortBy;
     /* default sort by PK */
     private SortOrder sortOrder;
 
-    public BookQueryConditions() {
-        this.category = null;
+    public ProductQueryConditions() {
+        this.comment = null;
         this.title = null;
-        this.press = null;
+        this.shop = null;
         this.minPublishYear = null;
         this.maxPublishYear = null;
-        this.author = null;
+        this.img_url = null;
         this.minPrice = null;
         this.maxPrice = null;
-        sortBy = Book.SortColumn.BOOK_ID;
+        sortBy = Product.SortColumn.PRODUCT_ID;
         sortOrder = SortOrder.ASC;
     }
 
-    public String getCategory() {
-        return category;
+    public String getComment() {
+        return comment;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     public String getTitle() {
@@ -58,12 +58,12 @@ public class BookQueryConditions {
         this.title = title;
     }
 
-    public String getPress() {
-        return press;
+    public String getShop() {
+        return shop;
     }
 
-    public void setPress(String press) {
-        this.press = press;
+    public void setShop(String shop) {
+        this.shop = shop;
     }
 
     public Integer getMinPublishYear() {
@@ -82,12 +82,12 @@ public class BookQueryConditions {
         this.maxPublishYear = maxPublishYear;
     }
 
-    public String getAuthor() {
-        return author;
+    public String getImg() {
+        return img_url;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setImg(String img_url) {
+        this.img_url = img_url;
     }
 
     public Double getMinPrice() {
@@ -106,11 +106,11 @@ public class BookQueryConditions {
         this.maxPrice = maxPrice;
     }
 
-    public Book.SortColumn getSortBy() {
+    public Product.SortColumn getSortBy() {
         return sortBy;
     }
 
-    public void setSortBy(Book.SortColumn sortBy) {
+    public void setSortBy(Product.SortColumn sortBy) {
         this.sortBy = sortBy;
     }
 

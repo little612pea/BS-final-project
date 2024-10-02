@@ -1,15 +1,15 @@
 package queries;
 
-import entities.Book;
+import entities.Product;
 
 import java.util.List;
 
-public class BookQueryResults {
+public class ProductQueryResults {
 
     private int count;   /* number of results, equal to results.size() */
-    private List<Book> results;
+    private List<Product> results;
 
-    public BookQueryResults(List<Book> results) {
+    public ProductQueryResults(List<Product> results) {
         this.count = results.size();
         this.results = results;
     }
@@ -22,11 +22,11 @@ public class BookQueryResults {
         this.count = count;
     }
 
-    public List<Book> getResults() {
+    public List<Product> getResults() {
         return results;
     }
 
-    public void setResults(List<Book> results) {
+    public void setResults(List<Product> results) {
         this.results = results;
     }
 }

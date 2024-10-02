@@ -2,10 +2,10 @@ package utils;
 
 public interface DBInitializer {
 
-    String sqlDropBook();
+    String sqlDropProduct();
     String sqlDropCard();
     String sqlDropBorrow();
-    String sqlCreateBook();
+    String sqlCreateProduct();
     String sqlCreateCard();
     String sqlCreateBorrow();
 

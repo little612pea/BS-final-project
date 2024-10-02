@@ -45,7 +45,7 @@ export default {
           ElMessage.success("登录成功") // 显示消息提醒
           this.$store.dispatch('setUserName', this.form.username);
           this.$router.push({
-            path: '/home/book',
+            path: '/home/product',
           })
         }).catch(err=>{
           console.log("登录失败，用户名或密码错误" + err);

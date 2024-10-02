@@ -214,7 +214,7 @@ export default {
               })
               .catch(error=>{
                 ElMessage.error("借书证删除失败,可能有未归还的书")
-                this.borrowBookVisible = false
+                this.borrowProductVisible = false
                 this.QueryBorrows()
               })
         },

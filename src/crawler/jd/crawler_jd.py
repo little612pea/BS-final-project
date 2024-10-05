@@ -1,6 +1,8 @@
 import json
 import time
 from time import sleep
+
+import jieba
 from selenium import webdriver
 import pymysql
 from selenium import webdriver
@@ -36,7 +38,7 @@ cursor = conn.cursor()
 options = webdriver.ChromeOptions()
 # 关闭自动测试状态显示 // 会导致浏览器报：请停用开发者模式
 options.add_experimental_option("excludeSwitches", ['enable-automation'])
-
+options.add_argument('--headless=new')
 # 把chrome设为selenium驱动的浏览器代理；
 driver = webdriver.Chrome(options=options)
 # 窗口最大化
@@ -155,7 +157,13 @@ def get_goods():
         # 定位商品标题
         title = item.find('.p-name.p-name-type-2').text()
         # 定位价格
-        price = item.find('.p-price').text()
+        price_string = item.find('.p-price').text()
+
+        # 去除非数字字符（包括货币符号和空格）
+        clean_price_string = re.sub(r'[^\d.]', '', price_string)
+
+        # 将清洗后的字符串转换为 float
+        price = float(clean_price_string)
         # 定位评论数
         comment = item.find('.p-commit').text()
         # 定位店名
@@ -164,6 +172,7 @@ def get_goods():
         img = item.find('.p-img').html()
         pattern = r'data-lazy-img="(.*?)" source-data-lazy-img=""'
         img_url = re.findall(pattern, img)
+        href = re.findall(r'href="(.*?)"', img)
         if img_url[0] == "done":
             pattern = r'source-data-lazy-img="" src="(.*?)"/>'
             img_url = re.findall(pattern, img)
@@ -174,7 +183,7 @@ def get_goods():
             'comment': comment,
             'shop': shop,
             'img_url': img_url,
-            'source': 1
+            'source': href,
         }
 
         product_list.append(product)
@@ -196,7 +205,10 @@ def save_to_mysql(result):
 def get_data(keyword):
     pageStart = 1
     pageAll = 5
-    search_goods(pageStart, pageAll, keyword)
+    segmented = jieba.cut(keyword)
+    segmented_list = list(segmented)
+    combined_string = ' '.join(segmented_list)  # 这里用空格作为分隔符
+    search_goods(pageStart, pageAll, combined_string)
     # cursor.close()
     # conn.close()
     return json.dumps(product_list, ensure_ascii=False)

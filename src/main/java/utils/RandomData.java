@@ -24,53 +24,11 @@ public final class RandomData {
             "Management", "Civil Engineering", "Architecture", "Environmental Science",
             "English Language", "General Education", "Ideological & Political");
 
-    public static Product randomProduct() {
-        return new Product(randomCategory(), randomTitle(), randomPress(), randomPublishYear(),
-                randomAuthor(), randomPrice(), randomStock());
-    }
-
-    public static String randomCategory() {
-        return categories.get(new Random().nextInt(categories.size()));
-    }
-
-    public static String randomPress() {
-        return shop.get(new Random().nextInt(shop.size()));
-    }
-
-    public static String randomAuthor() {
-        return authors.get(new Random().nextInt(authors.size()));
-    }
-
-    public static String randomTitle() {
-        return titles.get(new Random().nextInt(titles.size()));
-    }
-
-    public static String randomPublishYear() {
-        return String.valueOf(RandomUtils.nextInt(1990, 2023));
-    }
-
-    public static double randomPrice() {
-        double v = RandomUtils.nextDouble(0.1, 233.3);
-        return Double.parseDouble(String.format("%.2f", v));
-    }
-
-    public static int randomStock() {
-        return RandomUtils.nextInt(1, 100);
-    }
-
-    public static String randomDepartment() {
-        return departments.get(new Random().nextInt(departments.size()));
-    }
-
     private static final Calendar calStart = Calendar.getInstance();
     private static final Calendar calEnd = Calendar.getInstance();
     static {
         calStart.set(Calendar.YEAR, 2017);
         calEnd.set(Calendar.YEAR, 2023);
-    }
-
-    public static long randomTime() {
-        return RandomUtils.nextLong(calStart.getTimeInMillis(), calEnd.getTimeInMillis());
     }
 
 }

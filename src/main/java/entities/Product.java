@@ -12,17 +12,17 @@ public final class Product {
     private String deal; //->DEAL
     private String img_url; //->IMG_URL
     private double price; //->PRICE
-    private int source; //->SOURCE 0 淘宝 1 京东
+    private String source; //->SOURCE 0 淘宝 1 京东
 
     public enum SortColumn {
-        PRODUCT_ID("productId", Comparator.comparingInt(Product::getProductId)),
+        ProductId("productId", Comparator.comparingInt(Product::getProductId)),
         CATEGORY("comment", Comparator.comparing(Product::getComment)),
         TITLE("title", Comparator.comparing(Product::getTitle)),
         PRESS("shop", Comparator.comparing(Product::getShop)),
         PUBLISH_YEAR("deal", Comparator.comparing(Product::getDeal)),
         AUTHOR("img_url", Comparator.comparing(Product::getImg)),
         PRICE("price", Comparator.comparingDouble(Product::getPrice)),
-        STOCK("source", Comparator.comparingInt(Product::getSource));
+        STOCK("source", Comparator.comparing(Product::getSource));
 
         private final String value;
         private final Comparator<Product> comparator;
@@ -49,7 +49,7 @@ public final class Product {
     }
 
     public Product(String comment, String title, String shop, String deal,
-                String img_url, double price, int source) {
+                String img_url, double price, String source) {
         this.comment = comment;
         this.title = title;
         this.shop = shop;
@@ -153,11 +153,11 @@ public final class Product {
         this.price = price;
     }
 
-    public int getSource() {
+    public String getSource() {
         return source;
     }
 
-    public void setSource(int source) {
+    public void setSource(String source) {
         this.source = source;
     }
 }

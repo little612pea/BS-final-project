@@ -484,7 +484,7 @@ public class Main {
     }
 
     private static void handleGetRequest(HttpExchange exchange) throws IOException {
-        //System.out.println("GET request received");
+        System.out.println("GET request received in card handler");
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         // 状态码为200，也就是status ok
         exchange.sendResponseHeaders(200, 0);
@@ -505,7 +505,7 @@ public class Main {
         }
         response += "]";
         // 写
-        System.out.printf("Response: %s\n", response);
+//        System.out.printf("Response: %s\n", response);
         outputStream.write(response.getBytes());
         // 流一定要close！！！小心泄漏
         outputStream.close();
@@ -888,7 +888,7 @@ public class Main {
             }
         }
         private static void handleGetRequest(HttpExchange exchange) throws IOException {
-            //System.out.println("GET request received");
+            System.out.println("GET request received");
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             // 状态码为200，也就是status ok
             exchange.sendResponseHeaders(200, 0);
@@ -906,7 +906,7 @@ public class Main {
                 System.out.println(resProductList.getCount());
                 for (int i = 0; i < resProductList.getCount(); i++) {
                     Product o2 = resProductList.getResults().get(i);
-                    response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": "+o2.getDeal()+ ", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": "+o2.getSource()+"}";
+                    response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": \""+o2.getDeal()+ "\", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": \""+o2.getSource()+"\"}";
                     if (i != resProductList.getCount() - 1)
                         response += ",";
                     //{\"id\": " + o2.getProductId() + ", \"name\": \"" + o2.getName() + "\", \"department\": \"" + o2.getDepar response.append("{\"id\": ").append(o2.getProductId()).append(", \"name\": \"").append(o2.getName()).append("\", \"department\": \"").append(o2.getDepartment()).append("\", \"type\": \"").append(o2.getType()).append("\"}");
@@ -1000,7 +1000,7 @@ public class Main {
                 System.out.println(resProductList.getCount());
                 for (int i = 0; i < resProductList.getCount(); i++) {
                     Product o2 = resProductList.getResults().get(i);
-                    response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": "+o2.getDeal()+ ", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": "+o2.getSource()+"}";
+                    response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": \""+o2.getDeal()+ "\", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": "+o2.getSource()+"}";
                     if (i != resProductList.getCount() - 1)
                         response += ",";
                 }
@@ -1009,9 +1009,13 @@ public class Main {
             }
             // 写
             System.out.printf("Response: %s\n", response);
-            outputStream.write(response.getBytes());
-            // 流一定要close！！！小心泄漏
-            outputStream.close();
+            try {
+                outputStream.write(response.getBytes());
+                // 流一定要close！！！小心泄漏
+                outputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         private static void handlePostRequest(HttpExchange exchange) throws IOException {
@@ -1094,7 +1098,7 @@ public class Main {
                     }
                     int source = Integer.parseInt(productInfo1.substring(stockStartIndex, stockEndIndex));
                     System.out.println(source);
-                    product_to_create.setSource(source);
+//                    product_to_create.setSource(source);
                     //调用createProduct函数
                     System.out.printf("comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", comment, title, shop, deal, img_url, price, source);
                     //ApiResult result = ProductHandler.library.storeProduct(product_to_create);
@@ -1193,7 +1197,7 @@ public class Main {
                 // 转换为int类型：
                 int source = Integer.parseInt(stockStr);
                 System.out.println(source);
-                product_to_modify.setSource(source);
+//                product_to_modify.setSource(source);
 
                 //解析stock_inc
                 int stock_incStartIndex = product_Info.indexOf("inc") + 5; // 获取 "stock_inc" 后的索引位置
@@ -1314,7 +1318,7 @@ public class Main {
                 int stockEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`）
                 int source = Integer.parseInt(product_Info.substring(stockStartIndex, stockEndIndex-1));
                 System.out.println(source);
-                product_to_create.setSource(source);
+//                product_to_create.setSource(source);
 
 
                 //调用createProduct函数

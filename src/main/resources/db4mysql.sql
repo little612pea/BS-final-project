@@ -19,8 +19,8 @@ create table product
     shop       varchar(255) not null,
     deal       varchar(255) null,
     img_url    varchar(500) null,
-    price      varchar(255) not null,
-    source     varchar(50) null
+    price      double not null,
+    source     varchar(255) not null
 )engine=innodb charset=utf8mb4;
 
 create table `card` (

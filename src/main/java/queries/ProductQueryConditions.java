@@ -38,7 +38,7 @@ public class ProductQueryConditions {
         this.img_url = null;
         this.minPrice = null;
         this.maxPrice = null;
-        sortBy = Product.SortColumn.PRODUCT_ID;
+        sortBy = Product.SortColumn.ProductId;
         sortOrder = SortOrder.ASC;
     }
 

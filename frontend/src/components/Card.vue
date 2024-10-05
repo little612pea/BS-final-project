@@ -220,6 +220,7 @@ export default {
         },
         QueryCards() {
             this.cards = [] // 清空列表
+          console.log("QueryProducts")
             let response = axios.get('/home/card') // 向/card发出GET请求
                 .then(response => {
                     let cards = response.data // 接收响应负载
@@ -230,6 +231,7 @@ export default {
         }
     },
     mounted() { // 当页面被渲染时
+
         this.QueryCards() // 查询借书证
     }
 }

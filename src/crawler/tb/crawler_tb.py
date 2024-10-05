@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import jieba
 import pymysql
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -30,7 +31,8 @@ cursor = conn.cursor()
 options = webdriver.ChromeOptions()
 # 关闭自动测试状态显示 // 会导致浏览器报：请停用开发者模式
 options.add_experimental_option("excludeSwitches", ['enable-automation'])
-
+options.add_argument('--headless=new')
+options.add_argument("--window-position=-2400,-2400")
 # 把chrome设为selenium驱动的浏览器代理；
 driver = webdriver.Chrome(options=options)
 # 窗口最大化
@@ -140,6 +142,8 @@ def get_goods():
     for item in items:
         # 定位商品标题
         title = item.find('.title--F6pvp_RZ').text()
+        href = item.attr('href')  # 直接访问 href 属性
+        # print(href)
         # print(title)
         # 定位价格
         price_int = item.find('.priceInt--j47mhkXk').text()
@@ -150,13 +154,8 @@ def get_goods():
             price = 0.0
         # 定位交易量
         deal = item.find('.realSales--nOat6VGM').text()
-        # 定位所在地信息
-        location = item.find('.procity--QyzqB59i').text()
         # 定位店名
         shop = item.find('.shopNameText--APRH8pWb').text()
-        # 定位包邮的位置
-        postText = item.find('.subIconWrapper--KnkgUW0R').text()
-        result = 1 if "包邮" in postText else 0
         # 定位img_url
         img_url = item.find('.mainPic--CuSfUC4j').attr('src')
         if img_url == None:
@@ -168,7 +167,7 @@ def get_goods():
             'deal': deal,
             'shop': shop,
             'img_url': img_url,
-            'source': 0
+            'source': href
         }
         product_list.append(product)
         # print(product)
@@ -177,7 +176,7 @@ def get_goods():
 
 # 在 save_to_mysql 函数中保存数据到 MySQL
 def save_to_mysql(result):
-    sql = "INSERT INTO {} (title, price, deal, shop, img_url,source) VALUES (%s, %s, %s, %s, %s, %s)".format(
+    sql = "INSERT INTO {} (title, price, deal, shop, img_url, source) VALUES (%s, %s, %s, %s, %s, %s)".format(
         MYSQL_TABLE)
     # print("sql语句为:  "  + sql)
     cursor.execute(sql, (
@@ -191,8 +190,11 @@ def save_to_mysql(result):
 def get_data(keyword):
     pageStart = 1
     pageAll = 5
-    search_goods(pageStart, pageAll, keyword)
-    print(product_list)
+    # 使用jieba进行分词
+    segmented = jieba.cut(keyword)
+    segmented_list = list(segmented)
+    combined_string = ' '.join(segmented_list)  # 这里用空格作为分隔符
+    search_goods(pageStart, pageAll, combined_string)
     cursor.close()
     conn.close()
     return json.dumps(product_list, ensure_ascii=False)

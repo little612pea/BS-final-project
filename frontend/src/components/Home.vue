@@ -10,7 +10,7 @@
             <span style="font-size: large; font-family: 'Microsoft YaHei';
                 color: black; font-weight: bold;">商品比价网站</span>
             <span style="margin-left: 40px; color:rgba(0, 0, 0, 0.2)">《BS体系软件设计》大程</span>
-            <span class="user" style="text-align: right; display: inline-block;">        你好：{{this.$store.state.username}}</span>
+            <span class="user" style="margin-left:80px; display: inline-block;">        你好：{{this.$store.state.username}}</span>
           </div>
         </el-header>
         <el-container style="width: 100%; ">

@@ -87,7 +87,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             statement.setString(4, product.getDeal());
             statement.setString(5, product.getImg());
             statement.setDouble(6,product.getPrice());
-            statement.setInt(7,product.getSource());
+            statement.setString(7,product.getSource());
             // 执行插入
             if(isProductDuplicate(product)){
                 System.out.println("duplicate products");
@@ -302,7 +302,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                 newproduct.setDeal(rs.getString("deal"));
                 newproduct.setImg(rs.getString("img_url"));
                 newproduct.setPrice(rs.getDouble("price"));
-                newproduct.setSource(rs.getInt("source"));
+                newproduct.setSource(rs.getString("source"));
                 ResultList.add(newproduct);
 
             }
@@ -317,6 +317,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             commit(connector.getConn());
             return new ApiResult(true, "success ", Results);
         } catch (SQLException e) {
+            System.out.println("Error occurred while querying products: " + e.getMessage());
             return new ApiResult(false,"error!");
         }
     }
@@ -556,7 +557,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                         newproduct.setDeal(rs2.getString("deal"));
                         newproduct.setImg(rs2.getString("img_url"));
                         newproduct.setPrice(rs2.getDouble("price"));
-                        newproduct.setSource(rs2.getInt("source") - 1);
+                        newproduct.setSource(rs2.getString("source"));
                         BorrowHistories.Item newitem = new BorrowHistories.Item(cardId, newproduct, newborrow);
                         resultlist.add(newitem);
                     }

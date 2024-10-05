@@ -8,7 +8,6 @@
                 style=" width: 15vw;min-width: 150px; margin-left: 30px; margin-right: 30px; float: right;" clearable />
       <!--在button文字的前面加上icon-->
       <!-- 标题和搜索框 -->
-      <div style="display: inline-flex">
         <el-input
             v-model="keyword"
             :disabled="disabled"
@@ -23,14 +22,13 @@
             @click="search">
           搜索
         </el-button>
-      </div>
       <el-button @click="multi_cond_ProductInfo.title = '',multi_cond_ProductInfo.img_url = '',multi_cond_ProductInfo.comment = '',  multi_cond_ProductInfo.shop = '', multi_cond_ProductInfo.deal = '',  multi_cond_ProductInfo.price = '', multi_cond_ProductInfo.source = '',
       multiCondProductVisible = true" style="float: right;" type="primary":icon="Search">
         多条件查询
       </el-button>
-<!--      <el-button @click="uploadFileInfo = '', uploadFileInfoVisible = true" style="float: right;margin-right: 10px" type="primary":icon="UploadFilled">-->
-<!--        商品批量入库-->
-<!--      </el-button>-->
+      <el-button @click="QueryProducts" style="float: right;margin-right: 10px" type="primary":icon="UploadFilled">
+        显示历史记录
+      </el-button>
     </div>
 
 
@@ -40,33 +38,40 @@
 
       <!-- 商品卡片 -->
       <div class="productBox" v-for="product in products" v-show="product.title.includes(toSearch)" :key="product.id">
-        <div @click="detailedProductInfo.id = product.id; detailedProductVisible = true">
+        <div @click="detailedProductInfo.title = product.title; detailedProductInfo.shop = product.shop; detailedProductInfo.price=product.price; detailedProductInfo.img_url=product.img_url; detailedProductInfo.source=product.source; detailedProductVisible = true">
         <!-- 卡片标题 -->
-          <div style="font-size: 15px; font-weight: bold;">{{product.title}}</div>
+          <div style="margin: 0px; padding: 0px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0);">
+            <!-- 图片 -->
+            <img :src="product.img_url" alt="Product Image" style="width: 100%; border-radius: 5px;"/>
 
-          <el-divider />
+            <div style="margin-top: 10px; text-align: left;">
+              <p style="font-size: 18px; font-weight: bold; color: #e74c3c; margin: 5px 0;">
+                <span style="color: #333; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; -webkit-line-clamp: 3;">
+                  <span v-if="product.source.includes('jd')" style="color: #e74c3c;font-weight: bold;">京东 </span>
+                  <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝 </span>
+                  {{ product.title }}
+                </span>
+              </p>
 
-          <!-- 卡片内容 -->
-          <div style="margin: 10px; text-align: start; font-size: 16px;">
-            <img :src="product.img_url" alt="Product Image" style="max-width: 100%; border-radius: 5px;"/>
-            <p style="padding: 2.5px;"><span style="font-weight: bold;">店铺：</span>{{ product.shop }}</p>
-            <p style="padding: 2.5px;"><span style="font-weight: bold;">价格：</span>{{ product.price }}</p>
-            <p style="padding: 2.5px;">
-              <span style="font-weight: bold;">来源：</span>
-              <span v-if="product.source === 1">京东</span>
-              <span v-else-if="product.source === 0">淘宝</span>
-            </p>
+              <!-- 价格和销量放在同一行 -->
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <p style="font-size: 24px; font-weight: bold; color: #e74c3c; margin: 5px;">
+                  ￥{{ product.price }}
+                </p>
+                <p style="font-size: 16px; color: #666; margin: 5px 0;">
+                  <span v-if="product.source.includes('jd')">{{ product.comment }}</span>
+                  <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')">{{ product.deal }}</span>
+                </p>
+              </div>
 
-            <!-- 当 source 为 1 时，显示 comment -->
-            <p style="padding: 2.5px;" v-if="product.source === 1">
-              <span style="font-weight: bold;">评论：</span>{{ product.comment }}
-            </p>
-
-            <!-- 当 source 为 0 时，显示 deal -->
-            <p style="padding: 2.5px;" v-if="product.source === 0">
-              <span style="font-weight: bold;">交易量：</span>{{ product.deal }}
-            </p>
+              <!-- 店铺名称 -->
+              <p style="font-size: 15px; color: #666; margin: 5px 0;">
+                <span style="font-weight: bold;">{{ product.shop }}</span>
+              </p>
+            </div>
           </div>
+
+
         </div>
       </div>
 
@@ -103,15 +108,39 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="detailedProductVisible" title="查看商品" width="30%">
-      <span>确定借阅<span style="font-weight: bold;">{{ detailedProductInfo.id }}号商品</span>吗？</span>
-      <div style="margin-left: 10px; text-align: start; font-size: 16px;">
-        <p style="padding: 2.5px;"><span style="font-weight: bold;">店铺：</span>{{ detailedProductInfo.shop }}</p>
-        <p style="padding: 2.5px;"><span style="font-weight: bold;">图片：</span>{{ detailedProductInfo.img_url }}</p>
-        <p style="padding: 2.5px;"><span style="font-weight: bold;">价格：</span>{{ detailedProductInfo.price }}</p>
-        <p style="padding: 2.5px;"><span style="font-weight: bold;">来源：</span>{{ detailedProductInfo.source }}</p>
+    <el-dialog
+        v-model="detailedProductVisible"
+        title="查看商品详细信息"
+        :width="'70%'"
+        :style="{ height: '70%' }"
+    >
+      <div style="display: flex;">
+        <!-- 左侧放置图片 -->
+        <div style="flex: 1; padding: 20px;">
+          <img :src="detailedProductInfo.img_url" alt="商品图片" style="width: 100%; height: auto; max-width: 300px;" />
+        </div>
+
+        <!-- 右侧显示其他内容 -->
+        <div style="flex: 2; padding: 20px;">
+          <p style="font-weight: bold; font-size: 18px;">   <span v-if="detailedProductInfo.source.includes('jd')" style="color: #e74c3c;font-weight: bold;">京东 </span>
+            <span v-else-if="detailedProductInfo.source.includes('tmall') || detailedProductInfo.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝 </span>
+            {{ detailedProductInfo.title }}</p>
+          <p style="margin-top: 10px;">
+            <span style="font-weight: bold;">店铺：</span>{{ detailedProductInfo.shop }}
+          </p>
+          <p style="margin-top: 10px;">
+            <span style="font-weight: bold;">价格：￥</span>{{ detailedProductInfo.price }}
+          </p>
+          <p style="margin-top: 10px;">
+            <a :href="detailedProductInfo.source" target="_blank" style="color: #3498db; text-decoration: none;">
+              跳转到原网页
+            </a>
+          </p>
+        </div>
       </div>
     </el-dialog>
+
+
 
   </el-scrollbar>
 </template>
@@ -148,7 +177,7 @@ export default {
       multiCondProductVisible:false,
       detailedProductVisible:false,
       detailedProductInfo:{
-        productID:'',
+        id:'',
         comment:'',
         title:'',
         shop:'',
@@ -233,10 +262,13 @@ export default {
           })
     },
     QueryProducts() {
+      ElMessage.success("刷新成功")
       this.products = [] // 清空列表
-      let response = axios.get('/home/product') // 向/product发出GET请求
+      axios.get('/home/product') // 向/product发出GET请求
           .then(response => {
-            let products = response.data // 接收响应负载
+            let cleanedData = response.data.replace(/[\n\r\t]/g, '');
+            let products = JSON.parse(cleanedData);
+            console.log(products)
             products.forEach(product => { // 对于每个商品
               this.products.push(product) // 将其加入到列表中
             })
@@ -259,6 +291,7 @@ export default {
   margin-top: 40px;
   margin-left: 27.5px;
   margin-right: 10px;
+  border-radius: 8px;
   padding: 7.5px;
   padding-right: 10px;
   padding-top: 15px;

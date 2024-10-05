@@ -64,15 +64,6 @@
             >个人中心</span
             >
           </div>
-          <!-- <div
-            class="person_body_list"
-            v-for="(item, index) in person_body_list"
-            :key="index"
-          >
-            <router-link :to="{ name: item.name, params: item.params }">{{
-              item.label
-            }}</router-link>
-          </div> -->
           <el-menu
               router
               active-text-color="#00c3ff"
@@ -93,25 +84,11 @@
               <span slot="title">历史记录</span>
             </el-menu-item>
             <el-menu-item
-                index="mycollect"
-                :route="{ name: 'mycollect', params: $route.params.id }"
-            >
-              <i class="el-icon-document"></i>
-              <span slot="title">收藏</span>
-            </el-menu-item>
-            <el-menu-item
                 index="myfan"
                 :route="{ name: 'myfan', params: $route.params.id }"
             >
               <i class="el-icon-tableware"></i>
               <span slot="title">推送设置</span>
-            </el-menu-item>
-            <el-menu-item
-                index="myfollow"
-                :route="{ name: 'myfollow', params: $route.params.id }"
-            >
-              <i class="el-icon-circle-plus-outline"></i>
-              <span slot="title">关注</span>
             </el-menu-item>
           </el-menu>
         </el-card>

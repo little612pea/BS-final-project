@@ -78,15 +78,41 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
 
     @Override
     public ApiResult storeProduct(Product product) {
+        String countSQL = "SELECT COUNT(*) FROM product";
+        String deleteSQL = "DELETE FROM product ORDER BY productId ASC LIMIT 500"; // 假设 id 是自增主键
+        System.out.printf("comment:%s,title:%s,shop:%s,deal:%s,img_url:%s,price:%f,source:%s\n", product.getComment(), product.getTitle(), product.getShop(),product.getDeal(), product.getImg(), product.getPrice(), product.getSource());
         String insertSQL = "INSERT INTO product VALUES (null, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement statement = this.connector.getConn().prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement statement = this.connector.getConn().prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement countStatement = this.connector.getConn().prepareStatement(countSQL);
+             PreparedStatement deleteStatement = this.connector.getConn().prepareStatement(deleteSQL);) {
             // 设置参数
-            statement.setString(1, product.getComment());
+            ResultSet countResult = countStatement.executeQuery();
+            int recordCount = 0;
+            if (countResult.next()) {
+                recordCount = countResult.getInt(1);
+            }
+            System.out.println(recordCount);
+            if (recordCount > 2000) {
+                deleteStatement.executeUpdate();
+            }
+            if (product.getComment() != null) {
+                statement.setString(1, product.getComment());
+            } else {
+                statement.setNull(1, Types.VARCHAR);  // 设置为 null
+            }
+
             statement.setString(2, product.getTitle());
+
             statement.setString(3, product.getShop());
-            statement.setString(4, product.getDeal());
+
+            if (product.getDeal() != null) {
+                statement.setString(4, product.getDeal());
+            } else {
+                statement.setNull(4, Types.VARCHAR);  // 设置为 null
+            }
+
             statement.setString(5, product.getImg());
-            statement.setDouble(6,product.getPrice());
+            statement.setDouble(6, product.getPrice());
             statement.setString(7,product.getSource());
             // 执行插入
             if(isProductDuplicate(product)){
@@ -117,7 +143,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             }
         }
         catch(Exception e){
-            System.out.println("Unimplemented Function！");
+            System.out.println("exception:"+e);
             return new ApiResult(false, "Unimplemented Function");
         }
 
@@ -176,16 +202,16 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     @Override
     public ApiResult storeProduct(List<Product> products) {
         Connection conn = this.connector.getConn();
-        int flag=0;
-        for(int i=0;i<products.size();i++){
-            for(int j=i+1;j<products.size();j++){
-                if (products.get(i).equals(products.get(j))) {
-                    flag = 1;
-                    break;
-                }
-            }
-        }
-        if(flag==1) return new ApiResult(false, "fail");
+//        int flag=0;
+//        for(int i=0;i<products.size();i++){
+//            for(int j=i+1;j<products.size();j++){
+//                if (products.get(i).equals(products.get(j))) {
+//                    flag = 1;
+//                    break;
+//                }
+//            }
+//        }
+//        if(flag==1) return new ApiResult(false, "fail");
         try {
             // 开始事务
             conn.setAutoCommit(false);

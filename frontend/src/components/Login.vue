@@ -43,7 +43,7 @@ export default {
           }
         }).then(res=>{
           ElMessage.success("登录成功") // 显示消息提醒
-          this.$store.dispatch('setUserName', this.form.username);
+          this.$store.dispatch('login', this.form.username);
           this.$router.push({
             path: '/home/product',
           })

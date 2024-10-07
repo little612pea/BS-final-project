@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 import jieba
-import pymysql
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -10,34 +9,19 @@ from pyquery import PyQuery as pq
 import time
 import random
 import json
+import sys
 
 product_list = []
-MYSQL_TABLE = 'product'
-# MySQL 数据库连接配置
-db_config = {
-    # 'host': 'host.docker.internal',
-    'host': 'localhost',
-    'port': 3306,
-    'user': 'root',
-    'password': 'qwerty',
-    'database': 'library',
-    'charset': 'utf8mb4',
-}
-
-# 创建 MySQL 连接对象
-conn = pymysql.connect(**db_config)
-cursor = conn.cursor()
 
 options = webdriver.ChromeOptions()
 # 关闭自动测试状态显示 // 会导致浏览器报：请停用开发者模式
 options.add_experimental_option("excludeSwitches", ['enable-automation'])
-options.add_argument('--headless=new')
+# options.add_argument('--headless=new')
 options.add_argument("--window-position=-2400,-2400")
 # 把chrome设为selenium驱动的浏览器代理；
 driver = webdriver.Chrome(options=options)
 # 窗口最大化
 driver.maximize_window()
-
 # wait是Selenium中的一个等待类，用于在特定条件满足之前等待一定的时间(这里是15秒)。
 # 如果一直到等待时间都没满足则会捕获TimeoutException异常
 wait = WebDriverWait(driver, 15)
@@ -63,7 +47,7 @@ def search_goods(start_page, total_pages, keyword):
             EC.element_to_be_clickable((By.CSS_SELECTOR, '#J_TSearchForm > div.search-button > button')))
         input.send_keys(keyword)
         submit.click()
-        # 搜索商品后会再强制停止10秒，如有滑块请手动操作
+        # # 搜索商品后会再强制停止10秒，如有滑块请手动操作
         time.sleep(10)
 
         # 如果不是从第一页开始爬取，就滑动到底部输入页面然后跳转
@@ -125,7 +109,7 @@ def random_sleep(timeS, timeE):
 # 获取每一页的商品信息；
 def get_goods():
     # 获取商品前固定等待2-4秒
-    random_sleep(2, 4)
+    random_sleep(1, 3)
     sroll_cnt = 0
     while True:
         if sroll_cnt < 5:
@@ -143,8 +127,6 @@ def get_goods():
         # 定位商品标题
         title = item.find('.title--F6pvp_RZ').text()
         href = item.attr('href')  # 直接访问 href 属性
-        # print(href)
-        # print(title)
         # 定位价格
         price_int = item.find('.priceInt--j47mhkXk').text()
         price_float = item.find('.priceFloat--zPTqSZZJ').text()
@@ -170,35 +152,22 @@ def get_goods():
             'source': href
         }
         product_list.append(product)
-        # print(product)
-        save_to_mysql(product)
-
-
-# 在 save_to_mysql 函数中保存数据到 MySQL
-def save_to_mysql(result):
-    sql = "INSERT INTO {} (title, price, deal, shop, img_url, source) VALUES (%s, %s, %s, %s, %s, %s)".format(
-        MYSQL_TABLE)
-    # print("sql语句为:  "  + sql)
-    cursor.execute(sql, (
-    result['title'], result['price'], result['deal'],  result['shop'],
-    result['img_url'], result['source']))
-    conn.commit()
-    # print('存储到MySQL成功: ', result)
 
 
 # 在 main 函数开始时连接数据库
 def get_data(keyword):
     pageStart = 1
-    pageAll = 5
+    pageAll = 2
     # 使用jieba进行分词
     segmented = jieba.cut(keyword)
     segmented_list = list(segmented)
     combined_string = ' '.join(segmented_list)  # 这里用空格作为分隔符
     search_goods(pageStart, pageAll, combined_string)
-    cursor.close()
-    conn.close()
-    return json.dumps(product_list, ensure_ascii=False)
+    print(json.dumps(product_list, ensure_ascii=False))
 
 
-if __name__ == '__main__':
-    get_data("手机")
+if len(sys.argv) != 2:
+    print("Usage: python crawler_tb.py <query>")
+    sys.exit(1)
+query = sys.argv[1]
+get_data(query)

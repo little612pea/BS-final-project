@@ -17,17 +17,20 @@
             clearable></el-input>
         <el-button
             :disabled="disabled"
-            icon="el-icon-search"
+            icon="Search"
             type="primary"
             @click="search">
           搜索
         </el-button>
-      <el-button @click="multi_cond_ProductInfo.title = '',multi_cond_ProductInfo.img_url = '',multi_cond_ProductInfo.comment = '',  multi_cond_ProductInfo.shop = '', multi_cond_ProductInfo.deal = '',  multi_cond_ProductInfo.price = '', multi_cond_ProductInfo.source = '',
-      multiCondProductVisible = true" style="float: right;" type="primary":icon="Search">
-        多条件查询
-      </el-button>
+<!--      <el-button @click="multi_cond_ProductInfo.title = '',multi_cond_ProductInfo.img_url = '',multi_cond_ProductInfo.comment = '',  multi_cond_ProductInfo.shop = '', multi_cond_ProductInfo.deal = '',  multi_cond_ProductInfo.price = '', multi_cond_ProductInfo.source = '',-->
+<!--      multiCondProductVisible = true" style="float: right;" type="primary":icon="Search">-->
+<!--        多条件查询-->
+<!--      </el-button>-->
       <el-button @click="QueryProducts" style="float: right;margin-right: 10px" type="primary":icon="UploadFilled">
         显示历史记录
+      </el-button>
+      <el-button @click="StoreSearchResults" style="float: right;margin-right: 10px" type="primary":icon="UploadFilled">
+        保存搜索结果
       </el-button>
     </div>
 
@@ -47,7 +50,7 @@
             <div style="margin-top: 10px; text-align: left;">
               <p style="font-size: 18px; font-weight: bold; color: #e74c3c; margin: 5px 0;">
                 <span style="color: #333; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; -webkit-line-clamp: 3;">
-                  <span v-if="product.source.includes('jd')" style="color: #e74c3c;font-weight: bold;">京东 </span>
+                  <span v-if="product.source.includes('jd')||product.source.includes('360')" style="color: #e74c3c;font-weight: bold;">京东 </span>
                   <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝 </span>
                   {{ product.title }}
                 </span>
@@ -200,6 +203,7 @@ export default {
   },
   methods: {
     search() {
+      this.products = [] // 清空列表
       this.$emit("search", ['search', this.keyword])
       axios.get('/search', {
         params: {
@@ -207,8 +211,7 @@ export default {
         }
       }).then(res => {
         ElMessage.success("搜索执行成功") // 显示消息提醒
-        this.products = [] // 清空列表
-        let products = res.data // 接收响应负载
+        let products = res.data; // 接收响应负载
         console.log(products)
         products.forEach(product => { // 对于每个商品
           this.products.push(product) // 将其加入到列表中
@@ -262,17 +265,27 @@ export default {
           })
     },
     QueryProducts() {
-      ElMessage.success("刷新成功")
       this.products = [] // 清空列表
       axios.get('/home/product') // 向/product发出GET请求
           .then(response => {
-            let cleanedData = response.data.replace(/[\n\r\t]/g, '');
-            let products = JSON.parse(cleanedData);
-            console.log(products)
+            // let cleanedData = response.data.replace(/[\n\r\t]/g, '');
+            let products = response.data;
+            console.log(products);
             products.forEach(product => { // 对于每个商品
               this.products.push(product) // 将其加入到列表中
             })
           })
+    },
+    StoreSearchResults(){
+      axios.post('/home/product/', {
+        params: {
+          product: this.products
+        }
+      }).then(res => {
+        ElMessage.success("保存搜索结果成功")
+      }).catch(err => {
+        ElMessage.error("保存搜索结果失败")
+      })
     },
     mounted() { // 当页面被渲染时
       this.QueryProducts() // 查询商品

@@ -7,7 +7,7 @@ browser = webdriver.Chrome()
 browser.maximize_window()
 browser.implicitly_wait(2)
 
-url = "https://www.taobao.com"
+url = "https://www.jd.com"
 browser.get(url)
 
 # # 登陆前
@@ -39,6 +39,6 @@ sleep(30)
 # 获取 cookies
 cookies = browser.get_cookies()
 # 将 cookies 写入文件
-with open("cookies_tb.txt", "w")  as f:
+with open("cookies_jd.txt", "w")  as f:
     json.dump(cookies, f)
 browser.quit()

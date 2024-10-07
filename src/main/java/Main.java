@@ -25,7 +25,8 @@ import javax.mail.internet.MimeMessage;
 import java.util.Properties;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 public class Main {
 
     private static final Logger log = Logger.getLogger(Main.class.getName());
@@ -720,8 +721,8 @@ public class Main {
             System.out.println(resBorrowHistories.getCount());
             for (int i = 0; i < resBorrowHistories.getCount(); i++) {
                 BorrowHistories.Item o2 = borrow_items.get(i);
-                String iso_borrowTime = new java.text.SimpleDateFormat("yyyy.MM.dd HH:mm").format(new java.util.Date(o2.getBorrowTime()));
-                String iso_returnTime = new java.text.SimpleDateFormat("yyyy.MM.dd HH:mm").format(new java.util.Date(o2.getReturnTime()));
+                String iso_borrowTime = new SimpleDateFormat("yyyy.MM.dd HH:mm").format(new Date(o2.getBorrowTime()));
+                String iso_returnTime = new SimpleDateFormat("yyyy.MM.dd HH:mm").format(new Date(o2.getReturnTime()));
                 if (o2.getReturnTime() == 0)
                     iso_returnTime = "product unreturned";
                 response += "{\"cardID\": " + o2.getCardId() + ", \"productId\": " + o2.getProductId() + ", \"borrowTime\": \"" + iso_borrowTime + "\", \"unix_borrowTime\": " + o2.getBorrowTime() + ", \"returnTime\": \"" + iso_returnTime + "\", \"unix_returnTime\": " + o2.getReturnTime() + "}";
@@ -1038,295 +1039,286 @@ public class Main {
             // 1. 解析请求体，获取卡片信息
             String product_Info = requestBodyBuilder.toString();
             //如果product_Info有id字段，调用updateProduct函数，否则调用createProduct函数：
-            if(product_Info.contains("text/plain")){
-                System.out.println("3 here");
-                // 解析 product_Info：格式为 text/plain:[{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"},{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}]
-                int productInfoStartIndex = product_Info.indexOf("[{") + 1; // 获取第一个 `[` 的索引位置
-                int productInfoEndIndex = product_Info.indexOf("]"); // 获取最后一个 `]` 的索引位置
-                String productInfo = product_Info.substring(productInfoStartIndex, productInfoEndIndex);
-                System.out.println(productInfo);
-                String[] productInfos = productInfo.split("},");
-                //计算productInfos的长度，一共有多少本书：
-                int product_num = productInfos.length;
-                System.out.println(product_num);
-                int product_count = 0;
-                List<Product> new_products = new ArrayList<>();
-                for (String productInfo1 : productInfos) {
-                    Product product_to_create = new Product();
-                    //格式为：{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}
+            // 解析 product_Info：格式为 text/plain:[{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"},{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}]
+            int productInfoStartIndex = product_Info.indexOf("[{") + 1; // 获取第一个 `[` 的索引位置
+            int productInfoEndIndex = product_Info.indexOf("]"); // 获取最后一个 `]` 的索引位置
+            String productInfo = product_Info.substring(productInfoStartIndex, productInfoEndIndex);
+            String[] productInfos = productInfo.split("},");
+            //计算productInfos的长度，一共有多少本书：
+            int product_num = productInfos.length;
+            int product_count = 0;
+            List<Product> new_products = new ArrayList<>();
+            for (String productInfo1 : productInfos) {
+                Product product_to_create = new Product();
+                //格式为：{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}
+                // 解析 title,如果包含comment/deal字段分别处理
+                int titleStartIndex = productInfo1.indexOf("title") + 8; // 获取 "title" 后的索引位置
+                int titleEndIndex = productInfo1.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
+                String title = productInfo1.substring(titleStartIndex, titleEndIndex - 1);
+                product_to_create.setTitle(title);
+                System.out.println(title);
+                // 解析 shop
+                int pressStartIndex = productInfo1.indexOf("shop") + 7; // 获取 "shop" 后的索引位置
+                int pressEndIndex = productInfo1.indexOf(",", pressStartIndex - 1); // 获取第一个逗号的位置
+                String shop = productInfo1.substring(pressStartIndex, pressEndIndex - 1);
+                product_to_create.setShop(shop);
+                System.out.println(shop);
+                // 解析 img_url
+                int authorStartIndex = productInfo1.indexOf("img_url") + 10; // 获取 "img_url" 后的索引位置
+                int authorEndIndex = productInfo1.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
+                String img_url = productInfo1.substring(authorStartIndex, authorEndIndex-1 );
+                product_to_create.setImg(img_url);
+                System.out.println(img_url);
+                // 解析 price
+                int priceStartIndex = productInfo1.indexOf("price") + 7; // 获取 "price" 后的索引位置
+                int priceEndIndex = productInfo1.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
+                double price = Double.parseDouble(productInfo1.substring(priceStartIndex, priceEndIndex));
+                product_to_create.setPrice(price);
+                System.out.println(price);
+                // 解析 source
+                int stockStartIndex = productInfo1.indexOf("source") + 9; // 获取 "source" 后的索引位置
+                int stockEndIndex = productInfo1.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+                if(product_count==product_num-1){
+                    stockEndIndex = productInfo1.length() - 2;
+                }
+                String source = productInfo1.substring(stockStartIndex, stockEndIndex);
+                product_to_create.setSource(source);
+                System.out.println(source);
+                if(productInfo1.contains("comment")){
                     // 解析 comment
-                    int categoryStartIndex = productInfo1.indexOf("comment") + 11; // 获取 "comment" 后的索引位置
+                    int categoryStartIndex = productInfo1.indexOf("comment") + 10; // 获取 "comment" 后的索引位置
                     int categoryEndIndex = productInfo1.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
                     String comment = productInfo1.substring(categoryStartIndex, categoryEndIndex - 1);
-                    System.out.println(comment);
                     product_to_create.setComment(comment);
-                    // 解析 title
-                    int titleStartIndex = productInfo1.indexOf("title") + 8; // 获取 "title" 后的索引位置
-                    int titleEndIndex = productInfo1.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-                    String title = productInfo1.substring(titleStartIndex, titleEndIndex - 1);
-                    System.out.println(title);
-                    product_to_create.setTitle(title);
-                    // 解析 shop
-                    int pressStartIndex = productInfo1.indexOf("shop") + 8; // 获取 "shop" 后的索引位置
-                    int pressEndIndex = productInfo1.indexOf(",", pressStartIndex - 1); // 获取第一个逗号的位置
-                    String shop = productInfo1.substring(pressStartIndex, pressEndIndex - 1);
-                    System.out.println(shop);
-                    product_to_create.setShop(shop);
+                    System.out.printf("comment:%s,title:%s,shop:%s,img_url:%s,price:%f,source:%s\n", comment, title, shop, img_url, price, source);
+                }
+                else if (productInfo1.contains("deal")){
                     // 解析 deal
-                    int publishYearStartIndex = productInfo1.indexOf("deal") + 14; // 获取 "deal" 后的索引位置
+                    int publishYearStartIndex = productInfo1.indexOf("deal") + 7; // 获取 "deal" 后的索引位置
                     int publishYearEndIndex = productInfo1.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
                     String deal = productInfo1.substring(publishYearStartIndex, publishYearEndIndex - 1);
-                    System.out.println(deal);
                     product_to_create.setDeal(deal);
-                    // 解析 img_url
-                    int authorStartIndex = productInfo1.indexOf("img_url") + 9; // 获取 "img_url" 后的索引位置
-                    int authorEndIndex = productInfo1.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
-                    String img_url = productInfo1.substring(authorStartIndex, authorEndIndex - 1);
-                    System.out.println(img_url);
-                    product_to_create.setImg(img_url);
-                    // 解析 price
-                    int priceStartIndex = productInfo1.indexOf("price") + 8; // 获取 "price" 后的索引位置
-                    int priceEndIndex = productInfo1.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-                    double price = Double.parseDouble(productInfo1.substring(priceStartIndex, priceEndIndex - 1));
-                    System.out.println(price);
-                    product_to_create.setPrice(price);
-                    // 解析 source
-                    int stockStartIndex = productInfo1.indexOf("source") + 8; // 获取 "source" 后的索引位置
-                    int stockEndIndex = productInfo1.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                    if(product_count==product_num-1){
-                        stockEndIndex = productInfo1.length() - 2;
-                    }
-                    int source = Integer.parseInt(productInfo1.substring(stockStartIndex, stockEndIndex));
-                    System.out.println(source);
-//                    product_to_create.setSource(source);
-                    //调用createProduct函数
-                    System.out.printf("comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", comment, title, shop, deal, img_url, price, source);
-                    //ApiResult result = ProductHandler.library.storeProduct(product_to_create);
-                    //System.out.println("Create product result: " + result.toString());
-                    new_products.add(product_to_create);
-                    product_count++;
+                    System.out.printf("title:%s,shop:%s,deal:%s,img_url:%s,price:%f,source:%s\n", title, shop, deal, img_url, price, source);
                 }
-                //打印new_products:
-                System.out.println("new_products:");
-                for (Product new_product : new_products) {
-                    System.out.printf("comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", new_product.getComment(), new_product.getTitle(), new_product.getShop(), new_product.getDeal(), new_product.getImg(), new_product.getPrice(), new_product.getSource());
-                }
-                ApiResult result = ProductHandler.library.storeProduct(new_products);
-                System.out.println("store multi product result: " + result.toString());
-                if (result.ok) {
-                    exchange.sendResponseHeaders(200, 0);
-                    System.out.println("Store all products successfully");
-                } else {
-                    exchange.sendResponseHeaders(400, 0);
-                    System.out.println("Store product failed");
-                }
+                new_products.add(product_to_create);
+                product_count++;
             }
-            else if(product_Info.contains("id") && product_Info.contains("comment")&& product_Info.contains("inc")){
-
-                //调用modifyProductInfo函数
-                System.out.println("1");
-                Product product_to_modify = new Product();
-                int idStartIndex = product_Info.indexOf("id") + 4; // 获取冒号后的索引位置
-                int idEndIndex = product_Info.indexOf(",", idStartIndex); // 获取第一个逗号的位置
-                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
-                System.out.println(id);
-                product_to_modify.setProductId(id);
-                // 解析 comment
-                int categoryStartIndex = product_Info.indexOf("comment") + 11; // 获取 "comment" 后的索引位置
-                int categoryEndIndex = product_Info.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
-                String comment = product_Info.substring(categoryStartIndex, categoryEndIndex-1);
-                System.out.println(comment);
-                product_to_modify.setComment(comment);
-                // 解析 title
-                int titleStartIndex = product_Info.indexOf("title") + 8; // 获取 "title" 后的索引位置
-                int titleEndIndex = product_Info.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-                String title = product_Info.substring(titleStartIndex, titleEndIndex-1);
-                System.out.println(title);
-                product_to_modify.setTitle(title);
-                // 解析 shop
-                int pressStartIndex = product_Info.indexOf("shop") + 8; // 获取 "shop" 后的索引位置
-                int pressEndIndex = product_Info.indexOf(",", pressStartIndex-1); // 获取第一个逗号的位置
-                String shop = product_Info.substring(pressStartIndex, pressEndIndex-1);
-                System.out.println(shop);
-                product_to_modify.setShop(shop);
-
-                // 解析 deal
-                int publishYearStartIndex = product_Info.indexOf("deal") + 13; // 获取 "deal" 后的索引位置
-                int publishYearEndIndex = product_Info.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
-                String publishYearStr = product_Info.substring(publishYearStartIndex, publishYearEndIndex);
-                System.out.println(publishYearStr);
-                // 去除前后的引号：
-                if(publishYearStr.charAt(0)=='"'){
-                    publishYearStr = publishYearStr.substring(1, publishYearStr.length()-1);
-                }
-                // 转换为int类型：
-                String deal = publishYearStr;
-                System.out.println(deal);
-                product_to_modify.setDeal(deal);
-
-                // 解析 img_url
-                int authorStartIndex = product_Info.indexOf("img_url") + 9; // 获取 "img_url" 后的索引位置
-                int authorEndIndex = product_Info.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
-                String img_url = product_Info.substring(authorStartIndex, authorEndIndex-1);
-                System.out.println(img_url);
-                product_to_modify.setImg(img_url);
-
-                // 解析 price
-                int priceStartIndex = product_Info.indexOf("price") + 7; // 获取 "price" 后的索引位置
-                int priceEndIndex = product_Info.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-                String priceStr = product_Info.substring(priceStartIndex, priceEndIndex);
-                System.out.println(priceStr);
-                // 去除前后的引号：
-                if(priceStr.charAt(0)=='"'){
-                    priceStr = priceStr.substring(1, priceStr.length()-1);
-                }
-                // 转换为int类型：
-                double price = Double.parseDouble(priceStr);
-                System.out.println(price);
-                product_to_modify.setPrice(price);
-
-                // 解析 source
-                int stockStartIndex = product_Info.indexOf("source") + 7; // 获取 "source" 后的索引位置
-                int stockEndIndex = product_Info.indexOf(",", stockStartIndex); // 获取最后一个字符前的索引位置（排除末尾的 `}`）
-                String stockStr = product_Info.substring(stockStartIndex, stockEndIndex);
-                System.out.println(stockStr);
-                // 去除前后的引号：
-                if(stockStr.charAt(0)=='"'){
-                    stockStr = stockStr.substring(1, stockStr.length()-1);
-                }
-                // 转换为int类型：
-                int source = Integer.parseInt(stockStr);
-                System.out.println(source);
-//                product_to_modify.setSource(source);
-
-                //解析stock_inc
-                int stock_incStartIndex = product_Info.indexOf("inc") + 5; // 获取 "stock_inc" 后的索引位置
-                int stock_incEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                String stock_incStr = product_Info.substring(stock_incStartIndex, stock_incEndIndex);
-                System.out.println("here1"+stock_incStr);
-                // 去除前后的引号：
-                if(stock_incStr.charAt(0)=='"'){
-                    stock_incStr = stock_incStr.substring(1, stock_incStr.length()-1);
-                }
-                // 转换为int类型：
-                int stock_inc = Integer.parseInt(stock_incStr);
-                System.out.println("here2 "+stock_inc);
-                ApiResult inc_result =  ProductHandler.library.incProductStock(product_to_modify.getProductId(), stock_inc);
-                if(inc_result.ok){
-                    System.out.println("Increase source successfully");
-                    System.out.printf("id:%d,comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", product_to_modify.getProductId(), product_to_modify.getComment(), product_to_modify.getTitle(), product_to_modify.getShop(), product_to_modify.getDeal(), product_to_modify.getImg(), product_to_modify.getPrice(), product_to_modify.getSource());
-                    ApiResult result = ProductHandler.library.modifyProductInfo(product_to_modify);
-                    if(result.ok){
-                        System.out.println("Update product successfully");
-                        exchange.sendResponseHeaders(200, 0);
-                    }
-                    else{
-                        System.out.println("Update product failed");
-                        exchange.sendResponseHeaders(400, 0);
-                    }
-                }
-                else{
-                    System.out.println("Increase source failed");
-                    exchange.sendResponseHeaders(400, 0);
-                }
-
-            }
-            else if (product_Info.contains("id")&&product_Info.contains("card_id")) {
-                System.out.println("2 here");
-                int idStartIndex = product_Info.indexOf("id") + 4; // 获取冒号后的索引位置
-                int idEndIndex = product_Info.indexOf(",", idStartIndex); // 获取第一个逗号的位置
-                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
-                int card_idStartIndex = product_Info.indexOf("card_id") + 10; // 获取 "card_id" 后的索引位置
-                int card_idEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                int card_id = Integer.parseInt(product_Info.substring(card_idStartIndex, card_idEndIndex-1));
-                System.out.printf("id:%d,card_id:%d\n", id, card_id);
-                Borrow product_borrow = new Borrow();
-                product_borrow.setProductId(id);
-                product_borrow.setCardId(card_id);
-                product_borrow.setBorrowTime(new Date().getTime());
-                product_borrow.setReturnTime(0);
-                ApiResult result = ProductHandler.library.borrowProduct(product_borrow);
-                if(result.ok){
-                    System.out.println("Borrow product successfully");
-                    exchange.sendResponseHeaders(200, 0);
-                }else{
-                    System.out.println("Borrow product failed");
-                    exchange.sendResponseHeaders(400, 0);
-                }
-
-            }
-            else if(product_Info.contains("id")){
-                //调用removeProduct函数:
-                // 解析 id
-                int idStartIndex = product_Info.indexOf(":") + 1; // 获取冒号后的索引位置
-                int idEndIndex = product_Info.indexOf("}", idStartIndex); // 获取第一个逗号的位置
-                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
-                //调用removeProduct函数
-                System.out.printf("id:%d\n", id);
-                ApiResult result = ProductHandler.library.removeProduct(id);
-                System.out.println("Remove product result: " + result.toString());
-                if (result.ok) {
-                    exchange.sendResponseHeaders(200, 0);
-                    System.out.println("Remove product successfully");
-                } else {
-                    exchange.sendResponseHeaders(400, 0);
-                    System.out.println("Remove product failed");
-                }
-            }
-            else {
-                Product product_to_create = new Product();
-                product_to_create.setProductId(0);
-                //格式为：{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}
-                // 解析 comment
-                int categoryStartIndex = product_Info.indexOf("comment") + 11; // 获取 "comment" 后的索引位置
-                int categoryEndIndex = product_Info.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
-                String comment = product_Info.substring(categoryStartIndex, categoryEndIndex-1);
-                System.out.println(comment);
-                product_to_create.setComment(comment);
-                // 解析 title
-                int titleStartIndex = product_Info.indexOf("title") + 8; // 获取 "title" 后的索引位置
-                int titleEndIndex = product_Info.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-                String title = product_Info.substring(titleStartIndex, titleEndIndex-1);
-                System.out.println(title);
-                product_to_create.setTitle(title);
-                // 解析 shop
-                int pressStartIndex = product_Info.indexOf("shop") + 8; // 获取 "shop" 后的索引位置
-                int pressEndIndex = product_Info.indexOf(",", pressStartIndex-1); // 获取第一个逗号的位置
-                String shop = product_Info.substring(pressStartIndex, pressEndIndex-1);
-                System.out.println(shop);
-                product_to_create.setShop(shop);
-                // 解析 deal
-                int publishYearStartIndex = product_Info.indexOf("deal") + 14; // 获取 "deal" 后的索引位置
-                int publishYearEndIndex = product_Info.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
-                String deal = product_Info.substring(publishYearStartIndex, publishYearEndIndex-1);
-                System.out.println(deal);
-                product_to_create.setDeal(deal);
-                // 解析 img_url
-                int authorStartIndex = product_Info.indexOf("img_url") + 9; // 获取 "img_url" 后的索引位置
-                int authorEndIndex = product_Info.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
-                String img_url = product_Info.substring(authorStartIndex, authorEndIndex-1);
-                System.out.println(img_url);
-                product_to_create.setImg(img_url);
-                // 解析 price
-                int priceStartIndex = product_Info.indexOf("price") + 8; // 获取 "price" 后的索引位置
-                int priceEndIndex = product_Info.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-                double price = Double.parseDouble(product_Info.substring(priceStartIndex, priceEndIndex-1));
-                System.out.println(price);
-                product_to_create.setPrice(price);
-                // 解析 source
-                int stockStartIndex = product_Info.indexOf("source") + 8; // 获取 "source" 后的索引位置
-                int stockEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`）
-                int source = Integer.parseInt(product_Info.substring(stockStartIndex, stockEndIndex-1));
-                System.out.println(source);
-//                product_to_create.setSource(source);
-
-
-                //调用createProduct函数
-                System.out.printf("comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", comment, title, shop, deal, img_url, price, source);
-                ApiResult result = ProductHandler.library.storeProduct(product_to_create);
-                System.out.println("Create product result: " + result.toString());
+            ApiResult result = ProductHandler.library.storeProduct(new_products);
+            System.out.println("store multi product result: " + result.toString());
+            if (result.ok) {
                 exchange.sendResponseHeaders(200, 0);
+                System.out.println("Store all products successfully");
+            } else {
+                exchange.sendResponseHeaders(400, 0);
+                System.out.println("Store product failed");
             }
+
+//            else if(product_Info.contains("id") && product_Info.contains("comment")&& product_Info.contains("inc")){
+//
+//                //调用modifyProductInfo函数
+//                System.out.println("1");
+//                Product product_to_modify = new Product();
+//                int idStartIndex = product_Info.indexOf("id") + 4; // 获取冒号后的索引位置
+//                int idEndIndex = product_Info.indexOf(",", idStartIndex); // 获取第一个逗号的位置
+//                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
+//                System.out.println(id);
+//                product_to_modify.setProductId(id);
+//                // 解析 comment
+//                int categoryStartIndex = product_Info.indexOf("comment") + 11; // 获取 "comment" 后的索引位置
+//                int categoryEndIndex = product_Info.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
+//                String comment = product_Info.substring(categoryStartIndex, categoryEndIndex-1);
+//                System.out.println(comment);
+//                product_to_modify.setComment(comment);
+//                // 解析 title
+//                int titleStartIndex = product_Info.indexOf("title") + 8; // 获取 "title" 后的索引位置
+//                int titleEndIndex = product_Info.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
+//                String title = product_Info.substring(titleStartIndex, titleEndIndex-1);
+//                System.out.println(title);
+//                product_to_modify.setTitle(title);
+//                // 解析 shop
+//                int pressStartIndex = product_Info.indexOf("shop") + 8; // 获取 "shop" 后的索引位置
+//                int pressEndIndex = product_Info.indexOf(",", pressStartIndex-1); // 获取第一个逗号的位置
+//                String shop = product_Info.substring(pressStartIndex, pressEndIndex-1);
+//                System.out.println(shop);
+//                product_to_modify.setShop(shop);
+//
+//                // 解析 deal
+//                int publishYearStartIndex = product_Info.indexOf("deal") + 13; // 获取 "deal" 后的索引位置
+//                int publishYearEndIndex = product_Info.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
+//                String publishYearStr = product_Info.substring(publishYearStartIndex, publishYearEndIndex);
+//                System.out.println(publishYearStr);
+//                // 去除前后的引号：
+//                if(publishYearStr.charAt(0)=='"'){
+//                    publishYearStr = publishYearStr.substring(1, publishYearStr.length()-1);
+//                }
+//                // 转换为int类型：
+//                String deal = publishYearStr;
+//                System.out.println(deal);
+//                product_to_modify.setDeal(deal);
+//
+//                // 解析 img_url
+//                int authorStartIndex = product_Info.indexOf("img_url") + 9; // 获取 "img_url" 后的索引位置
+//                int authorEndIndex = product_Info.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
+//                String img_url = product_Info.substring(authorStartIndex, authorEndIndex-1);
+//                System.out.println(img_url);
+//                product_to_modify.setImg(img_url);
+//
+//                // 解析 price
+//                int priceStartIndex = product_Info.indexOf("price") + 7; // 获取 "price" 后的索引位置
+//                int priceEndIndex = product_Info.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
+//                String priceStr = product_Info.substring(priceStartIndex, priceEndIndex);
+//                System.out.println(priceStr);
+//                // 去除前后的引号：
+//                if(priceStr.charAt(0)=='"'){
+//                    priceStr = priceStr.substring(1, priceStr.length()-1);
+//                }
+//                // 转换为int类型：
+//                double price = Double.parseDouble(priceStr);
+//                System.out.println(price);
+//                product_to_modify.setPrice(price);
+//
+//                // 解析 source
+//                int stockStartIndex = product_Info.indexOf("source") + 7; // 获取 "source" 后的索引位置
+//                int stockEndIndex = product_Info.indexOf(",", stockStartIndex); // 获取最后一个字符前的索引位置（排除末尾的 `}`）
+//                String stockStr = product_Info.substring(stockStartIndex, stockEndIndex);
+//                System.out.println(stockStr);
+//                // 去除前后的引号：
+//                if(stockStr.charAt(0)=='"'){
+//                    stockStr = stockStr.substring(1, stockStr.length()-1);
+//                }
+//                // 转换为int类型：
+//                int source = Integer.parseInt(stockStr);
+//                System.out.println(source);
+////                product_to_modify.setSource(source);
+//
+//                //解析stock_inc
+//                int stock_incStartIndex = product_Info.indexOf("inc") + 5; // 获取 "stock_inc" 后的索引位置
+//                int stock_incEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+//                String stock_incStr = product_Info.substring(stock_incStartIndex, stock_incEndIndex);
+//                System.out.println("here1"+stock_incStr);
+//                // 去除前后的引号：
+//                if(stock_incStr.charAt(0)=='"'){
+//                    stock_incStr = stock_incStr.substring(1, stock_incStr.length()-1);
+//                }
+//                // 转换为int类型：
+//                int stock_inc = Integer.parseInt(stock_incStr);
+//                System.out.println("here2 "+stock_inc);
+//                ApiResult inc_result =  ProductHandler.library.incProductStock(product_to_modify.getProductId(), stock_inc);
+//                if(inc_result.ok){
+//                    System.out.println("Increase source successfully");
+//                    System.out.printf("id:%d,comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", product_to_modify.getProductId(), product_to_modify.getComment(), product_to_modify.getTitle(), product_to_modify.getShop(), product_to_modify.getDeal(), product_to_modify.getImg(), product_to_modify.getPrice(), product_to_modify.getSource());
+//                    ApiResult result = ProductHandler.library.modifyProductInfo(product_to_modify);
+//                    if(result.ok){
+//                        System.out.println("Update product successfully");
+//                        exchange.sendResponseHeaders(200, 0);
+//                    }
+//                    else{
+//                        System.out.println("Update product failed");
+//                        exchange.sendResponseHeaders(400, 0);
+//                    }
+//                }
+//                else{
+//                    System.out.println("Increase source failed");
+//                    exchange.sendResponseHeaders(400, 0);
+//                }
+//
+//            }
+//            else if (product_Info.contains("id")&&product_Info.contains("card_id")) {
+//                System.out.println("2 here");
+//                int idStartIndex = product_Info.indexOf("id") + 4; // 获取冒号后的索引位置
+//                int idEndIndex = product_Info.indexOf(",", idStartIndex); // 获取第一个逗号的位置
+//                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
+//                int card_idStartIndex = product_Info.indexOf("card_id") + 10; // 获取 "card_id" 后的索引位置
+//                int card_idEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+//                int card_id = Integer.parseInt(product_Info.substring(card_idStartIndex, card_idEndIndex-1));
+//                System.out.printf("id:%d,card_id:%d\n", id, card_id);
+//                Borrow product_borrow = new Borrow();
+//                product_borrow.setProductId(id);
+//                product_borrow.setCardId(card_id);
+//                product_borrow.setBorrowTime(new Date().getTime());
+//                product_borrow.setReturnTime(0);
+//                ApiResult result = ProductHandler.library.borrowProduct(product_borrow);
+//                if(result.ok){
+//                    System.out.println("Borrow product successfully");
+//                    exchange.sendResponseHeaders(200, 0);
+//                }else{
+//                    System.out.println("Borrow product failed");
+//                    exchange.sendResponseHeaders(400, 0);
+//                }
+//
+//            }
+//            else if(product_Info.contains("id")){
+//                //调用removeProduct函数:
+//                // 解析 id
+//                int idStartIndex = product_Info.indexOf(":") + 1; // 获取冒号后的索引位置
+//                int idEndIndex = product_Info.indexOf("}", idStartIndex); // 获取第一个逗号的位置
+//                int id = Integer.parseInt(product_Info.substring(idStartIndex, idEndIndex));
+//                //调用removeProduct函数
+//                System.out.printf("id:%d\n", id);
+//                ApiResult result = ProductHandler.library.removeProduct(id);
+//                System.out.println("Remove product result: " + result.toString());
+//                if (result.ok) {
+//                    exchange.sendResponseHeaders(200, 0);
+//                    System.out.println("Remove product successfully");
+//                } else {
+//                    exchange.sendResponseHeaders(400, 0);
+//                    System.out.println("Remove product failed");
+//                }
+//            }
+//            else {
+//                Product product_to_create = new Product();
+//                product_to_create.setProductId(0);
+//                //格式为：{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}
+//                // 解析 comment
+//                int categoryStartIndex = product_Info.indexOf("comment") + 11; // 获取 "comment" 后的索引位置
+//                int categoryEndIndex = product_Info.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
+//                String comment = product_Info.substring(categoryStartIndex, categoryEndIndex-1);
+//                System.out.println(comment);
+//                product_to_create.setComment(comment);
+//                // 解析 title
+//                int titleStartIndex = product_Info.indexOf("title") + 8; // 获取 "title" 后的索引位置
+//                int titleEndIndex = product_Info.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
+//                String title = product_Info.substring(titleStartIndex, titleEndIndex-1);
+//                System.out.println(title);
+//                product_to_create.setTitle(title);
+//                // 解析 shop
+//                int pressStartIndex = product_Info.indexOf("shop") + 8; // 获取 "shop" 后的索引位置
+//                int pressEndIndex = product_Info.indexOf(",", pressStartIndex-1); // 获取第一个逗号的位置
+//                String shop = product_Info.substring(pressStartIndex, pressEndIndex-1);
+//                System.out.println(shop);
+//                product_to_create.setShop(shop);
+//                // 解析 deal
+//                int publishYearStartIndex = product_Info.indexOf("deal") + 14; // 获取 "deal" 后的索引位置
+//                int publishYearEndIndex = product_Info.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
+//                String deal = product_Info.substring(publishYearStartIndex, publishYearEndIndex-1);
+//                System.out.println(deal);
+//                product_to_create.setDeal(deal);
+//                // 解析 img_url
+//                int authorStartIndex = product_Info.indexOf("img_url") + 9; // 获取 "img_url" 后的索引位置
+//                int authorEndIndex = product_Info.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
+//                String img_url = product_Info.substring(authorStartIndex, authorEndIndex-1);
+//                System.out.println(img_url);
+//                product_to_create.setImg(img_url);
+//                // 解析 price
+//                int priceStartIndex = product_Info.indexOf("price") + 8; // 获取 "price" 后的索引位置
+//                int priceEndIndex = product_Info.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
+//                double price = Double.parseDouble(product_Info.substring(priceStartIndex, priceEndIndex-1));
+//                System.out.println(price);
+//                product_to_create.setPrice(price);
+//                // 解析 source
+//                int stockStartIndex = product_Info.indexOf("source") + 8; // 获取 "source" 后的索引位置
+//                int stockEndIndex = product_Info.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`）
+//                int source = Integer.parseInt(product_Info.substring(stockStartIndex, stockEndIndex-1));
+//                System.out.println(source);
+////                product_to_create.setSource(source);
+//
+//
+//                //调用createProduct函数
+//                System.out.printf("comment:%s,title:%s,shop:%s,deal:%d,img_url:%s,price:%f,source:%d\n", comment, title, shop, deal, img_url, price, source);
+//                ApiResult result = ProductHandler.library.storeProduct(product_to_create);
+//                System.out.println("Create product result: " + result.toString());
+//                exchange.sendResponseHeaders(200, 0);
+//            }
 
 
             // 2. 插入数据库
@@ -1432,34 +1424,21 @@ public class Main {
             URI requestedUri = exchange.getRequestURI();
             // 解析查询字符串
             String query = requestedUri.getRawQuery();
-            System.out.println("query to search: " + query);
+
             String[] parts = query.split("=", 2);
             String search = parts[1];
             if (search!=null) {
-                try {
-//                    String[] args1 = new String[]{"/usr/bin/python3.9", "/app/python-scripts/crawler.py", search};//第二个为python脚本所在位置，后面的为所传参数（得是字符串类型）
-                    String[] args1 = new String[]{"C:\\Users\\23828\\anaconda3\\python.exe", "D:\\home\\BS\\BS-final-project\\src\\crawler\\crawler.py", search};//第二个为python脚本所在位置，后面的为所传参数（得是字符串类型）
-                    Process proc = Runtime.getRuntime().exec(args1);// 执行py文件
-
-                    BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream(), "gb2312"));//解决中文乱码，参数可传中文
-                    // 读取输出
-                    StringBuilder output = new StringBuilder();
-                    String line;
-                    while ((line = in.readLine()) != null) {
-                        output.append(line);
-                    }
-                    in.close();
-
-                    // 处理输出（解析JSON）
-                    String jsonOutput = output.toString();
-                    System.out.println("Received JSON: " + jsonOutput);
-                    outputStream.write(jsonOutput.getBytes());
-                    // 流一定要close！！！小心泄漏
-                    outputStream.close();
-                    proc.waitFor();
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+                String jd = getSearchResult("\"C:\\\\Users\\\\23828\\\\anaconda3\\\\python.exe\"","D:\\home\\BS\\BS-final-project\\src\\crawler\\jd\\crawler_jd.py",search);
+                String tb = getSearchResult("\"C:\\\\Users\\\\23828\\\\anaconda3\\\\python.exe\"","D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\crawler_tb.py",search);
+                System.out.println(tb);
+                System.out.println(jd);
+            // 定义正则表达式模式
+                String combinedJson = tb + jd;
+                String result = combinedJson.replace("}][{", "},{");
+                System.out.println(result);
+                outputStream.write(result.getBytes());
+                // 流一定要close！！！小心泄漏
+                outputStream.close();
             }
             else{
                 System.out.println("No search content");
@@ -1467,5 +1446,58 @@ public class Main {
                 ApiResult result = SearchHandeler.library.queryProduct(new ProductQueryConditions());
             }
         }
+        static String getSearchResult(String python_path, String exe_path, String search) {
+            String jsonOutput = null;
+            Process proc = null;
+            try {
+                String decodedSearch = URLDecoder.decode(search, "UTF-8");
+                System.out.println("Query to search: " + decodedSearch);
+
+                // 设置执行Python脚本的命令
+                String[] args1 = new String[]{python_path, exe_path, decodedSearch};
+
+                // 执行Python脚本
+                proc = Runtime.getRuntime().exec(args1);
+
+                // 读取标准输出
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream(), "gb2312"));
+                // 读取错误输出
+                BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream(), "gb2312"));
+
+                // 使用StringBuilder来存储标准输出结果
+                StringBuilder output = new StringBuilder();
+                String line;
+                while ((line = stdInput.readLine()) != null) {
+                    output.append(line);
+                }
+                stdInput.close();
+
+                // 如果有错误信息，也将其输出，方便调试
+                StringBuilder errorOutput = new StringBuilder();
+                while ((line = stdError.readLine()) != null) {
+                    errorOutput.append(line);
+                }
+                stdError.close();
+
+//                if (errorOutput.length() > 0) {
+//                    System.out.println("Python Error Output: " + errorOutput.toString());
+//                }
+
+                // 获取标准输出内容作为JSON结果
+                jsonOutput = output.toString();
+
+                // 确保Python进程已经完成
+                proc.waitFor();
+
+            } catch (Exception e) {
+                System.out.println("Exception: " + e);
+            } finally {
+                if (proc != null) {
+                    proc.destroy(); // 确保进程被关闭
+                }
+            }
+            return jsonOutput;
+        }
+
     }
 }

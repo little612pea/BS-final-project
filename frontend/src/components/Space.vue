@@ -7,169 +7,211 @@
       <div class="PersonTop_text">
         <div class="user_text">
           <div class="user_name">
-            <span> {{ nickname }} </span>
-          </div>
-          <div class="user-v" v-if="v === 3">
-            <img src="@/assets/img/logo.png" class="user-v-img" />
-            <span class="user-v-font">优质媒体作者</span>
+            <span> {{this.$store.state.username}}</span>
           </div>
           <div class="user_qianming">
             <span> {{ design }}</span>
-          </div>
-          <div class="user_anniu">
-            <el-button
-                class="el-icon-edit"
-                v-if="this.$route.params.id === this.$store.state.id"
-                type="primary"
-                size="medium"
-                plain
-                @click="edit"
-            >编辑</el-button
-            >
-            <el-button
-                v-else
-                @click="follow"
-                type="primary"
-                size="medium"
-                icon="el-icon-check"
-                v-text="
-                isfollowid.indexOf(this.$route.params.id) > -1
-                  ? '已关注'
-                  : '关注'
-              "
-            ></el-button>
           </div>
         </div>
         <div class="user_num">
           <div style="cursor: pointer" @click="myfan">
             <div class="num_number">{{ fanCounts }}</div>
-            <span class="num_text">扫码</span>
+            <span class="num_text">信息修改</span>
           </div>
           <div style="cursor: pointer" @click="myfollow">
             <div class="num_number">{{ followCounts }}</div>
-            <span class="num_text">关注</span>
+            <span class="num_text">推送设置</span>
           </div>
           <div>
             <div class="num_number">{{ goodCounts }}</div>
-            <span class="num_text">改密</span>
+            <span class="num_text">扫一扫</span>
           </div>
         </div>
       </div>
     </div>
     <div class="person_body">
-      <div class="person_body_left">
-        <el-card class="box-card" :body-style="{ padding: '0px' }">
-          <div slot="header" class="clearfix">
-            <span class="person_body_list" style="border-bottom: none"
-            >个人中心</span
-            >
-          </div>
-          <el-menu
-              router
-              active-text-color="#00c3ff"
-              class="el-menu-vertical-demo"
-          >
-            <el-menu-item
-                index="info"
-                :route="{ name: 'info', params: $route.params.id }"
-            >
-              <i class="el-icon-user"></i>
-              <span slot="title">个人简介</span>
-            </el-menu-item>
-            <el-menu-item
-                index="myarticle"
-                :route="{ name: 'myarticle', params: $route.params.id }"
-            >
-              <i class="el-icon-edit-outline"></i>
-              <span slot="title">历史记录</span>
-            </el-menu-item>
-            <el-menu-item
-                index="myfan"
-                :route="{ name: 'myfan', params: $route.params.id }"
-            >
-              <i class="el-icon-tableware"></i>
-              <span slot="title">推送设置</span>
-            </el-menu-item>
-          </el-menu>
-        </el-card>
-      </div>
-      <div class="person_body_right">
-        <router-view></router-view>
-      </div>
+      <el-card class="info-card" :body-style="{ padding: '20px' }" style="width: 100%;height:100%">
+        <div class="card-header" style="font-size: 18px; font-weight: bold; text-align: center;">个人信息</div>
+        <div class="card-body"  style="width: 100%; height: 400px">
+          <el-row gutter={20}>
+            <el-col :span="12">
+              <div class="info-item"><strong>昵称:</strong> {{ form.nickname }}</div>
+              <div class="info-item"><strong>年龄:</strong> {{ form.age }}</div>
+              <div class="info-item"><strong>性别:</strong> {{ form.sex === 1 ? '男' : '女' }}</div>
+              <div class="info-item"><strong>邮箱:</strong> {{ form.email }}</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="info-item"><strong>用户编号:</strong> {{ form.id }}</div>
+              <div class="info-item"><strong>账号:</strong> {{ form.account }}</div>
+              <div class="info-item"><strong>地区:</strong> {{ form.area }}</div>
+              <div class="info-item"><strong>兴趣爱好:</strong> {{ form.hobby }}</div>
+            </el-col>
+          </el-row>
+        </div>
+      </el-card>
     </div>
     <personal-dia ref="dia" @flesh="reload" />
+    <el-dialog v-model="dialogVisible"
+        title="修改个人信息"
+        width="60%"
+        :before-close="handleClose">
+      <el-form :model="form" :rules="rules" ref="form" label-width="150px">
+        <div class="updateinfo">
+          <div class="left">
+            <el-form-item label="头像" prop="avatar">
+              <img style="width:150px;height:110px" :src="form.avatar"></img>
+            </el-form-item>
+            <el-form-item label="账号密码" prop="password">
+              <el-input v-model="form.password"></el-input>
+            </el-form-item>
+            <el-form-item label="昵称" prop="nickname">
+              <el-input v-model="form.nickname"></el-input>
+            </el-form-item>
+            <el-form-item label="年龄" prop="age">
+              <el-input v-model="form.age"></el-input>
+            </el-form-item>
+            <el-form-item label="性别" prop="sex">
+              <el-switch
+                  v-model="form.sex"
+                  active-color="#13ce66"
+                  inactive-color="#ff4949"
+                  active-text="男"
+                  inactive-text="女"
+                  :active-value= "1"
+                  :inactive-value= "0"
+              >
+              </el-switch>
+            </el-form-item>
+            <el-form-item label="邮箱" prop="email">
+              <el-input v-model="form.email"></el-input>
+            </el-form-item>
+
+          </div>
+          <div class="right">
+            <el-form-item label="用户编号" prop="id">
+              <el-input v-model="form.id" disabled></el-input>
+            </el-form-item>
+            <el-form-item label="账号" prop="account">
+              <el-input v-model="form.account" disabled></el-input>
+            </el-form-item>
+            <el-form-item label="地区" prop="area">
+              <el-input v-model="form.area"></el-input>
+            </el-form-item>
+            <el-form-item label="兴趣爱好" prop="hobby">
+              <el-input v-model="form.hobby"></el-input>
+            </el-form-item>
+            <el-form-item label="职业" prop="work">
+              <el-input v-model="form.work"></el-input>
+            </el-form-item>
+            <el-form-item label="个性签名" prop="design">
+              <el-input v-model="form.design"></el-input>
+            </el-form-item>
+            <el-form-item label="手机号码" prop="mobilePhoneNumber">
+              <el-input v-model="form.mobilePhoneNumber"></el-input>
+            </el-form-item>
+          </div>
+        </div>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+    <el-button @click="handleClose">取 消</el-button>
+    <el-button type="primary" @click="submit">提 交</el-button>
+  </span>
+    </el-dialog>
   </div>
+
 </template>
 
 <script>
-import PersonalDia from "./PersonalDia.vue";
+
+import {mapState} from "vuex";
 
 export default {
-  components: { PersonalDia },
   name: "Personal",
   inject: ["reload"],
   data() {
     return {
       avatar: "",
       nickname: "",
+      newUsername: '',
       v: 1,
       design: "",
       followCounts: "",
       fanCounts: "",
       goodCounts: "",
-      isfollow: true,
+      ModifyPersonalInfo:false,
       followData: {
         fanId: "",
         followId: "",
       },
-      isfollowid: [],
+      dialogVisible: false,
+      form: {
+        avatar: "",
+        password: "",
+        nickname: "",
+        age: Number,
+        email: "",
+        mobilePhoneNumber: "",
+        sex: Number,
+        id: Number,
+        account: "",
+        area: "",
+        hobby: "",
+        work: "",
+        design: "",
+      },
+      rules: {
+        nickname: [
+          { required: true, message: "昵称不能为空", trigger: "blur" },
+        ],
+        password: [
+          { required: true, message: "账号密码不能为空", trigger: "blur" },
+        ],
+      },
     };
   },
-  mounted() {
-    this.load();
-  },
-  watch: {
-    $route(to, from) {
-      if (to.path === `/personal/${this.$store.state.id}`) {
-        this.reload();
-      } else if (to.path === `/personal/${this.$route.params.id}`) {
-        this.reload();
-      }
-    },
+  computed: {
+    // 获取 Vuex 中的 username 状态
+    ...mapState(['username'])
   },
   methods: {
-    load() {
-      // userInfo(this.$route.params.id)
-      //     .then((res) => {
-      //       console.log(res);
-      //       this.avatar = res.data.avatar;
-      //       this.nickname = res.data.nickname;
-      //       this.v = res.data.v;
-      //       this.design = res.data.design;
-      //     })
-      //     .catch((err) => {
-      //       console.log(err);
-      //     });
+    open() {
+      this.dialogVisible = true;
     },
-    edit() {
-      this.$refs.dia.open();
+    submit() {
+      updateUser(this.form)
+          .then((res) => {
+            console.log(res);
+            this.dialogVisible = false;
+            this.$emit("flesh");
+          })
+          .catch((err) => {
+            console.log(err);
+          });
     },
+    handleClose() {
+      this.dialogVisible = false;
+      this.$emit("flesh");
+    },
+    myfan(){
+      this.dialogVisible=true;
+    },
+    loginUser() {
+      if (!this.username) { // 检查是否已登录（Vuex中的username是否为空）
+        // 如果未登录，跳转到 /login 页面
+        this.$router.push('/login');
+      } else {
+        alert('您已登录');
+      }
+    },
+    logoutUser() {
+      // 通过 this.$store.dispatch 调用 logout action
+      this.$store.dispatch('logout');
+    }
   },
 };
 </script>
 
 <style scoped>
-.me-video-player {
-  background-color: transparent;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  display: block;
-  position: fixed;
-  left: 0;
-  z-index: 0;
-  top: 0;
-}
 .PersonTop {
   width: 1000px;
   height: 140px;
@@ -267,7 +309,7 @@ export default {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  border-radius: 5px;
+  border-radius: 10px;
 }
 
 .person_body_left {
@@ -318,4 +360,26 @@ export default {
 .el-button {
   width: 84px;
 }
+.updateinfo {
+  height: 350px;
+  overflow: auto;
+}
+.left {
+  /* width: 330px; */
+  float: left;
+}
+.right {
+  overflow: hidden;
+}
+.info-item {
+  margin-bottom: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.card-header {
+  background-color: #f5f5f5;
+  padding: 10px;
+  border-bottom: 1px solid #e4e7ed;
+}
 </style>
+

@@ -55,3 +55,4 @@
 [超详细python实现爬取淘宝商品信息(标题、销量、地区、店铺等)_爬取淘宝商品数据-CSDN博客](https://blog.csdn.net/weixin_48266589/article/details/135303310)
 
 ![image-20241002221120435](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241002221120435.png)
+

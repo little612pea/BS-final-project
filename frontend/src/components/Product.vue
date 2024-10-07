@@ -139,6 +139,10 @@
               跳转到原网页
             </a>
           </p>
+          <div style="margin-top: 20px;">
+            <el-button type="primary" @click="showPriceHistory" style="margin-right: 10px;">查看历史价格走向图</el-button>
+            <img v-if="priceHistoryVisible" :src="priceHistoryImage" alt="历史价格走向图" style="margin-top: 10px; max-width: 100%; height: auto;" />
+          </div>
         </div>
       </div>
     </el-dialog>
@@ -152,7 +156,7 @@
 import {Delete, Edit, Search, UploadFilled} from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
-
+import history from '@/assets/img/history.png';
 export default {
   props:{
     disabled:{
@@ -173,6 +177,8 @@ export default {
   data() {
     return {
       products: [], // 商品列表
+      priceHistoryVisible: false, // 控制图像是否可见
+      priceHistoryImage: '', // 存储历史价格走向图的 URL
       Delete,
       Edit,
       Search,
@@ -289,6 +295,21 @@ export default {
     },
     mounted() { // 当页面被渲染时
       this.QueryProducts() // 查询商品
+    },
+    showPriceHistory() {
+      axios.post('/search/',{
+        params: {
+          url: this.detailedProductInfo.source
+        }
+      }).then(res => {
+        ElMessage.success("保存搜索结果成功")
+        // 这里可以通过 AJAX 请求获取历史价格走向图的 URL
+        this.priceHistoryImage = history; // 这里替换为真实的图像路径
+        this.priceHistoryVisible = true; // 显示图像
+      }).catch(err => {
+        ElMessage.error("保存搜索结果失败")
+      })
+
     }
 }
 }

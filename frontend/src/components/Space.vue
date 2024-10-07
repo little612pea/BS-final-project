@@ -1,9 +1,7 @@
 <template>
   <div>
     <div class="PersonTop">
-      <div class="PersonTop_img">
-        <img src="@/assets/img/logo.png"  />
-      </div>
+      <el-avatar :src="userAvatar" style="margin-right: 10px;width: 150px;height: 150px"></el-avatar>
       <div class="PersonTop_text">
         <div class="user_text">
           <div class="user_name">
@@ -14,7 +12,7 @@
           </div>
         </div>
         <div class="user_num">
-          <div style="cursor: pointer" @click="myfan">
+          <div style="cursor: pointer" @click="modify_info">
             <div class="num_number">{{ fanCounts }}</div>
             <span class="num_text">信息修改</span>
           </div>
@@ -32,89 +30,59 @@
     <div class="person_body">
       <el-card class="info-card" :body-style="{ padding: '20px' }" style="width: 100%;height:100%">
         <div class="card-header" style="font-size: 18px; font-weight: bold; text-align: center;">个人信息</div>
-        <div class="card-body"  style="width: 100%; height: 400px">
+        <div class="card-body"  style="width: 100%; height: 300px">
           <el-row gutter={20}>
             <el-col :span="12">
-              <div class="info-item"><strong>昵称:</strong> {{ form.nickname }}</div>
-              <div class="info-item"><strong>年龄:</strong> {{ form.age }}</div>
-              <div class="info-item"><strong>性别:</strong> {{ form.sex === 1 ? '男' : '女' }}</div>
+              <div class="info-item"><strong>用户id:</strong> {{ form.id }}</div>
+              <div class="info-item"><strong>用户名:</strong> {{ form.account }}</div>
               <div class="info-item"><strong>邮箱:</strong> {{ form.email }}</div>
-            </el-col>
-            <el-col :span="12">
-              <div class="info-item"><strong>用户编号:</strong> {{ form.id }}</div>
-              <div class="info-item"><strong>账号:</strong> {{ form.account }}</div>
-              <div class="info-item"><strong>地区:</strong> {{ form.area }}</div>
-              <div class="info-item"><strong>兴趣爱好:</strong> {{ form.hobby }}</div>
+              <div class="info-item"><strong>手机:</strong> {{ form.mobilePhoneNumber }}</div>
             </el-col>
           </el-row>
         </div>
       </el-card>
     </div>
-    <personal-dia ref="dia" @flesh="reload" />
     <el-dialog v-model="dialogVisible"
         title="修改个人信息"
         width="60%"
         :before-close="handleClose">
       <el-form :model="form" :rules="rules" ref="form" label-width="150px">
-        <div class="updateinfo">
-          <div class="left">
-            <el-form-item label="头像" prop="avatar">
-              <img style="width:150px;height:110px" :src="form.avatar"></img>
-            </el-form-item>
-            <el-form-item label="账号密码" prop="password">
-              <el-input v-model="form.password"></el-input>
-            </el-form-item>
-            <el-form-item label="昵称" prop="nickname">
-              <el-input v-model="form.nickname"></el-input>
-            </el-form-item>
-            <el-form-item label="年龄" prop="age">
-              <el-input v-model="form.age"></el-input>
-            </el-form-item>
-            <el-form-item label="性别" prop="sex">
-              <el-switch
-                  v-model="form.sex"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
-                  active-text="男"
-                  inactive-text="女"
-                  :active-value= "1"
-                  :inactive-value= "0"
-              >
-              </el-switch>
-            </el-form-item>
-            <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email"></el-input>
-            </el-form-item>
+        <el-form-item label="头像" prop="avatar">
+          <el-avatar :src="userAvatar" style="margin-right: 10px;width: 100px;height: 100px"></el-avatar>
 
-          </div>
-          <div class="right">
-            <el-form-item label="用户编号" prop="id">
-              <el-input v-model="form.id" disabled></el-input>
-            </el-form-item>
-            <el-form-item label="账号" prop="account">
-              <el-input v-model="form.account" disabled></el-input>
-            </el-form-item>
-            <el-form-item label="地区" prop="area">
-              <el-input v-model="form.area"></el-input>
-            </el-form-item>
-            <el-form-item label="兴趣爱好" prop="hobby">
-              <el-input v-model="form.hobby"></el-input>
-            </el-form-item>
-            <el-form-item label="职业" prop="work">
-              <el-input v-model="form.work"></el-input>
-            </el-form-item>
-            <el-form-item label="个性签名" prop="design">
-              <el-input v-model="form.design"></el-input>
-            </el-form-item>
-            <el-form-item label="手机号码" prop="mobilePhoneNumber">
-              <el-input v-model="form.mobilePhoneNumber"></el-input>
-            </el-form-item>
-          </div>
-        </div>
+          <!-- 上传头像功能 -->
+          <el-upload
+              class="avatar-uploader"
+              action="/upload-avatar"
+          :show-file-list="false"
+          :on-success="handleAvatarSuccess"
+          :before-upload="beforeAvatarUpload"
+          >
+          <el-button type="primary">修改头像</el-button>
+          </el-upload>
+        </el-form-item>
+        <!-- 输入原始密码 -->
+        <el-form-item label="原始密码" prop="oldPassword">
+          <el-input v-model="form.oldPassword" type="password" placeholder="请输入原始密码"></el-input>
+        </el-form-item>
+
+        <!-- 输入新密码 -->
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input v-model="form.newPassword" type="password" placeholder="请输入新密码"></el-input>
+        </el-form-item>
+
+        <!-- 确认新密码 -->
+        <el-form-item label="确认新密码" prop="confirmPassword">
+          <el-input v-model="form.confirmPassword" type="password" placeholder="请再次输入新密码"></el-input>
+        </el-form-item>
+
+        <!-- 提交按钮 -->
+        <el-form-item>
+          <el-button type="primary" @click="submitForm('form')">提交</el-button>
+          <el-button @click="resetForm('form')">重置</el-button>
+        </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-    <el-button @click="handleClose">取 消</el-button>
-    <el-button type="primary" @click="submit">提 交</el-button>
   </span>
     </el-dialog>
   </div>
@@ -122,92 +90,72 @@
 </template>
 
 <script>
-
+import defaultAvatar from '@/assets/img/logo.png';
 import {mapState} from "vuex";
-
 export default {
-  name: "Personal",
-  inject: ["reload"],
   data() {
     return {
-      avatar: "",
-      nickname: "",
-      newUsername: '',
-      v: 1,
-      design: "",
-      followCounts: "",
-      fanCounts: "",
-      goodCounts: "",
-      ModifyPersonalInfo:false,
-      followData: {
-        fanId: "",
-        followId: "",
-      },
       dialogVisible: false,
       form: {
-        avatar: "",
-        password: "",
-        nickname: "",
-        age: Number,
-        email: "",
-        mobilePhoneNumber: "",
-        sex: Number,
-        id: Number,
-        account: "",
-        area: "",
-        hobby: "",
-        work: "",
-        design: "",
+        avatar: 'https://example.com/avatar.jpg', // 头像的占位符
+        oldPassword: '',      // 原始密码
+        newPassword: '',      // 新密码
+        confirmPassword: ''   // 确认新密码
       },
+      // 表单验证规则
       rules: {
-        nickname: [
-          { required: true, message: "昵称不能为空", trigger: "blur" },
+        oldPassword: [
+          { required: true, message: '请输入原始密码', trigger: 'blur' }
         ],
-        password: [
-          { required: true, message: "账号密码不能为空", trigger: "blur" },
+        newPassword: [
+          { required: true, message: '请输入新密码', trigger: 'blur' },
+          { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
         ],
-      },
+        confirmPassword: [
+          { required: true, message: '请确认新密码', trigger: 'blur' },
+          { validator: (rule, value, callback) => {
+              if (value !== this.form.newPassword) {
+                callback(new Error('两次输入的密码不一致'));
+              } else {
+                callback();
+              }
+            }, trigger: 'blur' }
+        ]
+      }
     };
   },
   computed: {
-    // 获取 Vuex 中的 username 状态
-    ...mapState(['username'])
+    userAvatar() {
+      // 获取用户头像，如果没有则显示默认头像
+      return this.$store.state.userAvatar || defaultAvatar;
+    }
   },
   methods: {
-    open() {
-      this.dialogVisible = true;
+    // 提交表单
+    submitForm(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          // 执行提交逻辑，例如发送 API 请求
+          console.log('提交成功', this.form);
+        } else {
+          console.log('提交失败');
+          return false;
+        }
+      });
     },
-    submit() {
-      updateUser(this.form)
-          .then((res) => {
-            console.log(res);
-            this.dialogVisible = false;
-            this.$emit("flesh");
-          })
-          .catch((err) => {
-            console.log(err);
-          });
+    // 重置表单
+    resetForm(formName) {
+      this.$refs[formName].resetFields();
     },
     handleClose() {
       this.dialogVisible = false;
       this.$emit("flesh");
     },
-    myfan(){
+    modify_info(){
       this.dialogVisible=true;
     },
-    loginUser() {
-      if (!this.username) { // 检查是否已登录（Vuex中的username是否为空）
-        // 如果未登录，跳转到 /login 页面
-        this.$router.push('/login');
-      } else {
-        alert('您已登录');
-      }
-    },
-    logoutUser() {
-      // 通过 this.$store.dispatch 调用 logout action
-      this.$store.dispatch('logout');
-    }
   },
+
 };
 </script>
 

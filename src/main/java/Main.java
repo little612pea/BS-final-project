@@ -1498,6 +1498,46 @@ public class Main {
             }
             return jsonOutput;
         }
+        private static void handlePostRequest(HttpExchange exchange) throws IOException {
+            Process proc = null;
+            System.out.println("POST request received");
+            InputStream requestBody = exchange.getRequestBody();
+            // 用这个请求体（输入流）构造个buffered reader
+            BufferedReader reader = new BufferedReader(new InputStreamReader(requestBody));
+            // 拼字符串的
+            StringBuilder requestBodyBuilder = new StringBuilder();
+            // 用来读的
+            String line;
 
+            // 没读完，一直读，拼到string builder里
+            while ((line = reader.readLine()) != null) {
+                requestBodyBuilder.append(line);
+            }
+            System.out.println("Received POST request data here here~~~: " + requestBodyBuilder.toString());
+            String product_url = requestBodyBuilder.toString();
+            int titleStartIndex = product_url.indexOf("url") + 6; // 获取 "title" 后的索引位置
+            int titleEndIndex = product_url.indexOf("}", titleStartIndex); // 获取第一个逗号的位置
+            String title = product_url.substring(titleStartIndex, titleEndIndex - 1);
+            System.out.println(title);
+            try {
+                String[] args1 = new String[]{"\"C:\\\\Users\\\\23828\\\\anaconda3\\\\python.exe\"", "D:\\home\\BS\\BS-final-project\\src\\crawler\\history\\craw_history.py", title};
+                System.out.println("args1: " + args1);
+                proc = Runtime.getRuntime().exec(args1);
+                proc.waitFor();
+
+            } catch (Exception e) {
+            System.out.println("Exception: " + e);
+            } finally {
+                if (proc != null) {
+                    proc.destroy(); // 确保进程被关闭
+                }
+             }
+            exchange.getResponseHeaders().set("Content-Type", "text/plain");
+            // 响应状态码200
+            // 剩下三个和GET一样
+            OutputStream outputStream = exchange.getResponseBody();
+            outputStream.write("Product history get successfully".getBytes());
+            outputStream.close();
+        }
     }
 }

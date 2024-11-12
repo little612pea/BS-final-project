@@ -14,14 +14,15 @@ COPY src/crawler/ ./python-scripts/
 FROM openjdk:17-alpine
 WORKDIR /app
 # 安装 Python 和 pip
-RUN apk add --no-cache \
+RUN apk update && apk add --no-cache \
     gcc \
     musl-dev \
     python3-dev \
     libffi-dev \
     libxml2-dev \
     libxslt-dev \
-    openssl-dev \
+    openssl-dev
+
 # 更新并安装必要的依赖库和工具
 RUN apk update && apk upgrade && \
     apk add --no-cache \

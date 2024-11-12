@@ -14,7 +14,7 @@ import re
 options = webdriver.ChromeOptions()
 # 关闭自动测试状态显示 // 会导致浏览器报：请停用开发者模式
 options.add_experimental_option("excludeSwitches", ['enable-automation'])
-# options.add_argument('--headless=new')
+options.add_argument('--headless=new')
 options.add_argument("--window-position=-2400,-2400")
 # 把chrome设为selenium驱动的浏览器代理；
 driver = webdriver.Chrome(options=options)
@@ -29,7 +29,8 @@ wait = WebDriverWait(driver, 10)
 def search_goods(short_url):
     # print('正在搜索: ')
     try:
-        link = 'https://history.yhmai.cn/#/pages/index/info?url={}'.format(short_url)
+        # link = 'https://history.yhmai.cn/#/pages/index/info?url={}'.format(short_url)
+        link = 'http://www.hisprice.cn/his.php?hisurl={}'.format(short_url)
         driver.get(link)
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",
                                {"source": """Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"""})
@@ -38,7 +39,8 @@ def search_goods(short_url):
         # 提取所有商品的共同父元素的类选择器
         # r_node = driver.find_element_by_css_selector('#chart > div > canvas')
         r_node = driver.find_element(By.XPATH,
-                                     '/html/body/uni-app/uni-page/uni-page-wrapper/uni-page-body/uni-view/uni-view[5]')
+                                     '//*[@id="container"]')
+
         driver.execute_script("arguments[0].scrollIntoView();", r_node)
 
         # 等待页面滚动完成
@@ -69,9 +71,10 @@ def search_goods(short_url):
         image_crop = webpage.crop(box=(left, upper, right, bottom))
         image_crop.save('history.png')
         source_file = 'history.png'  # 替换为你的源文件路径
-        target_dir = '../../../frontend/src/assets/img'  # 替换为你的目标目录路径
+        target_dir = 'frontend/public'  # 替换为你的目标目录路径
         target_file = os.path.join(target_dir, os.path.basename(source_file))
         shutil.copy(source_file, target_file)
+        print('图片已保存到：', target_file)
     except TimeoutException:
         print("search_goods: error")
 

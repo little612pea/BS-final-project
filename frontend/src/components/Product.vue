@@ -1,8 +1,18 @@
 <!-- TODO: YOUR CODE HERE -->
 <template>
+
+
+
   <el-scrollbar height="100%" style="width: 100%;">
+    <!-- 动画节点 -->
+    <div id="loader-wrapper" v-show="loadingVisible">
+      <div id="loader"></div>
 
-
+      <div class="load_title">正在加载,请耐心等待
+        <br>
+        <span>爬虫运行中</span>
+      </div>
+    </div>
     <div style="margin-top: 20px; margin-left: 40px; font-size: 2em; font-weight: bold; ">商品比价
       <el-input v-model="toSearch" :prefix-icon="Search"
                 style=" width: 15vw;min-width: 150px; margin-left: 30px; margin-right: 30px; float: right;" clearable />
@@ -114,8 +124,8 @@
     <el-dialog
         v-model="detailedProductVisible"
         title="查看商品详细信息"
-        :width="'70%'"
-        :style="{ height: '70%' }"
+        :width="'80%'"
+        :style="{ height: '80%' }"
     >
       <div style="display: flex;">
         <!-- 左侧放置图片 -->
@@ -141,7 +151,7 @@
           </p>
           <div style="margin-top: 20px;">
             <el-button type="primary" @click="showPriceHistory" style="margin-right: 10px;">查看历史价格走向图</el-button>
-            <img v-if="priceHistoryVisible" :src="priceHistoryImage" alt="历史价格走向图" style="margin-top: 10px; max-width: 100%; height: auto;" />
+            <img v-show=priceHistoryVisible :src=history_img_src alt="历史价格走向图" style="margin-top: 10px; max-width: 100%; height: auto;" />
           </div>
         </div>
       </div>
@@ -156,7 +166,8 @@
 import {Delete, Edit, Search, UploadFilled} from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
-import history from '@/assets/img/history.png';
+// import { VueSimpleSpinner } from 'vue-simple-spinner';
+// import history from '@/assets/img/history.png';
 export default {
   props:{
     disabled:{
@@ -172,19 +183,19 @@ export default {
     UploadFilled() {
       return UploadFilled
     }
-
   },
   data() {
     return {
       products: [], // 商品列表
-      priceHistoryVisible: false, // 控制图像是否可见
-      priceHistoryImage: '', // 存储历史价格走向图的 URL
       Delete,
       Edit,
       Search,
       toSearch: '', // 搜索内容
       multiCondProductVisible:false,
       detailedProductVisible:false,
+      priceHistoryVisible:false,
+      loadingVisible:false,
+      history_img_src:'',
       detailedProductInfo:{
         id:'',
         comment:'',
@@ -207,15 +218,18 @@ export default {
       }
     }
   },
+
   methods: {
     search() {
       this.products = [] // 清空列表
+      this.loadingVisible = true;
       this.$emit("search", ['search', this.keyword])
       axios.get('/search', {
         params: {
           keyword: this.keyword
         }
       }).then(res => {
+        this.loadingVisible = false;
         ElMessage.success("搜索执行成功") // 显示消息提醒
         let products = res.data; // 接收响应负载
         console.log(products)
@@ -244,6 +258,7 @@ export default {
           })
     },
     Multi_condition_search(){
+      this.priceHistoryVisible = false;
       this.products = [] // 清空列表
       axios.get(
           '/home/product/',
@@ -272,6 +287,7 @@ export default {
     },
     QueryProducts() {
       this.products = [] // 清空列表
+      console.log("QueryProducts called")
       axios.get('/home/product') // 向/product发出GET请求
           .then(response => {
             // let cleanedData = response.data.replace(/[\n\r\t]/g, '');
@@ -293,24 +309,32 @@ export default {
         ElMessage.error("保存搜索结果失败")
       })
     },
-    mounted() { // 当页面被渲染时
-      this.QueryProducts() // 查询商品
-    },
+    // mounted() { // 当页面被渲染时
+    //   this.QueryProducts() // 查询商品
+    // },
     showPriceHistory() {
-      axios.post('/search/',{
+      this.history_img_src = '';
+      axios.post('/search/', {
         params: {
           url: this.detailedProductInfo.source
         }
       }).then(res => {
-        ElMessage.success("保存搜索结果成功")
-        // 这里可以通过 AJAX 请求获取历史价格走向图的 URL
-        this.priceHistoryImage = history; // 这里替换为真实的图像路径
-        this.priceHistoryVisible = true; // 显示图像
-      }).catch(err => {
-        ElMessage.error("保存搜索结果失败")
-      })
+        ElMessage.success("查找历史价格成功");
+        // this.history_img_src = history;  // 假设 res 中有历史图像地址
+        console.log(res.data)
+        // 使用 setTimeout 延迟绘制操作，等待 canvas 完全渲染
+        // this.priceHistoryVisible = true;  // 显示图像
+        this.history_img_src = '/history.png?' + new Date().getTime();
+        console.log(this.history_img_src);
+        setTimeout(() => {
+          this.priceHistoryVisible = true; // 显示图像
+        }, 500); // 延迟 500 毫秒（0.5秒）
 
-    }
+      }).catch(err => {
+        ElMessage.error("查找历史价格失败");
+        console.log(err);
+      });
+    },
 }
 }
 
@@ -342,5 +366,181 @@ export default {
   padding-top: 15px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   text-align: center;
+}
+.chromeframe {
+  margin: 0.2em 0;
+  background: #fff;
+  color: #000;
+  padding: 0.2em 0;
+}
+
+#loader-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999999;
+}
+
+#loader {
+  display: block;
+  position: relative;
+  left: 50%;
+  top: 50%;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #1890ff;
+  -webkit-animation: spin 2s linear infinite;
+  -ms-animation: spin 2s linear infinite;
+  -moz-animation: spin 2s linear infinite;
+  -o-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+  z-index: 1001;
+}
+
+#loader:before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #1890ff;
+  -webkit-animation: spin 3s linear infinite;
+  -moz-animation: spin 3s linear infinite;
+  -o-animation: spin 3s linear infinite;
+  -ms-animation: spin 3s linear infinite;
+  animation: spin 3s linear infinite;
+}
+
+#loader:after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  bottom: 15px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #1890ff;
+  -moz-animation: spin 1.5s linear infinite;
+  -o-animation: spin 1.5s linear infinite;
+  -ms-animation: spin 1.5s linear infinite;
+  -webkit-animation: spin 1.5s linear infinite;
+  animation: spin 1.5s linear infinite;
+}
+
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+#loader-wrapper .loader-section {
+  position: fixed;
+  top: 0;
+  width: 51%;
+  height: 100%;
+  background: #ffffff;
+  z-index: 1000;
+  -webkit-transform: translateX(0);
+  -ms-transform: translateX(0);
+  transform: translateX(0);
+}
+
+#loader-wrapper .loader-section.section-left {
+  left: 0;
+}
+
+#loader-wrapper .loader-section.section-right {
+  right: 0;
+}
+
+.loaded #loader-wrapper .loader-section.section-left {
+  -webkit-transform: translateX(-100%);
+  -ms-transform: translateX(-100%);
+  transform: translateX(-100%);
+  -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+}
+
+.loaded #loader-wrapper .loader-section.section-right {
+  -webkit-transform: translateX(100%);
+  -ms-transform: translateX(100%);
+  transform: translateX(100%);
+  -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+}
+
+.loaded #loader {
+  opacity: 0;
+  -webkit-transition: all 0.3s ease-out;
+  transition: all 0.3s ease-out;
+}
+
+.loaded #loader-wrapper {
+  visibility: hidden;
+  -webkit-transform: translateY(-100%);
+  -ms-transform: translateY(-100%);
+  transform: translateY(-100%);
+  -webkit-transition: all 0.3s 1s ease-out;
+  transition: all 0.3s 1s ease-out;
+}
+
+.no-js #loader-wrapper {
+  display: none;
+}
+
+.no-js h1 {
+  color: #222222;
+}
+
+#loader-wrapper .load_title {
+  font-family: 'Open Sans';
+  color: #1890ff;
+  font-size: 19px;
+  width: 100%;
+  text-align: center;
+  z-index: 9999999999999;
+  position: absolute;
+  top: 60%;
+  opacity: 1;
+  line-height: 30px;
+}
+
+#loader-wrapper .load_title span {
+  font-weight: normal;
+  font-style: italic;
+  font-size: 13px;
+  color: #1890ff;
+  opacity: 0.5;
 }
 </style>

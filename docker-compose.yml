@@ -2,10 +2,10 @@ version: '3'
 services:
   frontend:
     build:
-      context: ./
-      dockerfile: frontend/dist/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "88:80"
+      - "8080:80"
     networks:
       - app-network
 
@@ -15,6 +15,16 @@ services:
       dockerfile: src/Dockerfile
     ports:
       - "8000:8000"
+    networks:
+      - app-network
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: qwerty
+      MYSQL_DATABASE: bs-final-project
+    ports:
+      - "3306:3306"
     networks:
       - app-network
 

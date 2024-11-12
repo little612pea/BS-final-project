@@ -5,6 +5,7 @@
     "express": "^4.21.0",
     "node-cache": "^5.1.2",
     "nodemailer": "^6.9.15",
+    "vue-simple-spinner": "^1.2.10",
     "vuex": "^3.6.2"
   }
 }

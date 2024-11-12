@@ -1,4 +1,3 @@
-drop table if exists `borrow`;
 drop table if exists `card`;
 drop table if exists `product`;
 drop table if exists `users`;
@@ -31,14 +30,4 @@ create table `card` (
     primary key (`card_id`),
     unique (`department`, `type`, `name`),
     check ( `type` in ('T', 'S') )
-) engine=innodb charset=utf8mb4;
-
-create table `borrow` (
-  `card_id` int not null,
-  `productId` int not null,
-  `borrow_time` bigint not null,
-  `return_time` bigint not null default 0,
-  primary key (`card_id`, `productId`, `borrow_time`),
-  foreign key (`card_id`) references `card`(`card_id`) on delete cascade on update cascade,
-  foreign key (`productId`) references `product`(`productId`) on delete cascade on update cascade
 ) engine=innodb charset=utf8mb4;

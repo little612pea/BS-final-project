@@ -10,6 +10,7 @@ from pyquery import PyQuery as pq
 import time
 import random
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import re
 import sys
 
@@ -18,10 +19,18 @@ product_list = []
 options = webdriver.ChromeOptions()
 # 关闭自动测试状态显示 // 会导致浏览器报：请停用开发者模式
 options.add_experimental_option("excludeSwitches", ['enable-automation'])
-# options.add_argument('--headless=new')
+# options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
 options.add_argument("--window-position=-2400,-2400")
+options.add_argument('blink-settings=imagesEnabled=false')
+options.add_argument('--disable-gpu')
 # 把chrome设为selenium驱动的浏览器代理；
 driver = webdriver.Chrome(options=options)
+# driver = webdriver.Remote(
+#     command_executor="http://chrome:4444/wd/hub",
+#     options=options
+# )
 # 窗口最大化
 driver.maximize_window()
 
@@ -38,6 +47,7 @@ def search_goods(start_page, total_pages, keyword):
         # 强制停止10秒，请在此时手动扫码登陆
         driver.delete_all_cookies()
         # 加载 cookies信息
+        # with open("/app/python-scripts/jd/cookies_jd.txt", "r") as f:
         with open("D:\\home\\BS\\BS-final-project\\src\\crawler\\jd\\cookies_jd.txt", "r") as f:
             cookies = json.load(f)
         for cookie in cookies:

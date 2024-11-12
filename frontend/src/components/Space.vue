@@ -28,20 +28,36 @@
       </div>
     </div>
     <div class="person_body">
-      <el-card class="info-card" :body-style="{ padding: '20px' }" style="width: 100%;height:100%">
-        <div class="card-header" style="font-size: 18px; font-weight: bold; text-align: center;">个人信息</div>
-        <div class="card-body"  style="width: 100%; height: 300px">
-          <el-row gutter={20}>
-            <el-col :span="12">
-              <div class="info-item"><strong>用户id:</strong> {{ form.id }}</div>
-              <div class="info-item"><strong>用户名:</strong> {{ form.account }}</div>
-              <div class="info-item"><strong>邮箱:</strong> {{ form.email }}</div>
-              <div class="info-item"><strong>手机:</strong> {{ form.mobilePhoneNumber }}</div>
+      <el-card class="info-card" :body-style="{ padding: '30px', backgroundColor: '#f9f9f9' }"
+               style="width: 100%; height: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+        <div class="card-header" style="font-size: 20px; font-weight: bold; text-align: center; color: #333; margin-bottom: 20px;">
+          个人信息
+        </div>
+        <div class="card-body" style="width: 100%; height: auto;">
+          <el-row :gutter="30">
+            <el-col :span="12" style="margin-bottom: 10px;">
+              <div class="info-item" style="margin-bottom: 10px;">
+                <strong style="color: #555;">用户ID:</strong>
+                <span style="color: #777;">       user_3</span>
+              </div>
+              <div class="info-item" style="margin-bottom: 10px;">
+                <strong style="color: #555;">用户名:</strong>
+                <span style="color: #777;">        little612pea</span>
+              </div>
+              <div class="info-item" style="margin-bottom: 10px;">
+                <strong style="color: #555;">邮箱:</strong>
+                <span style="color: #777;">         3220104116@zju.edu.cn</span>
+              </div>
+              <div class="info-item" style="margin-bottom: 10px;">
+                <strong style="color: #555;">手机:</strong>
+                <span style="color: #777;">         1935****138</span>
+              </div>
             </el-col>
           </el-row>
         </div>
       </el-card>
     </div>
+
     <el-dialog v-model="dialogVisible"
         title="修改个人信息"
         width="60%"

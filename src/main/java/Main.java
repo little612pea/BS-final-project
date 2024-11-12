@@ -1428,6 +1428,11 @@ public class Main {
             String[] parts = query.split("=", 2);
             String search = parts[1];
             if (search!=null) {
+                // /usr/bin/python3 /app/python-scripts/tb/crawler_tb.py
+                // /usr/bin/python3 /app/python-scripts/jd/crawler_jd.py
+//                String jd = getSearchResult("/usr/bin/python3","/app/python-scripts/tb/crawler_tb.py",search);
+//                String tb = getSearchResult("/usr/bin/python3","/app/python-scripts/jd/crawler_jd.py",search);
+
                 String jd = getSearchResult("\"C:\\\\Users\\\\23828\\\\anaconda3\\\\python.exe\"","D:\\home\\BS\\BS-final-project\\src\\crawler\\jd\\crawler_jd.py",search);
                 String tb = getSearchResult("\"C:\\\\Users\\\\23828\\\\anaconda3\\\\python.exe\"","D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\crawler_tb.py",search);
                 System.out.println(tb);
@@ -1521,10 +1526,17 @@ public class Main {
             System.out.println(title);
             try {
                 String[] args1 = new String[]{"\"C:\\\\Users\\\\23828\\\\anaconda3\\\\python.exe\"", "D:\\home\\BS\\BS-final-project\\src\\crawler\\history\\craw_history.py", title};
-                System.out.println("args1: " + args1);
+//                System.out.println("args1: " + args1);
                 proc = Runtime.getRuntime().exec(args1);
                 proc.waitFor();
-
+                exchange.sendResponseHeaders(200, 0);
+                exchange.getResponseHeaders().set("Content-Type", "text/plain");
+                // 响应状态码200
+                // 剩下三个和GET一样
+                OutputStream outputStream = exchange.getResponseBody();
+                outputStream.write("Product history get successfully".getBytes());
+                System.out.println("Product history get successfully");
+                outputStream.close();
             } catch (Exception e) {
             System.out.println("Exception: " + e);
             } finally {
@@ -1532,12 +1544,7 @@ public class Main {
                     proc.destroy(); // 确保进程被关闭
                 }
              }
-            exchange.getResponseHeaders().set("Content-Type", "text/plain");
-            // 响应状态码200
-            // 剩下三个和GET一样
-            OutputStream outputStream = exchange.getResponseBody();
-            outputStream.write("Product history get successfully".getBytes());
-            outputStream.close();
+
         }
     }
 }

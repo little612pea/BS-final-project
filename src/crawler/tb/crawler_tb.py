@@ -5,21 +5,31 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from pyquery import PyQuery as pq
 import time
 import random
 import json
 import sys
+import re
 
 product_list = []
 
 options = webdriver.ChromeOptions()
 # 关闭自动测试状态显示 // 会导致浏览器报：请停用开发者模式
 options.add_experimental_option("excludeSwitches", ['enable-automation'])
-# options.add_argument('--headless=new')
+# options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
 options.add_argument("--window-position=-2400,-2400")
+options.add_argument('blink-settings=imagesEnabled=false')
+options.add_argument('--disable-gpu')
 # 把chrome设为selenium驱动的浏览器代理；
 driver = webdriver.Chrome(options=options)
+# driver = webdriver.Remote(
+#     command_executor="http://chrome:4444/wd/hub",
+#     options=options
+# )
 # 窗口最大化
 driver.maximize_window()
 # wait是Selenium中的一个等待类，用于在特定条件满足之前等待一定的时间(这里是15秒)。
@@ -34,6 +44,7 @@ def search_goods(start_page, total_pages, keyword):
         driver.get('https://www.taobao.com')
         driver.delete_all_cookies()
         # 加载 cookies信息
+        # with open("/app/python-scripts/tb/cookies_tb.txt", "r") as f:
         with open("D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\cookies_tb.txt", "r") as f:
             cookies = json.load(f)
         for cookie in cookies:
@@ -106,6 +117,22 @@ def random_sleep(timeS, timeE):
     time.sleep(random_sleep_time)
 
 
+def extract_id_from_url(url):
+    # 使用正则表达式查找id参数
+    match = re.search(r'id=(\d+)', url)
+    if match:
+        # 提取出id的值
+        id_value = match.group(1)
+        # 构造新的URL
+        if 'detail.tmall.com' in url:
+            new_url = f"https://detail.tmall.com/item.htm?id={id_value}"
+        else:
+            new_url = f"https://item.taobao.com/item.htm?id={id_value}"
+        return new_url
+    else:
+        return "ID not found in URL"
+
+
 # 获取每一页的商品信息；
 def get_goods():
     # 获取商品前固定等待2-4秒
@@ -122,24 +149,25 @@ def get_goods():
     doc = pq(html)
     # print(doc)
     # 提取所有商品的共同父元素的类选择器
-    items = doc('div.content--CUnfXXxv a.doubleCardWrapper--BpyYIb1O').items()
+    items = doc('div.content--CUnfXXxv a.doubleCardWrapper--_6NpK_ey').items()
     for item in items:
         # 定位商品标题
-        title = item.find('.title--F6pvp_RZ').text()
+        title = item.find('.title--qJ7Xg_90 ').text()
         href = item.attr('href')  # 直接访问 href 属性
+        href = extract_id_from_url(href)
         # 定位价格
-        price_int = item.find('.priceInt--j47mhkXk').text()
-        price_float = item.find('.priceFloat--zPTqSZZJ').text()
+        price_int = item.find('.priceInt--yqqZMJ5a').text()
+        price_float = item.find('.priceFloat--XpixvyQ1').text()
         if price_int and price_float:
             price = float(f"{price_int}{price_float}")
         else:
             price = 0.0
         # 定位交易量
-        deal = item.find('.realSales--nOat6VGM').text()
+        deal = item.find('.realSales--XZJiepmt').text()
         # 定位店名
-        shop = item.find('.shopNameText--APRH8pWb').text()
+        shop = item.find('.shopNameText--DmtlsDKm').text()
         # 定位img_url
-        img_url = item.find('.mainPic--CuSfUC4j').attr('src')
+        img_url = item.find('.mainPic--Ds3X7I8z').attr('src')
         if img_url == None:
             img_url = item.find('.mainPic--ZzRJ1jkn').attr('src')
         # 构建商品信息字典

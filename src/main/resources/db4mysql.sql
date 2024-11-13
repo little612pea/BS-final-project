@@ -26,7 +26,7 @@ create table `card` (
     `card_id` int not null auto_increment,
     `name` varchar(63) not null,
     `department` varchar(63) not null,
-    `type` char(1) not null,
+    `type` char(crawler) not null,
     primary key (`card_id`),
     unique (`department`, `type`, `name`),
     check ( `type` in ('T', 'S') )

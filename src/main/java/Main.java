@@ -1,4 +1,5 @@
-import com.mysql.cj.log.Log;
+import crawler.JDCrawler;
+import crawler.TBCrwaler;
 import entities.Product;
 import entities.Borrow;
 import entities.Card;
@@ -23,10 +24,16 @@ import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import java.util.List;
+
+import java.util.Map;
+
+import java.util.HashMap;
+
+import java.util.ArrayList;
+
 public class Main {
 
     private static final Logger log = Logger.getLogger(Main.class.getName());
@@ -1414,43 +1421,67 @@ public class Main {
             }
         }
         private static void handleGetRequest(HttpExchange exchange) throws IOException {
-            //System.out.println("GET request received");
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            // 状态码为200，也就是status ok
-            exchange.sendResponseHeaders(200, 0);
-            // 获取输出流，java用流对象来进行io操作
-            OutputStream outputStream = exchange.getResponseBody();
-            // 构建JSON响应数据，这里简化为字符串
-            URI requestedUri = exchange.getRequestURI();
-            // 解析查询字符串
-            String query = requestedUri.getRawQuery();
+            System.out.println("GET request received in SearchHandler crawler");
+            exchange.getResponseHeaders().set("Content-Type", "text/event-stream");
+            exchange.sendResponseHeaders(200, 0); // 发送 200 响应码，表示请求成功
 
+            // 获取输出流
+            OutputStream outputStream = exchange.getResponseBody();
+            OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+
+            // 获取查询参数（例如商品关键词）
+            URI requestedUri = exchange.getRequestURI();
+            String query = requestedUri.getRawQuery();
             String[] parts = query.split("=", 2);
             String search = parts[1];
-            if (search!=null) {
-                // /usr/bin/python3 /app/python-scripts/tb/crawler_tb.py
-                // /usr/bin/python3 /app/python-scripts/jd/crawler_jd.py
-//                String jd = getSearchResult("/usr/bin/python3","/app/python-scripts/tb/crawler_tb.py",search);
-//                String tb = getSearchResult("/usr/bin/python3","/app/python-scripts/jd/crawler_jd.py",search);
 
-                String jd = getSearchResult("\"C:\\\\Users\\\\23828\\\\anaconda3\\\\python.exe\"","D:\\home\\BS\\BS-final-project\\src\\crawler\\jd\\crawler_jd.py",search);
-                String tb = getSearchResult("\"C:\\\\Users\\\\23828\\\\anaconda3\\\\python.exe\"","D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\crawler_tb.py",search);
-                System.out.println(tb);
-                System.out.println(jd);
-            // 定义正则表达式模式
-                String combinedJson = tb + jd;
-                String result = combinedJson.replace("}][{", "},{");
-                System.out.println(result);
-                outputStream.write(result.getBytes());
-                // 流一定要close！！！小心泄漏
-                outputStream.close();
+            // 创建爬虫实例
+            JDCrawler jdScraper = new JDCrawler(writer);
+            TBCrwaler tbScraper = new TBCrwaler(writer); // 将writer传入TBCrwaler，逐个发送商品
+            // 创建线程来并行执行爬虫操作
+            Thread jdThread = new Thread(() -> {
+                try {
+                    jdScraper.craw(search); // 逐个发送京东商品
+                } catch (Exception e) {
+                    try {
+                        writer.write("data: Error in JD Scraper: " + e.getMessage() + "\n\n");
+                        writer.flush();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                }
+            });
+
+            Thread tbThread = new Thread(() -> {
+                try {
+                    tbScraper.craw(search); // 逐个发送淘宝商品
+                } catch (Exception e) {
+                    try {
+                        writer.write("data: Error in TB Scraper: " + e.getMessage() + "\n\n");
+                        writer.flush();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                }
+            });
+
+            // 启动线程
+            jdThread.start();
+            tbThread.start();
+
+            // 等待两个线程完成
+            try {
+                jdThread.join();
+                tbThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            else{
-                System.out.println("No search content");
-                //返回数据库的内容：
-                ApiResult result = SearchHandeler.library.queryProduct(new ProductQueryConditions());
-            }
+
+            // 完成后关闭输出流
+            writer.close();
+            outputStream.close();
         }
+
         static String getSearchResult(String python_path, String exe_path, String search) {
             String jsonOutput = null;
             Process proc = null;

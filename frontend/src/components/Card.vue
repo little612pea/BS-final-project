@@ -130,7 +130,7 @@ export default {
     data() {
         return {
             cards: [{ // 借书证列表
-                id: 1,
+                id: crawler,
                 name: '小明',
                 department: '计算机学院',
                 type: 'Student'

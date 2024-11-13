@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 browser = webdriver.Chrome()
 browser.maximize_window()
 browser.implicitly_wait(2)
-
+print("here")
 url = "https://www.jd.com"
 browser.get(url)
 

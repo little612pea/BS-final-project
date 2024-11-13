@@ -29,7 +29,7 @@
     </div>
     <div class="person_body">
       <el-card class="info-card" :body-style="{ padding: '30px', backgroundColor: '#f9f9f9' }"
-               style="width: 100%; height: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+               style="width: 100%; height: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.crawler);">
         <div class="card-header" style="font-size: 20px; font-weight: bold; text-align: center; color: #333; margin-bottom: 20px;">
           个人信息
         </div>
@@ -338,7 +338,7 @@ export default {
 .info-item {
   margin-bottom: 10px;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: crawler.5;
 }
 .card-header {
   background-color: #f5f5f5;

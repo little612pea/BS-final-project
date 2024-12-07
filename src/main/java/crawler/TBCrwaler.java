@@ -159,7 +159,7 @@ public class TBCrwaler {
                 }
 
                 // 创建商品对象
-                CrawProduct crawProduct = new CrawProduct(title, price, null, deal, shop, img_url, href);
+                CrawProduct crawProduct = new CrawProduct(title, price, null, deal, shop, img_url, href, 0);
                 if (title.isEmpty() || price == 0.0) {
                     continue;
                 }
@@ -245,12 +245,14 @@ public class TBCrwaler {
         try{
             keyword = URLDecoder.decode(keyword, StandardCharsets.UTF_8.name());
             System.out.println("Crawling Taobao for keyword: " + keyword);
-            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+//            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
             // 配置 Chrome 选项
             ChromeOptions options = new ChromeOptions();
-            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+            //            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+            options.setBinary("/usr/bin/chromium-browser");
             options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "blink-settings=imagesEnabled=false");
-//            options.addArguments("--headless");
+            options.addArguments("--headless");
             options.addArguments("--remote-allow-origins=*");
             options.addArguments("excludeSwitches", "enable-automation");
             driver = new ChromeDriver(options);
@@ -277,9 +279,10 @@ public class TBCrwaler {
         private String shop;
         private String img_url;
         private String source;
+        private int favorite;
 
 
-        public CrawProduct(String title, double price, String comment, String deal, String shop, String img_url, String source) {
+        public CrawProduct(String title, double price, String comment, String deal, String shop, String img_url, String source , int favorite) {
             this.title = title;
             this.price = price;
             this.comment = comment; // 初始化 comment 字段
@@ -287,6 +290,7 @@ public class TBCrwaler {
             this.shop = shop;
             this.img_url = img_url;
             this.source = source;
+            this.favorite = 0;
 
         }
 

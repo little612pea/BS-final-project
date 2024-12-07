@@ -6,6 +6,7 @@ import queries.*;
 import utils.DBInitializer;
 import utils.DatabaseConnector;
 
+import java.awt.*;
 import java.util.Objects;
 import java.sql.*;
 import java.util.ArrayList;
@@ -276,14 +277,13 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     }
     @Override
     public ApiResult modifyProductInfo(Product product) {
-        try(PreparedStatement ps = connector.getConn().prepareStatement("update product set comment=?,title=?,shop=?,deal=?,img_url=?,price=? where productId=?")){
-            ps.setString(1,product.getComment());
-            ps.setString(2,product.getTitle());
-            ps.setString(3,product.getShop());
-            ps.setString(4,product.getDeal());
-            ps.setString(5,product.getImg());
-            ps.setDouble(6,product.getPrice());
-            ps.setInt(7,product.getProductId());
+        try(PreparedStatement ps = connector.getConn().prepareStatement("update product set favorite=? where productId=?")){
+            int favor=0;
+            if(product.getFavorite()==0) favor = 0;
+            else if (product.getFavorite()==1) favor = 1;
+            System.out.println("favor:"+favor);
+            ps.setInt(1,favor);
+            ps.setInt(2,product.getProductId());
             if(ps.executeUpdate()==0){
                 System.out.println("fail here 1");
                 return new ApiResult(false, "fail");
@@ -329,6 +329,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                 newproduct.setImg(rs.getString("img_url"));
                 newproduct.setPrice(rs.getDouble("price"));
                 newproduct.setSource(rs.getString("source"));
+                newproduct.setFavorite(rs.getInt("favorite"));
                 ResultList.add(newproduct);
 
             }

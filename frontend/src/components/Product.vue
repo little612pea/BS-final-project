@@ -51,7 +51,7 @@
 
       <!-- 商品卡片 -->
       <div class="productBox" v-for="product in products" v-show="product.title.includes(toSearch)" :key="product.id">
-        <div @click="detailedProductInfo.title = product.title; detailedProductInfo.shop = product.shop; detailedProductInfo.price=product.price; detailedProductInfo.img_url=product.img_url; detailedProductInfo.source=product.source; detailedProductVisible = true">
+        <div @click="detailedProductInfo.title = product.title; detailedProductInfo.shop = product.shop; detailedProductInfo.price=product.price; detailedProductInfo.img_url=product.img_url; detailedProductInfo.source=product.source; detailedProductInfo.favorite = product.favorite; detailedProductVisible = true; similarProducts_id = product.id; this.similarProducts=[];this.crawled_already = false">
         <!-- 卡片标题 -->
           <div style="margin: 0px; padding: 0px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0);">
             <!-- 图片 -->
@@ -78,9 +78,20 @@
               </div>
 
               <!-- 店铺名称 -->
-              <p style="font-size: 15px; color: #666; margin: 5px 0;">
+              <p style="font-size: 15px; color: #666; margin: 5px 0; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: bold;">{{ product.shop }}</span>
+                <!-- 收藏按钮，右侧对齐 -->
+                <el-rate
+                    v-model="product.favorite"
+                    :max="1"
+                    icon-classes="el-icon-heart"
+                    @change="toggleFavorite(product)"
+                    @click.stop
+                    style="color: #f39c12;">
+                </el-rate>
               </p>
+
+
             </div>
           </div>
 
@@ -124,38 +135,89 @@
     <el-dialog
         v-model="detailedProductVisible"
         title="查看商品详细信息"
-        :width="'80%'"
-        :style="{ height: '80%' }"
+        :width="'90%'"
+        :style="{ height: '90%' }"
     >
-      <div style="display: flex;">
-        <!-- 左侧放置图片 -->
-        <div style="flex: crawler; padding: 20px;">
+      <div style="display: flex; align-items: flex-start;">
+        <!-- 左侧放置商品图片和简要信息 -->
+        <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+          <!-- 商品图片 -->
           <img :src="detailedProductInfo.img_url" alt="商品图片" style="width: 100%; height: auto; max-width: 300px;" />
+
+          <!-- 商品简要信息 -->
+          <div style="margin-top: 20px;">
+            <p style="font-weight: bold; font-size: 18px;">
+              <span v-if="detailedProductInfo.source.includes('jd')" style="color: #e74c3c;font-weight: bold;">京东 </span>
+              <span v-else-if="detailedProductInfo.source.includes('tmall') || detailedProductInfo.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝 </span>
+              {{ detailedProductInfo.title }}
+            </p>
+            <p style="font-size: 14px; color: #555;">
+              <span style="font-weight: bold;">店铺：</span>{{ detailedProductInfo.shop }}
+            </p>
+            <p style="font-size: 14px; color: #555;">
+              <span style="font-weight: bold;">价格：￥</span>{{ detailedProductInfo.price }}
+            </p>
+          </div>
         </div>
 
-        <!-- 右侧显示其他内容 -->
-        <div style="flex: 2; padding: 20px;">
-          <p style="font-weight: bold; font-size: 18px;">   <span v-if="detailedProductInfo.source.includes('jd')" style="color: #e74c3c;font-weight: bold;">京东 </span>
-            <span v-else-if="detailedProductInfo.source.includes('tmall') || detailedProductInfo.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝 </span>
-            {{ detailedProductInfo.title }}</p>
-          <p style="margin-top: 10px;">
-            <span style="font-weight: bold;">店铺：</span>{{ detailedProductInfo.shop }}
-          </p>
-          <p style="margin-top: 10px;">
-            <span style="font-weight: bold;">价格：￥</span>{{ detailedProductInfo.price }}
-          </p>
-          <p style="margin-top: 10px;">
-            <a :href="detailedProductInfo.source" target="_blank" style="color: #3498db; text-decoration: none;">
-              跳转到原网页
-            </a>
-          </p>
-          <div style="margin-top: 20px;">
-            <el-button type="primary" @click="showPriceHistory" style="margin-right: 10px;">查看历史价格走向图</el-button>
-            <img v-show=priceHistoryVisible :src=history_img_src alt="历史价格走向图" style="margin-top: 10px; max-width: 100%; height: auto;" />
+        <!-- 右侧显示标签页 -->
+        <div style="flex: 2; padding: 20px; display: flex; flex-direction: column;">
+          <!-- 动画节点 -->
+          <div id="loader-wrapper"  v-show="loading_history_Visible" >
+            <div id="loader"></div>
+            <div class="load_title" >正在加载,请耐心等待<br><span>爬取该商品历史价格中...</span></div>
           </div>
+          <!-- 标签页切换 -->
+          <el-tabs v-model="activeTab" @tab-click="handleTabClick" style="margin-bottom: 20px;">
+            <!-- 历史记录查询 Tab -->
+            <el-tab-pane label="历史记录查询" name="history">
+              <div>
+                <img v-show="priceHistoryVisible" :src="history_img_src" alt="历史价格走向图" style="margin-top: 10px; max-width: 100%; height: auto;" />
+              </div>
+
+            </el-tab-pane>
+
+            <!-- 相似产品列表 Tab -->
+            <el-tab-pane label="相似产品列表" name="similar">
+              <div style="margin-bottom: 20px;">
+                <el-input v-model="searchQuery" placeholder="搜索商品" clearable style="width: 300px; margin-right: 10px;"></el-input>
+                <el-select v-model="sortMethod" placeholder="选择排序方式" style="width: 200px; margin-right: 10px;">
+                  <el-option label="价格升序" value="priceAsc"></el-option>
+                  <el-option label="价格降序" value="priceDesc"></el-option>
+                  <el-option label="标题排序" value="title"></el-option>
+                </el-select>
+                <el-button type="primary" @click="sortedProducts" style="width: 60px;">确定</el-button>
+              </div>
+              <div style="max-height: 500px; overflow-y: auto;">
+                <el-row :gutter="20">
+                  <el-col v-for="(product, index) in filteredProductsList" :key="index" :span="24" style="margin-bottom: 15px;">
+                    <el-card>
+                      <div style="display: flex; align-items: center;">
+                        <img :src="product.img_url" alt="商品图片" style="width: 100px; height: 100px; object-fit: cover;" />
+                        <div style="flex: 1; padding-left: 20px;">
+                          <p style="font-weight: bold; font-size: 16px; color: #333;">
+                            <span v-if="product.source.includes('jd')" style="color: #e74c3c;font-weight: bold;">京东</span>
+                            <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝</span>
+                            {{ product.title }}
+                          </p>
+                          <p style="font-size: 14px; color: #555;">店铺：{{ product.shop }}</p>
+                          <p style="font-size: 14px; color: #555;">价格：￥{{ product.price }}</p>
+                        </div>
+                        <a :href="product.source" target="_blank" style="color: #3498db; text-decoration: none;">
+                          跳转到原网页
+                        </a>
+                      </div>
+                    </el-card>
+                  </el-col>
+                </el-row>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
         </div>
       </div>
     </el-dialog>
+
+
 
 
 
@@ -182,11 +244,16 @@ export default {
   computed: {
     UploadFilled() {
       return UploadFilled
+    },
+    filteredProductsList() {
+      return this.filter ? this.filteredProducts : this.similarProducts;
     }
   },
   data() {
     return {
       products: [], // 商品列表
+      similarProducts: [], // 相似商品列表
+      filteredProducts: [], // 过滤后的商品列表
       Delete,
       Edit,
       Search,
@@ -194,7 +261,13 @@ export default {
       multiCondProductVisible:false,
       detailedProductVisible:false,
       priceHistoryVisible:false,
+      loading_history_Visible:false,
       loadingVisible:false,
+      filter: false,
+      crawled_already:false,
+      searchQuery:'',
+      similarProducts_id:0,
+      activeTab: 'history',  // 默认选中 "历史记录查询"
       history_img_src:'',
       detailedProductInfo:{
         id:'',
@@ -204,7 +277,8 @@ export default {
         deal:'',
         img_url:'',
         price:'',
-        source:''
+        source:'',
+        favorite:''
       },
       uploadFileInfo:'',
       keyword:'',
@@ -218,8 +292,56 @@ export default {
       }
     }
   },
-
+  watch: {
+    // 监听 activeTab 的变化
+    activeTab(newTab, oldTab) {
+      // 如果切换到"历史记录查询" Tab
+      console.log(newTab)
+      console.log(oldTab)
+      if (newTab === 'history') {
+        this.showPriceHistory();  // 调用显示历史价格的函数
+      }
+      // 如果切换到"相似产品列表" Tab
+      else if (newTab === 'similar') {
+        this.get_similar_products(this.similarProducts_id);  // 调用获取相似产品的函数
+      }
+    }
+  },
   methods: {
+    getMostSimilarProducts(products, targetIndex, topN = 3) {
+  // 计算 Jaccard 相似性
+  function jaccardIndex(set1, set2) {
+    const intersection = new Set([...set1].filter(item => set2.has(item)));
+    const union = new Set([...set1, ...set2]);
+    return intersection.size / union.size;
+  }
+
+  // 提取标题中的关键词并转换为 Set（使用空格分割单词）
+  function extractKeywords(title) {
+    return new Set(title.toLowerCase().split(/\s+/));
+  }
+  console.log(targetIndex)
+  const targetProduct = products[targetIndex];
+  console.log(targetProduct)
+  const targetKeywords = extractKeywords(targetProduct.title);
+
+  const similarityScores = products.map((product, index) => {
+    if (index === targetIndex) return { index, score: -1 }; // 排除自己
+    const keywords = extractKeywords(product.title);
+    const score = jaccardIndex(targetKeywords, keywords);
+    return { index, score };
+  });
+
+  // 按照相似度降序排序
+  similarityScores.sort((a, b) => b.score - a.score);
+
+  // 返回前 N 个相似的商品
+  return similarityScores.slice(0, topN).map(item => products[item.index]);
+},
+    get_similar_products(id){
+      this.similarProducts = this.getMostSimilarProducts(this.products, id, 10);
+      console.log(this.similarProducts);
+    },
     search() {
         this.products = [] // 清空列表
         this.loadingVisible = true;
@@ -243,6 +365,7 @@ export default {
       eventSource.onclose = function() {
         ElMessage.success("搜索执行成功") // 显示消息提醒
         console.log("连接已关闭");
+        eventSource.close(); // 关闭连接
         // 可以在这里执行一些清理操作，或者重新连接等
       };
       // 当发生错误时触发
@@ -324,8 +447,35 @@ export default {
     // mounted() { // 当页面被渲染时
     //   this.QueryProducts() // 查询商品
     // },
+    sortedProducts() {
+      let filteredProducts = this.similarProducts;
+
+      // 根据搜索框内容过滤
+      if (this.searchQuery) {
+        filteredProducts = filteredProducts.filter(product =>
+            product.title.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      }
+
+      // 根据排序条件排序
+      if (this.sortMethod === 'priceAsc') {
+        filteredProducts = filteredProducts.sort((a, b) => a.price - b.price);
+      } else if (this.sortMethod === 'priceDesc') {
+        filteredProducts = filteredProducts.sort((a, b) => b.price - a.price);
+      } else if (this.sortMethod === 'title') {
+        filteredProducts = filteredProducts.sort((a, b) => a.title.localeCompare(b.title));
+      }
+
+      this.filteredProducts=filteredProducts;
+      this.filter = true;
+    },
     showPriceHistory() {
-      this.history_img_src = '';
+      this.similarProducts = [];
+      if(this.crawled_already){
+        return;
+      }
+      this.priceHistoryVisible = false; // 显示图像
+      this.loading_history_Visible = true;
       axios.post('/search/', {
         params: {
           url: this.detailedProductInfo.source
@@ -334,11 +484,13 @@ export default {
         ElMessage.success("查找历史价格成功");
         // this.history_img_src = history;  // 假设 res 中有历史图像地址
         console.log(res.data)
+        this.crawled_already = true;
         // 使用 setTimeout 延迟绘制操作，等待 canvas 完全渲染
         // this.priceHistoryVisible = true;  // 显示图像
         this.history_img_src = '/history.png?' + new Date().getTime();
         console.log(this.history_img_src);
         setTimeout(() => {
+          this.loading_history_Visible = false;
           this.priceHistoryVisible = true; // 显示图像
         }, 500); // 延迟 500 毫秒（0.5秒）
 
@@ -347,6 +499,19 @@ export default {
         console.log(err);
       });
     },
+    toggleFavorite(product) {
+      //切换商品的收藏状态
+      console.log("toggleFavorite called")
+      axios.post('/home/product/', {
+        params: {
+          like: product
+        }
+      }).then(res => {
+        ElMessage.success("修改商品收藏状态成功")
+      }).catch(err => {
+        ElMessage.error("修改商品收藏状态失败")
+      })
+    }
 }
 }
 
@@ -511,6 +676,23 @@ export default {
   -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, crawler.000);
   transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, crawler.000);
 }
+
+::v-deep .el-dialog{
+  display: flex;
+  flex-direction: column;
+  margin:0 !important;
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  max-height:calc(100% - 20px);
+  max-width:calc(100% - 20px);
+}
+::v-deep  .el-dialog .el-dialog__body{
+  flex:1;
+  overflow: auto;
+}
+
 
 .loaded #loader {
   opacity: 0;

@@ -63,8 +63,8 @@ export default {
         return {
             isShow: false, // 结果表格展示状态
             tableData: [{ // 列表项
-                cardID: crawler,
-                productId: crawler,
+                cardID: "",
+                productId: "",
                 borrowTime: "",
                 unix_borrowTime: 0,
                 returnTime: "",

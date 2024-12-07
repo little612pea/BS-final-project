@@ -13,6 +13,7 @@ public final class Product {
     private String img_url; //->IMG_URL
     private double price; //->PRICE
     private String source; //->SOURCE 0 淘宝 1 京东
+    private int favorite;
 
     public enum SortColumn {
         ProductId("productId", Comparator.comparingInt(Product::getProductId)),
@@ -49,7 +50,7 @@ public final class Product {
     }
 
     public Product(String comment, String title, String shop, String deal,
-                String img_url, double price, String source) {
+                String img_url, double price, String source, int favorite) {
         this.comment = comment;
         this.title = title;
         this.shop = shop;
@@ -57,11 +58,12 @@ public final class Product {
         this.img_url = img_url;
         this.price = price;
         this.source = source;
+        this.favorite = favorite;
     }
 
     @Override
     public Product clone() {
-        Product b = new Product(comment, title, shop, deal, img_url, price, source);
+        Product b = new Product(comment, title, shop, deal, img_url, price, source, favorite);
         b.productId = productId;
         return b;
     }
@@ -76,6 +78,7 @@ public final class Product {
                 ", img_url='" + img_url + '\'' +
                 ", price=" + String.format("%.2f", price) +
                 ", source=" + source +
+                ", favorite=" + favorite +
                 '}';
     }
 
@@ -133,6 +136,10 @@ public final class Product {
         return deal;
     }
 
+    public int getFavorite() {
+        return favorite;
+    }
+
     public void setDeal(String deal) {
         this.deal = deal;
     }
@@ -159,5 +166,9 @@ public final class Product {
 
     public void setSource(String source) {
         this.source = source;
+    }
+
+    public void setFavorite(int favorite) {
+        this.favorite = favorite;
     }
 }

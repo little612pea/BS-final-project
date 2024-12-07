@@ -19,7 +19,8 @@ create table product
     deal       varchar(255) null,
     img_url    varchar(1000) null,
     price      double not null,
-    source     varchar(1000) not null
+    source     varchar(1000) not null,
+    favorite   int default 0
 )engine=innodb charset=utf8mb4;
 
 create table `card` (

@@ -180,7 +180,7 @@ public class JDCrawler {
             String href = extractProductLink(img);
 
             // Create product object and add to the list
-            CrawProduct crawProduct = new CrawProduct(title, price, comment,null, shop, img_url, href);
+            CrawProduct crawProduct = new CrawProduct(title, price, comment,null, shop, img_url, href,0);
             String productJson = new Gson().toJson(crawProduct);
             // 将爬取到的产品信息发送给SSE服务
             try {
@@ -196,12 +196,13 @@ public class JDCrawler {
     }
     // Helper function to extract the image URL
     private static String extractImageUrl(String imgHtml) {
+//        System.out.println(imgHtml);
         Pattern pattern = Pattern.compile("data-lazy-img=\"(.*?)\" source-data-lazy-img=\"\"");
         Matcher matcher = pattern.matcher(imgHtml);
-        if (matcher.find()) {
+        if (matcher.find() && !matcher.group(1).equals("done")){
             return matcher.group(1);
         } else {
-            pattern = Pattern.compile("source-data-lazy-img=\"\" src=\"(.*?)\"/>");
+            pattern = Pattern.compile("src=\"(.*?)\"");
             matcher = pattern.matcher(imgHtml);
             if (matcher.find()) {
                 return matcher.group(1);
@@ -257,16 +258,12 @@ public class JDCrawler {
             // 构建新的查询字符串和 URL
             String newQuery = queryParams.entrySet().stream()
                     .map(entry -> {
-                        try {
-                            return entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), "UTF-8");
-                        } catch (UnsupportedEncodingException e) {
-                            throw new RuntimeException(e);
-                        }
+                        return entry.getKey() + "=" + entry.getValue();
                     })
                     .collect(Collectors.joining("&"));
             URI newUri = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), newQuery, uri.getFragment());
             String newUrl = newUri.toString();
-
+            System.out.println("Navigating to: " + newUrl);
             // 导航到新的 URL
             try {
                 driver.get(newUrl);
@@ -298,13 +295,17 @@ public class JDCrawler {
         try{
             keyword = URLDecoder.decode(keyword, StandardCharsets.UTF_8.name());
             System.out.println("Crawling JD for keyword: " + keyword);
-            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+//            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
+
             // 配置 Chrome 选项
             ChromeOptions options = new ChromeOptions();
-            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+//            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+            options.setBinary("/usr/bin/chromium-browser");
+
             options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu");
             options.addArguments("--remote-allow-origins=*");
-//            options.addArguments("--headless");
+            options.addArguments("--headless");
             options.addArguments("excludeSwitches", "enable-automation");
             driver = new ChromeDriver(options);
             driver.manage().window().maximize();
@@ -330,9 +331,10 @@ public class JDCrawler {
         private String shop;
         private String img_url;
         private String source;
+        private int favorite;
 
 
-        public CrawProduct(String title, double price, String comment, String deal, String shop, String img_url, String source) {
+        public CrawProduct(String title, double price, String comment, String deal, String shop, String img_url, String source , int favorite) {
             this.title = title;
             this.price = price;
             this.comment = comment; // 初始化 comment 字段
@@ -340,6 +342,7 @@ public class JDCrawler {
             this.shop = shop;
             this.img_url = img_url;
             this.source = source;
+            this.favorite = 0;
 
         }
 

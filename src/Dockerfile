@@ -20,6 +20,7 @@ ENV CHROME_BIN=/usr/bin/chromium-browser \
 
 # 复制构建好的 JAR 文件到最终镜像
 COPY --from=build /app/target/bs-final-project-1.0.jar /app/backend.jar
-
+COPY src/crawler/jd/cookies_jd.txt /app/cookies_jd.txt
+COPY src/crawler/tb/cookies_tb.txt /app/cookies_tb.txt
 # 设置 CMD 以运行 Java 应用程序
 CMD ["java", "-jar", "/app/backend.jar"]

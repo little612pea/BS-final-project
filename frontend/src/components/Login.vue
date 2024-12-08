@@ -76,7 +76,7 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  background: url('../assets/img/zju.jpg');
+  background: url('../assets/img/background.png');
   background-size: 100% 100%;
 }
 
@@ -97,7 +97,8 @@ export default {
   backdrop-filter: blur(10px); /* 模糊效果 */
   border-radius: 15px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 添加阴影 */
-  width: 400px;
+  width: 500px;
+  height: 300px;
 }
 
 h2 {
@@ -107,15 +108,50 @@ h2 {
 }
 
 .btn {
-  display: block;
-  width: 100%;
-  margin-top: 30px;
+  background: linear-gradient(to bottom, #fd8c4c, #ffb84d); /* 温和的橙色到金色渐变 */
+  border: none; /* 去掉边框 */
+  color: #fff;  /* 设置文本颜色为白色 */
+  font-size: 16px; /* 设置字体大小 */
+  padding: 12px 20px; /* 设置内边距 */
+  border-radius: 30px; /* 圆角效果 */
+  width: 100%; /* 按钮宽度填满容器 */
+  text-align: center; /* 文字居中 */
+  cursor: pointer; /* 设置鼠标为指针形态 */
+  transition: all 0.3s ease; /* 平滑过渡效果 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 添加阴影，增加按钮立体感 */
 }
+
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 24px;
+  font-weight: bold;
+}
+
 .reg {
-  color: red;
+  display: inline-block;
+  color: #fd8c4c; /* 文字颜色 */
+  font-size: 16px;
+  text-decoration: none; /* 去掉下划线 */
+  font-weight: bold;
+  margin-top: 10px;
+  cursor: pointer;
   position: absolute;
   bottom: 10px;
   right: 10px;
-  cursor:pointer;
+  transition: all 0.3s ease; /* 平滑过渡效果 */
+}
+
+.reg:hover {
+  color: #ffb84d; /* 鼠标悬停时颜色变化 */
+  text-decoration: underline; /* 添加下划线 */
+  transform: translateY(-2px); /* 鼠标悬停时略微向上浮动 */
+}
+
+.reg:active {
+  color: #fd8c4c; /* 鼠标点击时的颜色 */
+  transform: translateY(1px); /* 点击时的轻微下移 */
 }
 </style>

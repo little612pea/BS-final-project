@@ -43,6 +43,7 @@ public class TBCrwaler {
             driver.manage().deleteAllCookies();
             System.out.println("searchGoods--loading cookies");
             File file = new File("D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\cookies_tb.txt");
+//            File file = new File("/app/cookies_tb.txt");
 
             BufferedReader reader = new BufferedReader(new FileReader(file));
             StringBuilder content = new StringBuilder();
@@ -113,10 +114,15 @@ public class TBCrwaler {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        catch(Exception e) {
+            System.out.println("searchGoods: error");
+            e.printStackTrace();
+        }
         return keyword;
     }
 
     public static void getGoods() {
+        System.out.println("getGoods--taobao");
         List<Product> productList = new ArrayList<>();
         try {
             // 随机等待 1-3 秒
@@ -133,8 +139,8 @@ public class TBCrwaler {
             Document doc = Jsoup.parse(pageSource);
 
             // 提取所有商品的共同父元素
-            Elements items = doc.select("div.content--CUnfXXxv a.doubleCardWrapper--_6NpK_ey");
-
+            Elements items = doc.select(".doubleCardWrapperAdapt--mEcC7olq");
+            System.out.println("items--" + items.size());
             for (Element item : items) {
                 // 定位商品标题
                 String title = item.select(".title--qJ7Xg_90").text();
@@ -166,6 +172,7 @@ public class TBCrwaler {
                 String productJson = new Gson().toJson(crawProduct);
                 // 将爬取到的产品信息发送给SSE服务
                 try {
+                    System.out.println("Sending product: " + productJson);
                     writer.write("data: " + productJson + "\n\n");
                     writer.flush();  // 刷新输出流
                 } catch (IOException e) {
@@ -245,12 +252,12 @@ public class TBCrwaler {
         try{
             keyword = URLDecoder.decode(keyword, StandardCharsets.UTF_8.name());
             System.out.println("Crawling Taobao for keyword: " + keyword);
-//            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
-            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
+            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+//            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
             // 配置 Chrome 选项
             ChromeOptions options = new ChromeOptions();
-            //            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
-            options.setBinary("/usr/bin/chromium-browser");
+                        options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+//            options.setBinary("/usr/bin/chromium-browser");
             options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "blink-settings=imagesEnabled=false");
             options.addArguments("--headless");
             options.addArguments("--remote-allow-origins=*");
@@ -259,7 +266,7 @@ public class TBCrwaler {
             driver.manage().window().maximize();
             wait = new WebDriverWait(driver, Duration.ofSeconds(10));
             System.out.println("searchGoods");
-            searchGoods(1, 5, keyword);
+            searchGoods(1, 2, keyword);
         }
         catch (Exception e){
             System.out.println("Error: " + e);

@@ -1,3 +1,5 @@
+package database;
+
 import entities.Product;
 import entities.Borrow;
 import entities.Card;
@@ -6,7 +8,6 @@ import queries.*;
 import utils.DBInitializer;
 import utils.DatabaseConnector;
 
-import java.awt.*;
 import java.util.Objects;
 import java.sql.*;
 import java.util.ArrayList;
@@ -76,13 +77,31 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             return new ApiResult(false, "Database error");
         }
     }
+    public ApiResult searchEmail(String username) {
+        // 检查用户是否存在
+        String checkSql = "SELECT email FROM users WHERE username = ?";
+        try (PreparedStatement statement = this.connector.getConn().prepareStatement(checkSql)) {
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                String email = resultSet.getString("email");
+                return new ApiResult(true, email);  // 返回查询到的email
+            } else {
+                return new ApiResult(false, "Username not found");
+            }
+        } catch (SQLException e) {
+            System.out.println("Database error during search: " + e.getMessage());
+            return new ApiResult(false, "Database error");
+        }
+    }
 
     @Override
     public ApiResult storeProduct(Product product) {
         String countSQL = "SELECT COUNT(*) FROM product";
         String deleteSQL = "DELETE FROM product ORDER BY productId ASC LIMIT 500"; // 假设 id 是自增主键
         System.out.printf("comment:%s,title:%s,shop:%s,deal:%s,img_url:%s,price:%f,source:%s\n", product.getComment(), product.getTitle(), product.getShop(),product.getDeal(), product.getImg(), product.getPrice(), product.getSource());
-        String insertSQL = "INSERT INTO product VALUES (null, ?, ?, ?, ?, ?, ?, ?)";
+        String insertSQL = "INSERT INTO product VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = this.connector.getConn().prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement countStatement = this.connector.getConn().prepareStatement(countSQL);
              PreparedStatement deleteStatement = this.connector.getConn().prepareStatement(deleteSQL);) {
@@ -115,6 +134,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             statement.setString(5, product.getImg());
             statement.setDouble(6, product.getPrice());
             statement.setString(7,product.getSource());
+            statement.setInt(8,product.getFavorite());
             // 执行插入
             if(isProductDuplicate(product)){
                 System.out.println("duplicate products");
@@ -276,13 +296,34 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         }
     }
     @Override
-    public ApiResult modifyProductInfo(Product product) {
+    public ApiResult modifyLikeStatus(Product product) {
         try(PreparedStatement ps = connector.getConn().prepareStatement("update product set favorite=? where productId=?")){
             int favor=0;
             if(product.getFavorite()==0) favor = 0;
             else if (product.getFavorite()==1) favor = 1;
             System.out.println("favor:"+favor);
             ps.setInt(1,favor);
+            ps.setInt(2,product.getProductId());
+            if(ps.executeUpdate()==0){
+                System.out.println("fail here 1");
+                return new ApiResult(false, "fail");
+            }
+
+        }
+        catch(SQLException e ){
+            System.out.println("fail here 2"+e);
+            return new ApiResult(false, "fail");
+        }
+
+        commit(connector.getConn());
+        System.out.println("success!");
+        return new ApiResult(true, "success");
+    }
+
+    @Override
+    public ApiResult modifyPrice(Product product) {
+        try(PreparedStatement ps = connector.getConn().prepareStatement("update product set price=? where productId=?")){
+            ps.setDouble(1,product.getPrice());
             ps.setInt(2,product.getProductId());
             if(ps.executeUpdate()==0){
                 System.out.println("fail here 1");

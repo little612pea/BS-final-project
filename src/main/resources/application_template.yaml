@@ -1,6 +1,6 @@
-host: "localhost"
+host: "db"
 port: "3306"
 user: "root"
 password: "qwerty"
-db: "library"
+db: "bs-final-project"
 type: "mysql"

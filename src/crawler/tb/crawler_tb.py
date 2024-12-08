@@ -22,7 +22,7 @@ options.add_experimental_option("excludeSwitches", ['enable-automation'])
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("--window-position=-2400,-2400")
-options.add_argument('blink-settings=imagesEnabled=false')
+options.add_argument('--enable-unsafe-webgl --enable-unsafe-swiftshader')
 options.add_argument('--disable-gpu')
 # 把chrome设为selenium驱动的浏览器代理；
 driver = webdriver.Chrome(options=options)

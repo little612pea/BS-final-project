@@ -45,6 +45,7 @@ public class JDCrawler {
             driver.manage().deleteAllCookies();
             System.out.println("searchGoods--loading cookies");
             File file = new File("D:\\home\\BS\\BS-final-project\\src\\crawler\\jd\\cookies_jd.txt");
+//            File file = new File("/app/cookies_jd.txt");
 
             BufferedReader reader = new BufferedReader(new FileReader(file));
             StringBuilder content = new StringBuilder();
@@ -129,6 +130,11 @@ public class JDCrawler {
         } catch (java.io.IOException e) {
             throw new RuntimeException(e);
         }
+        catch (Exception e) {
+            System.out.println("searchGoods: error");
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
     }
     private static void randomSleep(int minSeconds, int maxSeconds) {
         try {
@@ -175,7 +181,7 @@ public class JDCrawler {
             // Get image URL
             String img = item.findElement(By.cssSelector(".p-img")).getAttribute("outerHTML");
             String img_url = extractImageUrl(img);
-
+            img_url = img_url.replaceAll("^[^\"]*\".*?//", "");
             // Get product link
             String href = extractProductLink(img);
 
@@ -295,13 +301,13 @@ public class JDCrawler {
         try{
             keyword = URLDecoder.decode(keyword, StandardCharsets.UTF_8.name());
             System.out.println("Crawling JD for keyword: " + keyword);
-//            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
-            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
+            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+//            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
 
             // 配置 Chrome 选项
             ChromeOptions options = new ChromeOptions();
-//            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
-            options.setBinary("/usr/bin/chromium-browser");
+            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+//            options.setBinary("/usr/bin/chromium-browser");
 
             options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu");
             options.addArguments("--remote-allow-origins=*");
@@ -311,7 +317,7 @@ public class JDCrawler {
             driver.manage().window().maximize();
             wait = new WebDriverWait(driver, Duration.ofSeconds(10));
             System.out.println("searchGoods");
-            searchGoods(1, 5, keyword);
+            searchGoods(1, 2, keyword);
         }
         catch (Exception e){
             System.out.println("Error: " + e);

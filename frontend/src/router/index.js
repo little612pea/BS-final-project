@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ProductVue from '@/components/Product.vue'
-import CardVue from '@/components/Card.vue'
+import CardVue from '@/components/Compare.vue'
 import BorrowVue from '@/components/Borrow.vue'
 import SpaceVue from "@/components/Space.vue";
 import LoginVue from '@/components/Login.vue'

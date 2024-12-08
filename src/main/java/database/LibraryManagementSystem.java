@@ -1,3 +1,5 @@
+package database;
+
 import entities.Product;
 import entities.Borrow;
 import entities.Card;
@@ -86,7 +88,9 @@ public interface LibraryManagementSystem {
      *
      * @param product the product to be modified
      */
-    ApiResult modifyProductInfo(Product product);
+    ApiResult modifyLikeStatus(Product product);
+
+    ApiResult modifyPrice(Product product);
 
     /**
      * query products according to different query conditions.
@@ -175,4 +179,5 @@ public interface LibraryManagementSystem {
     ApiResult resetDatabase();
     ApiResult login(String username, String password);
     ApiResult register(String username, String password, String email);
+    ApiResult searchEmail(String username);
 }

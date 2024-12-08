@@ -1,78 +1,140 @@
 <template>
   <div class="container">
-      <div id="register" class="login-box">
-        <h2>注册页面</h2>
+    <div class="image-container"></div> <!-- 左侧图片区域 -->
+    <div class="form-container"> <!-- 右侧表单区域 -->
+      <div id="register" class="register-box">
+        <h2>新用户注册</h2>
         <el-form ref="form" :model="form" label-width="100px">
           <el-form-item label="用户名:">
             <el-input v-model="form.username" placeholder="请输入用户名"></el-input>
           </el-form-item>
-          <el-form-item label="密  码:">
-            <el-input show-password v-model="form.password" type="password" placeholder="请输入密码">
-            </el-input>
+          <el-form-item label="密码:">
+            <el-input show-password v-model="form.password" type="password" placeholder="请输入密码"></el-input>
           </el-form-item>
           <el-form-item label="确认密码:">
             <el-input show-password v-model="form.password_confirm" type="password" placeholder="请再次输入密码"></el-input>
           </el-form-item>
-            <el-form-item label="邮箱" >
-              <el-input v-model="form.email"></el-input>
-              <el-button type="primary" @click="send_code">获取验证码</el-button>
-            </el-form-item>
-            <el-form-item label="验证码">
-              <el-input v-model="form.code"></el-input>
-              <el-button type="primary" @click="verify_email">验证邮箱</el-button>
-            </el-form-item>
+          <el-form-item label="邮箱">
+            <el-input v-model="form.email"></el-input>
+            <el-button class="button-gradient" @click="send_code">获取验证码</el-button>
+          </el-form-item>
+          <el-form-item label="验证码">
+            <el-input v-model="form.code"></el-input>
+            <el-button class="button-gradient" @click="verify_email">验证邮箱</el-button>
+          </el-form-item>
         </el-form>
         <el-button :disabled="reg_disable" type="primary" round @click="register" class="btn">立即注册</el-button>
       </div>
+    </div>
   </div>
 </template>
 
-<style>
+<style scoped>
 .container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+.image-container {
+  width: 60%; /* 左侧占据一半屏幕宽度 */
+  background-image: url('../assets/img/background.png'); /* 背景图片 */
+  background-size: cover;
+  background-position: center;
+  height: 100%;
+}
+
+.form-container {
+  width: 40%; /* 右侧占据一半屏幕宽度 */
+  background: rgba(255, 255, 255, 0.65); /* 半透明白色背景 */
   display: flex;
   justify-content: center;
   align-items: center;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: url('../assets/img/zju.jpg');
-  background-size: 100% 100%;
-}
-
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+  padding: 20px;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* 半透明的黑色遮罩 */
 }
 
-.login-box {
-  position: relative;
-  z-index: 2;
+.register-box {
+  background: rgba(255, 255, 255, 0.95); /* 更加不透明的背景，突出表单 */
   padding: 40px;
-  background: rgba(255, 255, 255, 0.8); /* 半透明背景 */
-  backdrop-filter: blur(10px); /* 模糊效果 */
-  border-radius: 15px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 添加阴影 */
-  width: 400px;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* 表单阴影 */
+  width: 100%;
+  max-width: 400px; /* 限制表单最大宽度 */
 }
 
 h2 {
   text-align: center;
   margin-bottom: 20px;
   color: #333;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.el-form-item {
+  margin-bottom: 20px;
+}
+
+.el-input {
+  width: 100%;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+.el-button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.button-gradient {
+  background: linear-gradient(to bottom, #fd8c4c, #ffb84d); /* 温和的橙色到金色渐变 */
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  padding: 12px 20px;
+  border-radius: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.button-gradient:hover {
+  background: linear-gradient(to bottom, #ffb84d, #fd8c4c);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button-gradient:active {
+  background: linear-gradient(to bottom, #fd8c4c, #ffb84d);
+  transform: translateY(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .btn {
-  display: block;
-  width: 100%;
-  margin-top: 20px;
+  background: linear-gradient(to bottom, #fd8c4c, #ffb84d); /* 温和的橙色到金色渐变 */
+  border: none; /* 去掉边框 */
+  color: #fff;  /* 设置文本颜色为白色 */
+  font-size: 16px; /* 设置字体大小 */
+  padding: 12px 20px; /* 设置内边距 */
+  border-radius: 30px; /* 圆角效果 */
+  width: 100%; /* 按钮宽度填满容器 */
+  text-align: center; /* 文字居中 */
+  cursor: pointer; /* 设置鼠标为指针形态 */
+  transition: all 0.3s ease; /* 平滑过渡效果 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 添加阴影，增加按钮立体感 */
+}
+
+.btn:disabled {
+  background: #d3d3d3; /* 禁用时的背景色 */
+  cursor: not-allowed; /* 禁用时显示禁用光标 */
+  box-shadow: none; /* 禁用时移除阴影 */
 }
 </style>
+
 
 
 <script>

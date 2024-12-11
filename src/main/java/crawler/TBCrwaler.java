@@ -259,7 +259,7 @@ public class TBCrwaler {
                         options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
 //            options.setBinary("/usr/bin/chromium-browser");
             options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "blink-settings=imagesEnabled=false");
-            options.addArguments("--headless");
+//            options.addArguments("--headless");
             options.addArguments("--remote-allow-origins=*");
             options.addArguments("excludeSwitches", "enable-automation");
             driver = new ChromeDriver(options);

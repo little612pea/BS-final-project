@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Main {
 
@@ -1609,7 +1611,15 @@ public class Main {
             int nameStartIndex = product_Info.indexOf("user_name:") + 12; // 获取 "title" 后的索引位置
             int nameEndIndex = product_Info.indexOf(",", nameStartIndex); // 获取第一个逗号的位置
             String user_name = product_Info.substring(nameStartIndex, nameEndIndex);
-            System.out.println("user_name: " + user_name);
+            Pattern pattern = Pattern.compile("\"user_name\":\"([^\"]+)\"");
+            Matcher matcher = pattern.matcher(user_name);
+
+            if (matcher.find()) {
+                user_name = matcher.group(1);  // 获取匹配的用户名部分
+                System.out.println("Extracted username: " + user_name);
+            } else {
+                System.out.println("No username found.");
+            }
             int productInfoStartIndex = product_Info.indexOf("[{") + 1; // 获取第一个 `[` 的索引位置
             int productInfoEndIndex = product_Info.indexOf("]"); // 获取最后一个 `]` 的索引位置
             String productInfo = product_Info.substring(productInfoStartIndex, productInfoEndIndex);
@@ -1658,7 +1668,7 @@ public class Main {
             String emailContent = "亲爱的 " + user_name + ",\n\n";
             emailContent += "下列商品已经降价啦~点击链接查看详情:\n";
             exchange.getResponseHeaders().set("Content-Type", "text/plain");
-            String email = RegisterHandler.library.searchEmail(user_name).toString();
+            String email = RegisterHandler.library.searchEmail(user_name).message.toString();
             System.out.println("email: " + email);
             //如果price_updates中的price比原来的price低，发送邮件
             for (int i = 0; i < ids.size(); i++) {
@@ -1674,10 +1684,10 @@ public class Main {
                     );
                 }
             }
-            System.out.println("emailContent: " + emailContent);
             boolean mailSent = false;
             if(ids.size()>0){
                 mailSent = sendMail(email, emailContent, "商品价格更新通知");
+                System.out.println("emailContent: " + emailContent);
             }
             if (mailSent | ids.size() == 0) {
                 System.out.println("updated successfully");

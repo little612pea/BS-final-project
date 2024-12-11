@@ -1,7 +1,5 @@
 <template>
   <div class="container">
-    <div class="image-container"></div> <!-- 左侧图片区域 -->
-    <div class="form-container"> <!-- 右侧表单区域 -->
       <div id="register" class="register-box">
         <h2>新用户注册</h2>
         <el-form ref="form" :model="form" label-width="100px">
@@ -26,32 +24,20 @@
         <el-button :disabled="reg_disable" type="primary" round @click="register" class="btn">立即注册</el-button>
       </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
 .container {
   display: flex;
-  height: 100vh;
-  width: 100%;
-}
-
-.image-container {
-  width: 60%; /* 左侧占据一半屏幕宽度 */
-  background-image: url('../assets/img/background.png'); /* 背景图片 */
-  background-size: cover;
-  background-position: center;
-  height: 100%;
-}
-
-.form-container {
-  width: 40%; /* 右侧占据一半屏幕宽度 */
-  background: rgba(255, 255, 255, 0.65); /* 半透明白色背景 */
-  display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: url('../assets/img/background.png');
+  background-size: 100% 100%;
 }
 
 .register-box {
@@ -170,7 +156,9 @@ export default {
           this.form.veri_code =  res.data
           ElMessage.success("验证码发送成功") // 显示消息提醒
         }).catch(err => {
-          ElMessage.error("验证码发送失败")
+          const errorMessage = err.response?.data?.message || err.message || "未知错误";
+          ElMessage.error(`验证码发送失败: ${errorMessage}`);
+          console.error("验证码发送失败:", err); // 打印详细错误信息到控制台
         })
       } else {
         console.log('邮件格式不正确')

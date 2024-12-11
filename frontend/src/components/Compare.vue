@@ -24,22 +24,6 @@
       <el-input v-model="toSearch" :prefix-icon="Search"
                 style=" width: 15vw;min-width: 150px; margin-left: 30px; margin-right: 30px; float: right;" clearable />
       <!--在button文字的前面加上icon-->
-      <!-- 标题和搜索框 -->
-      <el-input
-          v-model="keyword"
-          :disabled="disabled"
-          :placeholder="placeholder"
-          prefix-icon="el-icon-search"
-          style="width: 350px;margin-right: 10px"
-          clearable></el-input>
-      <el-button
-          :disabled="disabled"
-          icon="Search"
-          type="primary"
-          @click="search"
-          class="button-gradient">
-        搜索
-      </el-button>
       <el-button
           @click="QueryProducts"
           style="float: right;margin-right: 10px"

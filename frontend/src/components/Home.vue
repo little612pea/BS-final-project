@@ -53,7 +53,7 @@
                 <el-icon>
                   <Postcard />
                 </el-icon>
-                <span>借书证管理</span>
+                <span>降价推送设置</span>
               </el-menu-item>
               <el-menu-item index="borrow">
                 <el-icon>

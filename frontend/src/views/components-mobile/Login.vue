@@ -76,7 +76,7 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  background: url('../assets/img/background.png');
+  background: url('../../assets/img/background.png');
   background-size: 100% 100%;
 }
 

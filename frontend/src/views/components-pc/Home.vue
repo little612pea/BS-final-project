@@ -8,7 +8,7 @@
             style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 60px;">
           <!-- 左侧 Logo 和网站标题 -->
           <div style="display: flex; align-items: center;">
-            <img src="./icons/logo.png" style="margin-right: 20px; height: 40px;" />
+            <img src="/favicon.ico" style="margin-right: 20px; height: 40px;" />
             <span style="font-size: large; font-family: 'Microsoft YaHei'; color: black; font-weight: bold;">
       商品比价网站
     </span>
@@ -194,7 +194,7 @@ export default {
 .header-gradient {
   background:
       linear-gradient(to right, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0) 100%), /* 蒙版从左到右渐变，透明度逐渐增加 */
-      url('../assets/img/sunset.png'); /* 替换为你的背景图片路径 */
+      url('../../assets/img/sunset.png'); /* 替换为你的背景图片路径 */
   background-size: auto 100%; /* 高度适应 header，高宽按比例缩放 */
   background-repeat: no-repeat; /* 避免图片重复 */
   background-position: right center; /* 图片居中 */

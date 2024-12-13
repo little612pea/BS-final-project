@@ -1,9 +1,6 @@
 <!-- TODO: YOUR CODE HERE -->
 <template>
-
-
-
-  <el-scrollbar height="100%" style="width: 100%;">
+  <el-scrollbar height="100%" style="width: 100%; display: flex; flex-direction: column; min-height: 100vh;">
     <!-- 动画节点 -->
     <div id="loader-wrapper" v-show="loadingVisible">
       <div id="loader"></div>
@@ -14,57 +11,54 @@
       </div>
     </div>
     <div class="empty-wrapper" v-show="products.length === 0 && !loadingVisible">
-      <img class="empty" src="../assets/img/empty.png" alt="No content"/>
+      <img class="empty" src="../../assets/img/empty.png" alt="No content"/>
       <div class="empty_title">请执行爬虫或加载历史记录
         <br>
         <span>空空如也...</span>
       </div>
     </div>
-    <div style="margin-top: 20px; margin-left: 40px; font-size: 2em; font-weight: bold; ">商品比价
-      <el-input v-model="toSearch" :prefix-icon="Search"
-                style=" width: 15vw;min-width: 150px; margin-left: 30px; margin-right: 30px; float: right;" clearable />
-      <!--在button文字的前面加上icon-->
-      <!-- 标题和搜索框 -->
+      <!-- 标题和按钮区域 -->
+      <header class="history-container" style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-weight: bold">商品比价</span>
+        <el-button
+            @click="QueryProducts"
+            type="primary"
+            icon="UploadFilled"
+            class="button-gradient"
+            style="padding: 5px 15px; font-size: 14px;">
+          显示历史记录
+        </el-button>
+
+        <el-button
+            @click="StoreSearchResults"
+            type="primary"
+            icon="UploadFilled"
+            class="button-gradient"
+            style="padding: 5px 15px; font-size: 14px;">
+          保存搜索结果
+        </el-button>
+      </header>
+
+      <div class="search-container">
         <el-input
             v-model="keyword"
             :disabled="disabled"
             :placeholder="placeholder"
             prefix-icon="el-icon-search"
-            style="width: 350px;margin-right: 10px"
-            clearable></el-input>
-      <el-button
-          :disabled="disabled"
-          icon="Search"
-          type="primary"
-          @click="search"
-          class="button-gradient">
-        搜索
-      </el-button>
-<!--      <el-button @click="multi_cond_ProductInfo.title = '',multi_cond_ProductInfo.img_url = '',multi_cond_ProductInfo.comment = '',  multi_cond_ProductInfo.shop = '', multi_cond_ProductInfo.deal = '',  multi_cond_ProductInfo.price = '', multi_cond_ProductInfo.source = '',-->
-<!--      multiCondProductVisible = true" style="float: right;" type="primary":icon="Search">-->
-<!--        多条件查询-->
-<!--      </el-button>-->
-      <el-button
-          @click="QueryProducts"
-          style="float: right;margin-right: 10px"
-          type="primary"
-          icon="UploadFilled"
-          class="button-gradient">
-        显示历史记录
-      </el-button>
-
-      <el-button
-          @click="StoreSearchResults"
-          style="float: right;margin-right: 10px"
-          type="primary"
-          icon="UploadFilled"
-          class="button-gradient">
-        保存搜索结果
-      </el-button>
-    </div>
-
-
-
+            style="width: 280px; margin-right: 5px; height: 40px;font-size: 15px"
+            clearable
+        ></el-input>
+        <el-button
+            :disabled="disabled"
+            icon="Search"
+            type="primary"
+            @click="search"
+            class="button-gradient"
+            style="height: 40px;font-size: 15px"
+        >
+          搜索
+        </el-button>
+      </div>
     <!-- 商品卡片显示区 -->
     <div style="display: flex;flex-wrap: wrap; justify-content: start;">
 
@@ -76,9 +70,9 @@
             <!-- 图片 -->
             <img :src="product.img_url" alt="Product Image" style="width: 100%; border-radius: 5px;"/>
 
-            <div style="margin-top: 10px; text-align: left;">
-              <p style="font-size: 18px; font-weight: bold; color: #e74c3c; margin: 5px 0;">
-                <span style="color: #333; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; -webkit-line-clamp: 3;">
+            <div style="margin-top: 0; text-align: left;">
+              <p style="font-size: 18px; font-weight: bold; color: #e74c3c;">
+                <span style="color: #333; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; -webkit-line-clamp: 3; font-size: 15px">
                   <span v-if="product.source.includes('jd')||product.source.includes('360')" style="color: #e74c3c;font-weight: bold;">京东 </span>
                   <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝 </span>
                   {{ product.title }}
@@ -87,17 +81,17 @@
 
               <!-- 价格和销量放在同一行 -->
               <div style="display: flex; align-items: center; justify-content: space-between;">
-                <p style="font-size: 24px; font-weight: bold; color: #e74c3c; margin: 5px;">
+                <p style="font-size: 20px; font-weight: bold; color: #e74c3c;">
                   ￥{{ product.price }}
                 </p>
-                <p style="font-size: 16px; color: #666; margin: 5px 0;">
+                <p style="font-size: 10px; color: #666;">
                   <span v-if="product.source.includes('jd')">{{ product.comment }}</span>
                   <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')">{{ product.deal }}</span>
                 </p>
               </div>
 
               <!-- 店铺名称 -->
-              <p style="font-size: 15px; color: #666; margin: 5px 0; display: flex; justify-content: space-between; align-items: center;">
+              <p style="font-size: 10px; color: #666;  display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: bold;">{{ product.shop }}</span>
                 <!-- 收藏按钮，右侧对齐 -->
                 <el-rate
@@ -257,7 +251,7 @@ export default {
     },
     placeholder:{
       type:String,
-      default: '请输入昵称进行搜索，可以直接回车搜索...'
+      default: '请输入要搜索的商品名称或关键词'
     }
   },
   computed: {
@@ -362,12 +356,14 @@ export default {
       console.log(this.similarProducts);
     },
     search() {
+      ElMessage.success("正在执行搜索") // 显示消息提醒
         this.products = [] // 清空列表
         this.loadingVisible = true;
         this.$emit("search", ['search', this.keyword])
       // 创建一个 EventSource 对象，连接到后端的 /search 路径
       const eventSource = new EventSource(`http://localhost:8000/search?keyword=${encodeURIComponent(this.keyword)}`);
-
+      //打印eventSource
+      ElMessage.success("eventSource: "+eventSource.url)
       // 当接收到数据时触发 'message' 事件
       eventSource.onmessage = function(event) {
         this.loadingVisible = false;
@@ -375,7 +371,7 @@ export default {
         console.log(product);
         this.products.push(product);
       }.bind(this);
-
+      ElMessage.success("正在打开连接") // 显示消息提醒
       // 当连接关闭时触发
       eventSource.onopen = function() {
         console.log("连接已打开");
@@ -405,7 +401,8 @@ export default {
               console.error("未知错误状态");
           }
         console.groupEnd(); // 结束分组
-        ElMessage.error("搜索执行失败，请检查网络或后端状态");
+        const errorMessage = err.response?.data?.message || err.message || "未知错误";
+        ElMessage.error(`搜索执行失败，请检查网络或后端状态: ${errorMessage}`);
         eventSource.close(); // 关闭连接以防止意外行为
       };
     },
@@ -554,37 +551,36 @@ export default {
 
 <style scoped>
 .productBox {
-  height: 500px;
-  width: 280px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  height: 305px;
+  width: 300px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 6px 0 rgba(0, 0, 0, 0.19);
   text-align: center;
-  margin-top: 40px;
-  margin-left: 27.5px;
+  margin-top: 5px;
+  margin-left: 10px;
   margin-right: 10px;
   border-radius: 8px;
-  padding: 7.5px;
-  padding-right: 10px;
-  padding-top: 15px;
+  padding: 5px 5px 5px 5px;
+  /* 使商品卡片自适应并按需要换行 */
+  flex: 1 1 30%;  /* 设置为 flex 布局的一部分，并在大屏上显示三个卡片 */
+  box-sizing: border-box;  /* 防止 padding 和 border 影响宽度 */
 }
 
-.newProductBox {
-  height: 500px;
-  width: 250px;
-  margin-top: 40px;
-  margin-left: 27.5px;
-  margin-right: 10px;
-  padding: 7.5px;
-  padding-right: 10px;
-  padding-top: 15px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  text-align: center;
+/* 小屏幕下（例如平板） */
+@media (max-width: 768px) {
+  .productBox {
+    width: 48%; /* 手机平板屏幕下，每行显示 2 个卡片，宽度为48% */
+    margin-left: 10px;  /* 在小屏幕上，减少卡片之间的间距 */
+    margin-right: 10px;
+  }
 }
-.chromeframe {
-  margin: 0.2em 0;
-  background: #fff;
-  color: #000;
-  padding: 0.2em 0;
+
+/* 更小屏幕（例如手机竖屏） */
+@media (max-width: 480px) {
+  .productBox {
+    width: 48%; /* 超小屏幕上（如手机竖屏），每行显示 2 个卡片，宽度为48% */
+  }
 }
+
 
 #loader-wrapper {
   position: absolute;
@@ -825,5 +821,19 @@ export default {
   background: linear-gradient(to bottom, #fd8c4c, #ffb84d); /* 激活时恢复原渐变色 */
 }
 
+.search-container {
+  margin-left: 5px;
+  margin-top: 10px;
+  display: flex;
+  flex:1;
+  align-items: center; /* Vertically center the input and button */
+}
+
+.history-container {
+  display: flex;
+  justify-content: center; /* Center the buttons horizontally */
+  gap: 10px; /* Space between the buttons */
+  margin-top: 0; /* Add some space above the buttons */
+}
 
 </style>

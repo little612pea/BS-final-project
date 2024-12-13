@@ -14,107 +14,142 @@
       </div>
     </div>
     <div class="empty-wrapper" v-show="products.length === 0 && !loadingVisible">
-      <img class="empty" src="../assets/img/empty.png" alt="No content"/>
+      <img class="empty" src="../../assets/img/empty.png" alt="No content"/>
       <div class="empty_title">请执行爬虫或加载历史记录
         <br>
         <span>空空如也...</span>
       </div>
     </div>
-    <div style="margin-top: 20px; margin-left: 40px; font-size: 2em; font-weight: bold; ">降价商品爬取
+    <div style="margin-top: 20px; margin-left: 40px; font-size: 2em; font-weight: bold; ">商品比价
       <el-input v-model="toSearch" :prefix-icon="Search"
                 style=" width: 15vw;min-width: 150px; margin-left: 30px; margin-right: 30px; float: right;" clearable />
       <!--在button文字的前面加上icon-->
+      <!-- 标题和搜索框 -->
+        <el-input
+            v-model="keyword"
+            :disabled="disabled"
+            :placeholder="placeholder"
+            prefix-icon="el-icon-search"
+            style="width: 350px;margin-right: 10px"
+            clearable></el-input>
+      <el-button
+          :disabled="disabled"
+          icon="Search"
+          type="primary"
+          @click="search"
+          class="button-gradient">
+        搜索
+      </el-button>
+<!--      <el-button @click="multi_cond_ProductInfo.title = '',multi_cond_ProductInfo.img_url = '',multi_cond_ProductInfo.comment = '',  multi_cond_ProductInfo.shop = '', multi_cond_ProductInfo.deal = '',  multi_cond_ProductInfo.price = '', multi_cond_ProductInfo.source = '',-->
+<!--      multiCondProductVisible = true" style="float: right;" type="primary":icon="Search">-->
+<!--        多条件查询-->
+<!--      </el-button>-->
       <el-button
           @click="QueryProducts"
           style="float: right;margin-right: 10px"
           type="primary"
           icon="UploadFilled"
           class="button-gradient">
-        显示收藏商品
+        显示历史记录
       </el-button>
 
       <el-button
-          @click="CrawNewPrices"
+          @click="StoreSearchResults"
           style="float: right;margin-right: 10px"
           type="primary"
           icon="UploadFilled"
           class="button-gradient">
-        爬取最新价格
+        保存搜索结果
       </el-button>
     </div>
 
 
 
-    <!-- 商品横条显示区 -->
-    <div style="display: flex; flex-direction: column; width: 100%;">
+    <!-- 商品卡片显示区 -->
+    <div style="display: flex;flex-wrap: wrap; justify-content: start;">
 
-      <!-- 商品横条 -->
-      <div
-          class="productRow"
-          v-for="product in products"
-          v-show="product.title.includes(toSearch) && product.favorite !== 0"
-          :key="product.id"
-          style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eaeaea; cursor: pointer;"
-      >
+      <!-- 商品卡片 -->
+      <div class="productBox" v-for="product in products" v-show="product.title.includes(toSearch)" :key="product.id">
+        <div @click="detailedProductInfo.title = product.title; detailedProductInfo.shop = product.shop; detailedProductInfo.price=product.price; detailedProductInfo.img_url=product.img_url; detailedProductInfo.source=product.source; detailedProductInfo.favorite = product.favorite; detailedProductVisible = true; similarProducts_id = product.id; this.similarProducts=[];this.crawled_already = false">
+        <!-- 卡片标题 -->
+          <div style="margin: 0px; padding: 0px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0);">
+            <!-- 图片 -->
+            <img :src="product.img_url" alt="Product Image" style="width: 100%; border-radius: 5px;"/>
 
-        <!-- 图片部分 -->
-        <div style="width: 100px; height: 100px; margin-right: 15px;">
-          <img
-              :src="product.img_url"
-              alt="Product Image"
-              style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;"
-          />
-        </div>
+            <div style="margin-top: 10px; text-align: left;">
+              <p style="font-size: 18px; font-weight: bold; color: #e74c3c; margin: 5px 0;">
+                <span style="color: #333; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; -webkit-line-clamp: 3;">
+                  <span v-if="product.source.includes('jd')||product.source.includes('360')" style="color: #e74c3c;font-weight: bold;">京东 </span>
+                  <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝 </span>
+                  {{ product.title }}
+                </span>
+              </p>
 
-        <!-- 信息部分 -->
-        <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+              <!-- 价格和销量放在同一行 -->
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <p style="font-size: 24px; font-weight: bold; color: #e74c3c; margin: 5px;">
+                  ￥{{ product.price }}
+                </p>
+                <p style="font-size: 16px; color: #666; margin: 5px 0;">
+                  <span v-if="product.source.includes('jd')">{{ product.comment }}</span>
+                  <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')">{{ product.deal }}</span>
+                </p>
+              </div>
 
-          <!-- 标题和来源 -->
-          <div style="margin-bottom: 5px;">
-            <p style="font-size: 16px; font-weight: bold; color: #333; margin: 0;">
-              <span v-if="product.source.includes('jd') || product.source.includes('360')" style="color: #e74c3c; font-weight: bold;">京东 </span>
-              <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')" style="color: #e74c3c; font-weight: bold;">淘宝 </span>
-              {{ product.title }}
-            </p>
+              <!-- 店铺名称 -->
+              <p style="font-size: 15px; color: #666; margin: 5px 0; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold;">{{ product.shop }}</span>
+                <!-- 收藏按钮，右侧对齐 -->
+                <el-rate
+                    v-model="product.favorite"
+                    :max="1"
+                    icon-classes="el-icon-heart"
+                    @change="toggleFavorite(product)"
+                    @click.stop
+                    style="color: #f39c12;">
+                </el-rate>
+              </p>
+
+
+            </div>
           </div>
 
-          <!-- 店铺名称 -->
-          <p style="font-size: 14px; color: #666; margin: 0;">
-            店铺: <span style="font-weight: bold;">{{ product.shop }}</span>
-          </p>
-
-          <!-- 销量或评论 -->
-          <p style="font-size: 14px; color: #999; margin: 0;">
-            <span v-if="product.source.includes('jd')">评论数: {{ product.comment }}</span>
-            <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')">销量: {{ product.deal }}</span>
-          </p>
 
         </div>
-
-        <!-- 价格部分 -->
-        <div style="width: 150px; text-align: right;">
-          <p style="font-size: 20px; font-weight: bold; color: #e74c3c; margin: 0;">
-            旧价格: ￥{{ product.price }}<br />
-            新价格: ￥<span v-if="this.priceUpdates">{{ this.priceUpdates[product.id] }}</span><span v-else>？</span>
-          </p>
-        </div>
-
-        <!-- 删除按钮 -->
-        <div style="margin-left: 10px;">
-          <button
-              @click.stop="product.favorite = 0; products = products.filter(p => p.favorite !== 0);"
-              @click="toggleFavorite(product)"
-              style="background-color: #e74c3c; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-            删除
-          </button>
-        </div>
-
       </div>
+
+
     </div>
 
 
-
-
+    <!-- 按照各种条件搜索商品 -->
+    <el-dialog v-model="multiCondProductVisible" title="多条件商品查询" width="30%" align-center>
+      <div style="margin-left: 1vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+        书名(模糊查询)：
+        <el-input v-model="multi_cond_ProductInfo.title" style="width: 12.5vw;" clearable />
+      </div>
+      <div style="margin-left: 1vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+        店名(模糊查询)：
+        <el-input v-model="multi_cond_ProductInfo.shop" style="width: 12.5vw;" clearable />
+      </div>
+      <div style="margin-left: 1vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+        来源(精确点查)：
+        <el-input v-model="multi_cond_ProductInfo.source" style="width: 12.5vw;" clearable />
+      </div>
+      <!-- 价格:下限-上限 -->
+      <div style="margin-left: 1vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+        价格(下限-上限)：
+        <el-input v-model="multi_cond_ProductInfo.minPrice" style="width: 5vw;" clearable />
+        <span> - </span>
+        <el-input v-model="multi_cond_ProductInfo.maxPrice" style="width: 5vw;" clearable />
+      </div>
+      <template #footer>
+                <span>
+                    <el-button @click="multiCondProductVisible = false">取消</el-button>
+                    <el-button type="primary" @click="Multi_condition_search">确定</el-button>
+                </span>
+      </template>
+    </el-dialog>
 
     <el-dialog
         v-model="detailedProductVisible"
@@ -222,7 +257,7 @@ export default {
     },
     placeholder:{
       type:String,
-      default: '请输入昵称进行搜索，可以直接回车搜索...'
+      default: '请输入要搜索的商品名称或关键词'
     }
   },
   computed: {
@@ -238,9 +273,6 @@ export default {
       products: [], // 商品列表
       similarProducts: [], // 相似商品列表
       filteredProducts: [], // 过滤后的商品列表
-      updatedProducts:[],
-      compareProducts: [], // 收藏商品列表
-      priceUpdates: {}, // 价格更新
       Delete,
       Edit,
       Search,
@@ -296,46 +328,48 @@ export default {
   },
   methods: {
     getMostSimilarProducts(products, targetIndex, topN = 3) {
-      // 计算 Jaccard 相似性
-      function jaccardIndex(set1, set2) {
-        const intersection = new Set([...set1].filter(item => set2.has(item)));
-        const union = new Set([...set1, ...set2]);
-        return intersection.size / union.size;
-      }
+  // 计算 Jaccard 相似性
+  function jaccardIndex(set1, set2) {
+    const intersection = new Set([...set1].filter(item => set2.has(item)));
+    const union = new Set([...set1, ...set2]);
+    return intersection.size / union.size;
+  }
 
-      // 提取标题中的关键词并转换为 Set（使用空格分割单词）
-      function extractKeywords(title) {
-        return new Set(title.toLowerCase().split(/\s+/));
-      }
-      console.log(targetIndex)
-      const targetProduct = products[targetIndex];
-      console.log(targetProduct)
-      const targetKeywords = extractKeywords(targetProduct.title);
+  // 提取标题中的关键词并转换为 Set（使用空格分割单词）
+  function extractKeywords(title) {
+    return new Set(title.toLowerCase().split(/\s+/));
+  }
+  console.log(targetIndex)
+  const targetProduct = products[targetIndex];
+  console.log(targetProduct)
+  const targetKeywords = extractKeywords(targetProduct.title);
 
-      const similarityScores = products.map((product, index) => {
-        if (index === targetIndex) return { index, score: -1 }; // 排除自己
-        const keywords = extractKeywords(product.title);
-        const score = jaccardIndex(targetKeywords, keywords);
-        return { index, score };
-      });
+  const similarityScores = products.map((product, index) => {
+    if (index === targetIndex) return { index, score: -1 }; // 排除自己
+    const keywords = extractKeywords(product.title);
+    const score = jaccardIndex(targetKeywords, keywords);
+    return { index, score };
+  });
 
-      // 按照相似度降序排序
-      similarityScores.sort((a, b) => b.score - a.score);
+  // 按照相似度降序排序
+  similarityScores.sort((a, b) => b.score - a.score);
 
-      // 返回前 N 个相似的商品
-      return similarityScores.slice(0, topN).map(item => products[item.index]);
-    },
+  // 返回前 N 个相似的商品
+  return similarityScores.slice(0, topN).map(item => products[item.index]);
+},
     get_similar_products(id){
       this.similarProducts = this.getMostSimilarProducts(this.products, id, 10);
       console.log(this.similarProducts);
     },
     search() {
-      this.products = [] // 清空列表
-      this.loadingVisible = true;
-      this.$emit("search", ['search', this.keyword])
+      ElMessage.success("正在执行搜索") // 显示消息提醒
+        this.products = [] // 清空列表
+        this.loadingVisible = true;
+        this.$emit("search", ['search', this.keyword])
       // 创建一个 EventSource 对象，连接到后端的 /search 路径
       const eventSource = new EventSource(`http://localhost:8000/search?keyword=${encodeURIComponent(this.keyword)}`);
-
+      //打印eventSource
+      ElMessage.success("eventSource: "+eventSource.url)
       // 当接收到数据时触发 'message' 事件
       eventSource.onmessage = function(event) {
         this.loadingVisible = false;
@@ -343,7 +377,7 @@ export default {
         console.log(product);
         this.products.push(product);
       }.bind(this);
-
+      ElMessage.success("正在打开连接") // 显示消息提醒
       // 当连接关闭时触发
       eventSource.onopen = function() {
         console.log("连接已打开");
@@ -361,19 +395,20 @@ export default {
         console.error("发生错误:");
         console.error("错误详情：", error); // 打印完整错误对象
 
-        console.error("连接状态:", error.target.readyState); // 打印连接状态
-        switch (error.target.readyState) {
-          case EventSource.CONNECTING:
-            console.warn("尝试重新连接...");
-            break;
-          case EventSource.CLOSED:
-            console.error("连接已关闭，无法恢复");
-            break;
-          default:
-            console.error("未知错误状态");
-        }
+          console.error("连接状态:", error.target.readyState); // 打印连接状态
+          switch (error.target.readyState) {
+            case EventSource.CONNECTING:
+              console.warn("尝试重新连接...");
+              break;
+            case EventSource.CLOSED:
+              console.error("连接已关闭，无法恢复");
+              break;
+            default:
+              console.error("未知错误状态");
+          }
         console.groupEnd(); // 结束分组
-        ElMessage.error("搜索执行失败，请检查网络或后端状态");
+        const errorMessage = err.response?.data?.message || err.message || "未知错误";
+        ElMessage.error(`搜索执行失败，请检查网络或后端状态: ${errorMessage}`);
         eventSource.close(); // 关闭连接以防止意外行为
       };
     },
@@ -435,28 +470,21 @@ export default {
             })
           })
     },
-    CrawNewPrices(){
-      this.priceUpdates = {};
-      console.log("CrawNewPrices called")
-      //遍历products,如果favorite为1,则将其加入到compare_products中
-      this.products.forEach(product => {
-        if(product.favorite === 1){
-          this.compareProducts.push(product)
-        }
-      })
-      axios.post('/update', {
+    StoreSearchResults(){
+      console.log("StoreSearchResults called")
+      axios.post('/home/product/', {
         params: {
-          user_name:this.$store.state.username,
-          product: this.compareProducts
+          product: this.products
         }
       }).then(res => {
-        console.log(res.data)
-        this.priceUpdates = res.data;
-        ElMessage.success("更新商品价格成功")
+        ElMessage.success("保存搜索结果成功")
       }).catch(err => {
-        ElMessage.error("更新商品价格失败")
+        ElMessage.error("保存搜索结果失败")
       })
     },
+    // mounted() { // 当页面被渲染时
+    //   this.QueryProducts() // 查询商品
+    // },
     sortedProducts() {
       let filteredProducts = this.similarProducts;
 
@@ -522,7 +550,7 @@ export default {
         ElMessage.error("修改商品收藏状态失败")
       })
     }
-  }
+}
 }
 
 </script>

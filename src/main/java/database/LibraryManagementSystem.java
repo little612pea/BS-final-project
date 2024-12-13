@@ -38,20 +38,7 @@ public interface LibraryManagementSystem {
      *
      * @param product all attributes of the product
      */
-    ApiResult storeProduct(Product product);
-
-    /**
-     * increase the product's inventory by productId & deltaStock.
-     *
-     * Note that:
-     *      (1) you need to check the correctness of productId
-     *      (2) deltaStock can be negative, but make sure that
-     *          the result of product.source + deltaStock is not negative!
-     *
-     * @param productId product's productId
-     * @param deltaStock increase count to product's source, must be greater
-     */
-    ApiResult incProductStock(int productId, int deltaStock);
+    ApiResult storeProduct(String username,Product product);
 
     /**
      * batch store products.
@@ -69,17 +56,8 @@ public interface LibraryManagementSystem {
      *
      * @param products list of products to be stored
      */
-    ApiResult storeProduct(List<Product> products);
+    ApiResult storeProduct(String username,List<Product> products);
 
-    /**
-     * remove this product from library system.
-     *
-     * Note that if someone has not returned this product,
-     * the product should not be removed!
-     *
-     * @param productId the product to be removed
-     */
-    ApiResult removeProduct(int productId);
 
     /**
      * modify a product's information by productId.productId.
@@ -88,9 +66,10 @@ public interface LibraryManagementSystem {
      *
      * @param product the product to be modified
      */
-    ApiResult modifyLikeStatus(Product product);
-
-    ApiResult modifyPrice(Product product);
+    ApiResult modifyLikeStatus(String user_name,Product product);
+    public ApiResult getAllUsernames();
+    public ApiResult getUserFavoriteProducts(String username);
+    public ApiResult modifyPrice(String user_name,Product product);
 
     /**
      * query products according to different query conditions.
@@ -109,68 +88,8 @@ public interface LibraryManagementSystem {
      * @return query results should be returned by ApiResult.payload
      *         and should be an instance of {@link queries.ProductQueryResults}
      */
-    ApiResult queryProduct(ProductQueryConditions conditions);
+    ApiResult queryProduct(String user_name, ProductQueryConditions conditions);
 
-    /* Interface for borrow & return products */
-
-    /**
-     * a user borrows one product with the specific card.
-     * the borrow operation will success iff there are
-     * enough products in source & the user has not borrowed
-     * the product or has returned it.
-     *
-     * @param borrow borrow information, include borrower &
-     *               product's id & time
-     */
-    ApiResult borrowProduct(Borrow borrow);
-
-    /**
-     * A user return one product with specific card.
-     *
-     * @param borrow borrow information, include borrower & product's id & return time
-     */
-    ApiResult returnProduct(Borrow borrow);
-
-    /**
-     * list all borrow histories for a specific card.
-     * the returned records should be sorted by borrow_time DESC, productId ASC
-     *
-     * @param cardId show which card's borrow history
-     * @return query results should be returned by ApiResult.payload
-     *         and should be an instance of {@link queries.BorrowHistories}
-     */
-    ApiResult showBorrowHistory(int cardId);
-
-    /**
-     * create a new borrow card. do nothing and return failed if
-     * the card already exists.
-     *
-     * Note that card_id should be stored to card after successfully
-     * completing this operation.
-     *
-     * @param card all attributes of the card
-     */
-    ApiResult registerCard(Card card);
-
-    /**
-     * simply remove a card.
-     *
-     * Note that if there exists any un-returned products under this user,
-     * this card should not be removed.
-     *
-     * @param cardId card to be removed
-     */
-    ApiResult removeCard(int cardId);
-
-    /**
-     * list all cards order by card_id.
-     *
-     * @return query results should be returned by ApiResult.payload
-     *         and should be an instance of {@link queries.CardList}
-     */
-    ApiResult showCards();
-
-    ApiResult ModifyCard(int cardId, String name, String department, String type);
 
     /**
      * reset database to its initial state.
@@ -180,4 +99,5 @@ public interface LibraryManagementSystem {
     ApiResult login(String username, String password);
     ApiResult register(String username, String password, String email);
     ApiResult searchEmail(String username);
+    ApiResult createUserTable(String username);
 }

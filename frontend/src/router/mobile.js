@@ -1,6 +1,5 @@
 import ProductVue from '@/views/components-mobile/Product.vue'
 import CardVue from '@/views/components-mobile/Compare.vue'
-import BorrowVue from '@/views/components-mobile/Borrow.vue'
 import SpaceVue from "@/views/components-mobile/Space.vue";
 import LoginVue from '@/views/components-mobile/Login.vue'
 import HomeVue from "@/views/components-mobile/Home.vue";
@@ -29,10 +28,6 @@ export const mobile = [
                     {
                         path: '/home/card', // 第二个tab
                         component: CardVue,
-                    },
-                    {
-                        path: '/home/borrow', // 第三个tab
-                        component: BorrowVue,
                     },
                     {
                         path: '/home/space',

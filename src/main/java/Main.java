@@ -45,8 +45,6 @@ import handlers.LoginHandler;
 import handlers.RegisterHandler;
 import handlers.SearchHandeler;
 import handlers.PriceUpdateHandler;
-import handlers.CardHandler;
-import handlers.BorrowHandler;
 import handlers.ProductHandler;
 
 public class Main {
@@ -65,16 +63,12 @@ public class Main {
                 System.exit(1);
             }
             /* do somethings */
-            CardHandler cardHandler = new CardHandler();
-            BorrowHandler borrowHandler = new BorrowHandler();
             ProductHandler productHandler = new ProductHandler();
             LoginHandler loginHandler = new LoginHandler();
             RegisterHandler registerHandler = new RegisterHandler();
             SearchHandeler searchHandeler = new SearchHandeler();
             PriceUpdateHandler priceUpdateHandler = new PriceUpdateHandler();
             HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
-            server.createContext("/home/card", cardHandler);
-            server.createContext("/home/borrow", borrowHandler);
             server.createContext("/home/product", productHandler);
             server.createContext("/login", loginHandler);
             server.createContext("/register", registerHandler);

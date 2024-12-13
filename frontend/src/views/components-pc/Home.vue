@@ -55,12 +55,6 @@
                 </el-icon>
                 <span>降价推送设置</span>
               </el-menu-item>
-              <el-menu-item index="borrow">
-                <el-icon>
-                  <Tickets />
-                </el-icon>
-                <span>查询历史记录</span>
-              </el-menu-item>
               <el-menu-item index="space">
                 <el-icon>
                   <Tickets />
@@ -91,6 +85,7 @@ import { mapState } from 'vuex';
 import defaultAvatar from '@/assets/img/logo.png';
 
 export default {
+  components: {Tickets, Postcard, Reading},
   data() {
     return {
       newUsername: ''

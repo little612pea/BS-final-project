@@ -322,44 +322,44 @@ export default {
   },
   methods: {
     getMostSimilarProducts(products, targetIndex, topN = 3) {
-  // 计算 Jaccard 相似性
-  function jaccardIndex(set1, set2) {
-    const intersection = new Set([...set1].filter(item => set2.has(item)));
-    const union = new Set([...set1, ...set2]);
-    return intersection.size / union.size;
-  }
+      // 计算 Jaccard 相似性
+      function jaccardIndex(set1, set2) {
+        const intersection = new Set([...set1].filter(item => set2.has(item)));
+        const union = new Set([...set1, ...set2]);
+        return intersection.size / union.size;
+      }
 
-  // 提取标题中的关键词并转换为 Set（使用空格分割单词）
-  function extractKeywords(title) {
-    return new Set(title.toLowerCase().split(/\s+/));
-  }
-  console.log(targetIndex)
-  const targetProduct = products[targetIndex];
-  console.log(targetProduct)
-  const targetKeywords = extractKeywords(targetProduct.title);
+      // 提取标题中的关键词并转换为 Set（使用空格分割单词）
+      function extractKeywords(title) {
+        return new Set(title.toLowerCase().split(/\s+/));
+      }
+      console.log(targetIndex)
+      const targetProduct = products[targetIndex];
+      console.log(targetProduct)
+      const targetKeywords = extractKeywords(targetProduct.title);
 
-  const similarityScores = products.map((product, index) => {
-    if (index === targetIndex) return { index, score: -1 }; // 排除自己
-    const keywords = extractKeywords(product.title);
-    const score = jaccardIndex(targetKeywords, keywords);
-    return { index, score };
-  });
+      const similarityScores = products.map((product, index) => {
+        if (index === targetIndex) return { index, score: -1 }; // 排除自己
+        const keywords = extractKeywords(product.title);
+        const score = jaccardIndex(targetKeywords, keywords);
+        return { index, score };
+      });
 
-  // 按照相似度降序排序
-  similarityScores.sort((a, b) => b.score - a.score);
+      // 按照相似度降序排序
+      similarityScores.sort((a, b) => b.score - a.score);
 
-  // 返回前 N 个相似的商品
-  return similarityScores.slice(0, topN).map(item => products[item.index]);
-},
+      // 返回前 N 个相似的商品
+      return similarityScores.slice(0, topN).map(item => products[item.index]);
+    },
     get_similar_products(id){
       this.similarProducts = this.getMostSimilarProducts(this.products, id, 10);
       console.log(this.similarProducts);
     },
     search() {
       ElMessage.success("正在执行搜索") // 显示消息提醒
-        this.products = [] // 清空列表
-        this.loadingVisible = true;
-        this.$emit("search", ['search', this.keyword])
+      this.products = [] // 清空列表
+      this.loadingVisible = true;
+      this.$emit("search", ['search', this.keyword])
       // 创建一个 EventSource 对象，连接到后端的 /search 路径
       const eventSource = new EventSource(`http://localhost:8000/search?keyword=${encodeURIComponent(this.keyword)}`);
       //打印eventSource
@@ -389,39 +389,20 @@ export default {
         console.error("发生错误:");
         console.error("错误详情：", error); // 打印完整错误对象
 
-          console.error("连接状态:", error.target.readyState); // 打印连接状态
-          switch (error.target.readyState) {
-            case EventSource.CONNECTING:
-              console.warn("尝试重新连接...");
-              break;
-            case EventSource.CLOSED:
-              console.error("连接已关闭，无法恢复");
-              break;
-            default:
-              console.error("未知错误状态");
-          }
+        console.error("连接状态:", error.target.readyState); // 打印连接状态
+        switch (error.target.readyState) {
+          case EventSource.CONNECTING:
+            console.warn("尝试重新连接...");
+            break;
+          case EventSource.CLOSED:
+            console.error("连接已关闭，无法恢复");
+            break;
+          default:
+            console.error("未知错误状态");
+        }
         console.groupEnd(); // 结束分组
-        const errorMessage = err.response?.data?.message || err.message || "未知错误";
-        ElMessage.error(`搜索执行失败，请检查网络或后端状态: ${errorMessage}`);
         eventSource.close(); // 关闭连接以防止意外行为
       };
-    },
-    DetailedProductInfo(){
-      axios.post("/book/",
-          { // 请求体
-            id: this.DetailedProductInfo.id,
-            card_id:this.DetailedProductInfo.card_id
-          })
-          .then(response => {
-            ElMessage.success("图书借阅成功") // 显示消息提醒
-            this.borrowBookVisible = false // 将对话框设置为不可见
-            this.QueryBooks() // 重新查询图书以刷新页面
-          })
-          .catch(error=>{
-            ElMessage.error("图书借阅失败,可能借书证无效")
-            this.borrowBookVisible = false
-            this.QueryBorrows()
-          })
     },
     Multi_condition_search(){
       this.priceHistoryVisible = false;
@@ -454,7 +435,9 @@ export default {
     QueryProducts() {
       this.products = [] // 清空列表
       console.log("QueryProducts called")
-      axios.get('/home/product') // 向/product发出GET请求
+      axios.get('/home/product',
+          { params: { // 请求体
+              user_name:this.$store.state.username} }) // 向/product发出GET请求
           .then(response => {
             // let cleanedData = response.data.replace(/[\n\r\t]/g, '');
             let products = response.data;
@@ -468,6 +451,7 @@ export default {
       console.log("StoreSearchResults called")
       axios.post('/home/product/', {
         params: {
+          user_name: this.$store.state.username,
           product: this.products
         }
       }).then(res => {
@@ -536,6 +520,7 @@ export default {
       console.log("toggleFavorite called")
       axios.post('/home/product/', {
         params: {
+          user_name: this.$store.state.username,
           like: product
         }
       }).then(res => {
@@ -544,7 +529,7 @@ export default {
         ElMessage.error("修改商品收藏状态失败")
       })
     }
-}
+  }
 }
 
 </script>

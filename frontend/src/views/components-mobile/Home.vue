@@ -67,11 +67,11 @@
           <span style="display: block;">降价推送</span>
         </el-menu-item>
 
-        <el-menu-item index="borrow">
+        <el-menu-item index="space">
           <el-icon style="display: block; margin-bottom: 5px;">
-            <Clock />
+            <User />
           </el-icon>
-          <span style="display: block;">历史记录</span>
+          <span style="display: block;">个人空间</span>
         </el-menu-item>
       </el-menu>
     </footer>

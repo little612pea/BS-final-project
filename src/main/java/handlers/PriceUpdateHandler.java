@@ -7,6 +7,7 @@ import com.sun.net.httpserver.HttpHandler;
 import crawler.PriceCrwaler;
 import database.LibraryManagementSystem;
 import database.LibraryManagementSystemImpl;
+import entities.Product;
 import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
@@ -20,11 +21,16 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class PriceUpdateHandler implements HttpHandler {
     private Map<String, String> verificationCodes = new HashMap<>();
     private static DatabaseConnector connector = null;
     private static LibraryManagementSystem library = null;
     private static ConnectConfig connectConfig = null;
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     static {
         try {
@@ -74,7 +80,11 @@ public class PriceUpdateHandler implements HttpHandler {
         if (requestMethod.equals("POST")) {
             // 处理POST
             handlePostRequest(exchange);
-        } else {
+        }else if (requestMethod.equals("OPTIONS")) {
+            handleOptionsRequest(exchange);
+        }
+
+        else {
             // 其他请求返回405 Method Not Allowed
             exchange.sendResponseHeaders(405, -1);
         }
@@ -167,7 +177,7 @@ public class PriceUpdateHandler implements HttpHandler {
         }
         //传入三个list，调用爬虫函数
         PriceCrwaler priceCrwaler = new PriceCrwaler();
-        Map<Integer, Double> price_updates = priceCrwaler.craw(ids, prices,titles, sources);
+        Map<Integer, Double> price_updates = priceCrwaler.craw(ids, prices,titles, sources,user_name);
         //设置邮箱内容
         String emailContent = "亲爱的 " + user_name + ",\n\n";
         emailContent += "下列商品已经降价啦~点击链接查看详情:\n";
@@ -278,5 +288,95 @@ public class PriceUpdateHandler implements HttpHandler {
             e.printStackTrace();
         }
         return false;
+    }
+    //执行定时任务
+    public void startScheduledTask() {
+        Runnable task = () -> {
+            try {
+                System.out.println("Executing scheduled task to check price updates...");
+
+                // 遍历所有用户并执行价格更新操作
+                List<String> allUsers = (List<String>) RegisterHandler.library.getAllUsernames().payload; // 假设有方法获取所有用户名
+                for (String userName : allUsers) {
+                    handlePriceUpdateForUser(userName);
+                }
+            } catch (Exception e) {
+                System.err.println("Error occurred while executing scheduled task: " + e.getMessage());
+                e.printStackTrace();
+            }
+        };
+
+        // 每10分钟执行一次
+        scheduler.scheduleAtFixedRate(task, 0, 10, TimeUnit.MINUTES);
+    }
+    private void handlePriceUpdateForUser(String userName) {
+        try {
+            // 获取用户收藏的商品信息
+            List<Integer> ids = new ArrayList<>();
+            List<Double> prices = new ArrayList<>();
+            List<String> sources = new ArrayList<>();
+            List<String> titles = new ArrayList<>();
+
+            // 从数据库或其他服务中加载用户的收藏数据
+            List<Product> favoriteProducts = (List<Product>) RegisterHandler.library.getUserFavoriteProducts(userName).payload;
+            for (Product product : favoriteProducts) {
+                ids.add(product.getProductId());
+                prices.add(product.getPrice());
+                titles.add(product.getTitle());
+                sources.add(product.getSource());
+            }
+
+            // 调用爬虫函数获取价格更新
+            PriceCrwaler priceCrwaler = new PriceCrwaler();
+            Map<Integer, Double> priceUpdates = priceCrwaler.craw(ids, prices, titles, sources, userName);
+
+            // 准备邮件内容
+            StringBuilder emailContent = new StringBuilder();
+            emailContent.append("亲爱的 ").append(userName).append(",\n\n");
+            emailContent.append("下列商品已经降价啦~点击链接查看详情:\n");
+
+            // 获取用户邮箱
+            String email = RegisterHandler.library.searchEmail(userName).message.toString();
+
+            for (int i = 0; i < ids.size(); i++) {
+                int productId = ids.get(i);
+                double originalPrice = prices.get(i);
+                double newPrice = priceUpdates.getOrDefault(productId, originalPrice);
+
+                if (newPrice < originalPrice) {
+                    emailContent.append(String.format(
+                            "商品ID: %d\n原价格: ￥%.2f\n现价格: ￥%.2f\n商品链接: %s\n\n",
+                            productId, originalPrice, newPrice, sources.get(i)
+                    ));
+                }
+            }
+
+            // 发送邮件
+            if (!ids.isEmpty()) {
+                boolean mailSent = sendMail(email, emailContent.toString(), "商品价格更新通知");
+                if (mailSent) {
+                    System.out.println("Price update email sent to: " + email);
+                } else {
+                    System.err.println("Failed to send email to: " + email);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error while handling price update for user " + userName + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    private static void handleOptionsRequest(HttpExchange exchange) throws IOException {
+        // 设置响应头
+        exchange.getResponseHeaders().set("Allow", "POST");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "POST");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+        exchange.getResponseHeaders().set("Access-Control-Max-Age", "86400");
+        exchange.getResponseHeaders().set("Content-Length", "0");
+
+        // 发送响应状态码 204 (No Content)
+        exchange.sendResponseHeaders(204, -1);
+
+        // 结束请求
+        exchange.close();
     }
 }

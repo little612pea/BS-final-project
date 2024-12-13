@@ -78,7 +78,11 @@ public class RegisterHandler implements HttpHandler {
         } else if (requestMethod.equals("POST")) {
             // 处理POST
             handlePostRequest(exchange);
-        } else {
+        }else if(requestMethod.equals("OPTIONS")){
+            // options请求不做处理
+            handleOptionsRequest(exchange);
+        }
+        else {
             // 其他请求返回405 Method Not Allowed
             exchange.sendResponseHeaders(405, -1);
         }
@@ -239,5 +243,19 @@ public class RegisterHandler implements HttpHandler {
             e.printStackTrace();
         }
         return false;
+    }
+    private static void handleOptionsRequest(HttpExchange exchange) throws IOException {
+        // 设置响应头
+        exchange.getResponseHeaders().set("Allow", "POST");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "POST");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+        exchange.getResponseHeaders().set("Access-Control-Max-Age", "86400");
+        exchange.getResponseHeaders().set("Content-Length", "0");
+
+        // 发送响应状态码 204 (No Content)
+        exchange.sendResponseHeaders(204, -1);
+
+        // 结束请求
+        exchange.close();
     }
 }

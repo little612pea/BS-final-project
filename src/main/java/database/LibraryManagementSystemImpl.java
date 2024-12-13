@@ -1,5 +1,6 @@
 package database;
 
+import com.google.protobuf.Api;
 import entities.Product;
 import entities.Borrow;
 import entities.Card;
@@ -45,8 +46,52 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         }
     }
 
+    public ApiResult createAccountTable(){
+        String createTableSQL = "CREATE TABLE IF NOT EXISTS users (\n"
+                + "    id INT AUTO_INCREMENT PRIMARY KEY,\n"
+                + "    username VARCHAR(255) UNIQUE NOT NULL,\n"
+                + "    password VARCHAR(255) NOT NULL,\n"
+                + "    email VARCHAR(255) UNIQUE NOT NULL\n"
+                + ")engine=innodb charset=utf8mb4";
+        try (PreparedStatement statement = this.connector.getConn().prepareStatement(createTableSQL)) {
+            // 执行创建表的 SQL
+            statement.executeUpdate();
+            System.out.println("Table users created successfully.");
+            return new ApiResult(true, "Table users created successfully.");
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+            return new ApiResult(false, "Failed to create table users");
+        }
+    }
+    public ApiResult createUserTable(String username) {
+        // 动态拼接表名
+        String tableName = "product_" + username;
+        ApiResult accountTable = createAccountTable();
+        // SQL 语句：创建表（如果不存在）
+        String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
+                + "    productId INT AUTO_INCREMENT PRIMARY KEY,\n"
+                + "    comment varchar(255) null,\n"
+                + "    title VARCHAR(255) NOT NULL,\n"
+                + "    shop VARCHAR(255) NOT NULL,\n"
+                + "    deal VARCHAR(255),\n"
+                + "    img_url VARCHAR(1000),\n"
+                + "    price DOUBLE NOT NULL,\n"
+                + "    source VARCHAR(1000) NOT NULL,\n"
+                + "    favorite INT DEFAULT 0\n"
+                + ")engine=innodb charset=utf8mb4";
+        try (PreparedStatement statement = this.connector.getConn().prepareStatement(createTableSQL)) {
+            // 执行创建表的 SQL
+            statement.executeUpdate();
+            return new ApiResult(true, "Table " + tableName + " created successfully.");
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+            return new ApiResult(false, "Failed to create table for username " + username);
+        }
+    }
+
     public ApiResult register(String username, String password, String email) {
         // 检查用户名是否已存在
+        createUserTable(username);
         String checkSql = "SELECT * FROM users WHERE username = ?";
         try (PreparedStatement statement = this.connector.getConn().prepareStatement(checkSql)) {
             statement.setString(1, username);
@@ -95,13 +140,33 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             return new ApiResult(false, "Database error");
         }
     }
+    public ApiResult getAllUsernames() {
+        String sql = "SELECT username FROM users"; // 假设用户表中包含 username 字段
+        List<String> usernameList = new ArrayList<>();
+        try (PreparedStatement statement = this.connector.getConn().prepareStatement(sql)) {
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                usernameList.add(resultSet.getString("username"));
+            }
+            return new ApiResult(true, usernameList);
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+            return new ApiResult(false, "Database error");
+        }
+    }
 
     @Override
-    public ApiResult storeProduct(Product product) {
-        String countSQL = "SELECT COUNT(*) FROM product";
-        String deleteSQL = "DELETE FROM product ORDER BY productId ASC LIMIT 500"; // 假设 id 是自增主键
-        System.out.printf("comment:%s,title:%s,shop:%s,deal:%s,img_url:%s,price:%f,source:%s\n", product.getComment(), product.getTitle(), product.getShop(),product.getDeal(), product.getImg(), product.getPrice(), product.getSource());
-        String insertSQL = "INSERT INTO product VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public ApiResult storeProduct(String userName, Product product) {
+        String tableName = "product_" + userName;
+
+        // 查询总数 SQL
+        String countSQL = "SELECT COUNT(*) FROM " + tableName;
+
+        // 删除最旧的 500 条记录 SQL
+        String deleteSQL = "DELETE FROM " + tableName + " ORDER BY productId ASC LIMIT 500";
+
+        // 插入新记录 SQL
+        String insertSQL = "INSERT INTO " + tableName + " VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = this.connector.getConn().prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement countStatement = this.connector.getConn().prepareStatement(countSQL);
              PreparedStatement deleteStatement = this.connector.getConn().prepareStatement(deleteSQL);) {
@@ -111,7 +176,6 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             if (countResult.next()) {
                 recordCount = countResult.getInt(1);
             }
-            System.out.println(recordCount);
             if (recordCount > 2000) {
                 deleteStatement.executeUpdate();
             }
@@ -136,7 +200,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             statement.setString(7,product.getSource());
             statement.setInt(8,product.getFavorite());
             // 执行插入
-            if(isProductDuplicate(product)){
+            if(isProductDuplicate(userName,product)){
                 System.out.println("duplicate products");
                 return new ApiResult(false,"duplicate products,no rows affected.");
             }
@@ -170,9 +234,10 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
 
     }
 
-    private boolean isProductDuplicate(Product product) throws SQLException {
+    private boolean isProductDuplicate(String user_name,Product product) throws SQLException {
         Connection conn = this.connector.getConn();
-        String checkSql = "SELECT * FROM product WHERE comment = ? AND title = ? AND shop = ? AND deal = ? AND img_url = ?";
+        String tableName = "product_" + user_name;
+        String checkSql = "SELECT * FROM " + tableName + " WHERE comment = ? AND title = ? AND shop = ? AND deal = ? AND img_url = ?";
         try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
             stmt.setString(1, product.getComment());
             stmt.setString(2, product.getTitle());
@@ -187,57 +252,13 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     }
 
     @Override
-    public ApiResult incProductStock(int productId, int deltaStock) {
-        try(PreparedStatement ps=connector.getConn().prepareStatement("select * from product where productId=?" )){
-            ps.setInt(1,productId);
-            ResultSet rs=ps.executeQuery();
-            if(!rs.next()){
-                return new ApiResult(false, "fail");
-            }
-            else{
-                if(rs.getInt("source")+deltaStock<0){
-                    System.out.println("source is not enough");
-                    return new ApiResult(false, "fail");
-                }
-                else{
-                    try(PreparedStatement ps1=connector.getConn().prepareStatement("update product set source=source+? where productId=?" )){
-                        ps1.setInt(1,deltaStock);
-                        ps1.setInt(2,productId);
-
-                        if(ps1.executeUpdate()>0){
-                            commit(connector.getConn());
-                            //System.out.println("success");
-                            return new ApiResult(true, "success");
-                        }
-                    }
-                }
-            }
-        }
-        catch(SQLException e ){
-            e.printStackTrace();
-        }
-        return new ApiResult(false, "fail");
-    }
-
-
-    @Override
-    public ApiResult storeProduct(List<Product> products) {
+    public ApiResult storeProduct(String username,List<Product> products) {
         Connection conn = this.connector.getConn();
-//        int flag=0;
-//        for(int i=0;i<products.size();i++){
-//            for(int j=i+1;j<products.size();j++){
-//                if (products.get(i).equals(products.get(j))) {
-//                    flag = 1;
-//                    break;
-//                }
-//            }
-//        }
-//        if(flag==1) return new ApiResult(false, "fail");
         try {
             // 开始事务
             conn.setAutoCommit(false);
             for (Product product : products) {
-                ApiResult result = storeProduct(product);
+                ApiResult result = storeProduct(username,product);
                 // 如果任何一本书入库失败，则中断循环并回滚事务
                 if (!result.ok) {
                     conn.rollback(); // 回滚事务
@@ -255,49 +276,10 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     }
 
     @Override
-    public ApiResult removeProduct(int productId) {
-        Connection conn = this.connector.getConn();
-
-        String select_stock_sql = "SELECT * FROM borrow WHERE productId = ?"; // 查询是否有未归还的书
-        String delete_product_sql = "DELETE FROM product WHERE productId = ?";
-        try (PreparedStatement ps = connector.getConn().prepareStatement("select * from product where productId = ?")) {
-            ps.setInt(1, productId);
-            ResultSet rs = ps.executeQuery();
-            if(!rs.next()) {
-                return new ApiResult(false, "fail");
-            }
-        } catch (SQLException e) {
-            return new ApiResult(false, "fail");
-        }
-        try (PreparedStatement stmt = conn.prepareStatement(select_stock_sql)) {
-            stmt.setInt(1, productId);
-            ResultSet rs = stmt.executeQuery();
-
-            while(rs.next()) {
-                if (rs.getLong("return_time") == 0) {
-                    return new ApiResult(false, "无法删除，因为这本书还有人尚未归还。");}
-            }
-        }
-        catch (SQLException e) {
-            return new ApiResult(false, "删除书籍时出现错误: " + e.getMessage());
-        }
-
-        try (PreparedStatement dstmt = conn.prepareStatement(delete_product_sql)) {
-            dstmt.setInt(1, productId);
-            int rowsAffected = dstmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                return new ApiResult(true, "成功从仓库中删除书籍");
-            } else {
-                return new ApiResult(false, "无法删除书籍，可能不存在该书籍记录");
-            }
-        } catch (SQLException e) {
-            return new ApiResult(false, "删除书籍时出现错误: " + e.getMessage());
-        }
-    }
-    @Override
-    public ApiResult modifyLikeStatus(Product product) {
-        try(PreparedStatement ps = connector.getConn().prepareStatement("update product set favorite=? where productId=?")){
+    public ApiResult modifyLikeStatus(String user_name,Product product) {
+        String tableName = "product_" + user_name;
+        String sql = "UPDATE " + tableName + " SET favorite = ? WHERE productId = ?";
+        try(PreparedStatement ps = connector.getConn().prepareStatement(sql)){
             int favor=0;
             if(product.getFavorite()==0) favor = 0;
             else if (product.getFavorite()==1) favor = 1;
@@ -321,8 +303,9 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     }
 
     @Override
-    public ApiResult modifyPrice(Product product) {
-        try(PreparedStatement ps = connector.getConn().prepareStatement("update product set price=? where productId=?")){
+    public ApiResult modifyPrice(String user_name,Product product) {
+        String tableName = "product_" + user_name;
+        try(PreparedStatement ps = connector.getConn().prepareStatement("UPDATE " + tableName + " SET price = ? WHERE productId = ?")){
             ps.setDouble(1,product.getPrice());
             ps.setInt(2,product.getProductId());
             if(ps.executeUpdate()==0){
@@ -340,9 +323,36 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         System.out.println("success!");
         return new ApiResult(true, "success");
     }
+
+    public ApiResult getUserFavoriteProducts(String username) {
+        String tableName = "product_" + username;
+        String sql = "SELECT * FROM " + tableName + " WHERE favorite = 1";
+        List<Product> productList = new ArrayList<>();
+        try (PreparedStatement statement = this.connector.getConn().prepareStatement(sql)) {
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Product product = new Product();
+                product.setProductId(resultSet.getInt("productId"));
+                product.setComment(resultSet.getString("comment"));
+                product.setTitle(resultSet.getString("title"));
+                product.setShop(resultSet.getString("shop"));
+                product.setDeal(resultSet.getString("deal"));
+                product.setImg(resultSet.getString("img_url"));
+                product.setPrice(resultSet.getDouble("price"));
+                product.setSource(resultSet.getString("source"));
+                product.setFavorite(resultSet.getInt("favorite"));
+                productList.add(product);
+            }
+            return new ApiResult(true, productList);
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+            return new ApiResult(false, "Database error");
+        }
+    }
     @Override
-    public ApiResult queryProduct(ProductQueryConditions conditions) {
-        String query = "SELECT * FROM product";
+    public ApiResult queryProduct(String user_name,ProductQueryConditions conditions) {
+        String tableName = "product_" + user_name;
+        String query = "SELECT * FROM " + tableName;
         //String whereClause = buildWhereClause(conditions);
         Pair<String, List<Object>> whereClauseAndParameters = buildWhereClause(conditions);
         String whereClause = (String) whereClauseAndParameters.getKey();
@@ -431,360 +441,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     private String buildOrderByClause(ProductQueryConditions conditions) {
         return " ORDER BY " + conditions.getSortBy() + " " + conditions.getSortOrder();
     }
-    @Override
-    public ApiResult borrowProduct(Borrow borrow) {
-        Connection conn = connector.getConn();
-        try {
-            //conn.setAutoCommit(false);
-            // 检查借书卡是否存在并锁定
-            try (PreparedStatement ps2 = conn.prepareStatement("SELECT * FROM card WHERE card_id = ? FOR UPDATE")) {
-                ps2.setInt(1, borrow.getCardId());
-                try (ResultSet rs2 = ps2.executeQuery()) {
-                    if (!rs2.next()) {
-                        System.out.println("The card does not exist");
-                        return new ApiResult(false, "The card does not exist");
 
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                conn.rollback();
-                System.out.println("Error occurred while checking the card");
-                return new ApiResult(false, "Error occurred while checking the card");
-            }
-
-
-            String lookfor_sql = "SELECT * FROM borrow WHERE card_id=? AND productId=?";
-            try (PreparedStatement stmt = conn.prepareStatement(lookfor_sql)) {
-                stmt.setInt(1, borrow.getCardId());
-                stmt.setInt(2, borrow.getProductId());
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while(rs.next()){
-                        if(rs.getLong("return_time")==0){
-                            conn.rollback();
-                            System.out.println("you have already rented this product");
-                            return new ApiResult(false,"you have already rented this product");
-                        }
-                    }
-                }
-                catch (Exception e){
-                    System.out.println("error1");
-                    return new ApiResult(false,"error");
-                }
-            }
-            catch (Exception e){
-                System.out.println("error2");
-                return new ApiResult(false,"error");
-            }
-
-            // 检查书是否存在并且库存充足并锁定
-            try (PreparedStatement ps1 = conn.prepareStatement("SELECT * FROM product WHERE productId = ? FOR UPDATE")) {
-                ps1.setInt(1, borrow.getProductId());
-                try (ResultSet rs1 = ps1.executeQuery()) {
-                    if (!rs1.next()) {
-                        System.out.println("The product does not exist");
-                        return new ApiResult(false, "The product does not exist");
-                    }
-                    if (rs1.getInt("source") == 0) {
-                        System.out.println("The product is out of source");
-                        return new ApiResult(false, "The product is out of source");
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                conn.rollback();
-                System.out.println("Error occurred while checking the product");
-                return new ApiResult(false, "Error occurred while checking the product");
-            }
-
-            // 借书操作
-            String borrow_sql = "INSERT INTO borrow VALUES (?, ?, ?, ?)";
-            try (PreparedStatement bstmt = conn.prepareStatement(borrow_sql)) {
-                bstmt.setInt(1, borrow.getCardId());
-                bstmt.setInt(2, borrow.getProductId());
-                bstmt.setLong(3, borrow.getBorrowTime());
-                bstmt.setLong(4, 0);
-                //commit(connector.getConn());
-                if (bstmt.executeUpdate() > 0) {
-                    // 更新书的库存
-                    try (PreparedStatement ps4 = conn.prepareStatement("UPDATE product SET source = source - 1 WHERE productId = ?")) {
-                        ps4.setInt(1, borrow.getProductId());
-                        ps4.executeUpdate();
-                    }
-                    //conn.commit();
-                    commit(connector.getConn());
-                    //System.out.println("Success");
-                    return new ApiResult(true, "Success");
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                conn.rollback();
-                System.out.println("Error occurred while borrowing the product");
-                return new ApiResult(false, "Error occurred while borrowing the product");
-            }
-            System.out.println("Error 3");
-            return new ApiResult(false, "Error occurred");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.out.println("Error 4");
-            return new ApiResult(false, "Error occurred");
-        } finally {
-            commit(connector.getConn());
-        }
-    }
-
-
-    @Override
-    public ApiResult returnProduct(Borrow borrow) {
-        //检查是否有这条借书记录
-        try (PreparedStatement ps2 = connector.getConn().prepareStatement("select * from borrow where card_id=? and productId=? and borrow_time=? ")) {
-            ps2.setInt(1, borrow.getCardId());
-            ps2.setInt(2, borrow.getProductId());
-            ps2.setLong(3, borrow.getBorrowTime());
-            ResultSet rs2 = ps2.executeQuery();
-            if (!rs2.next()) {
-                System.out.println("The borrow record does not exist");
-                return new ApiResult(false, "fail");
-            }
-        } catch (SQLException e) {
-            return new ApiResult(false, "fail");
-        }
-        //检查是否已经归还
-        try (PreparedStatement ps2 = connector.getConn().prepareStatement("select * from borrow where card_id=? and productId=? and borrow_time=? ")) {
-            ps2.setInt(1, borrow.getCardId());
-            ps2.setInt(2, borrow.getProductId());
-            ps2.setLong(3, borrow.getBorrowTime());
-            ResultSet rs2 = ps2.executeQuery();
-            if (rs2.next()) {
-                if (rs2.getLong("return_time") != 0) {
-                    System.out.println("The product has been returned");
-                    return new ApiResult(false, "fail");
-                }
-        }
-        } catch (SQLException e) {
-            return new ApiResult(false, "fail");
-        }
-        //更新borrow表
-        try (PreparedStatement ps3 = connector.getConn().prepareStatement("update borrow set return_time=? where card_id=? and productId=? and borrow_time=? ")) {
-            borrow.resetReturnTime();
-            ps3.setLong(1, borrow.getReturnTime());
-            ps3.setInt(2, borrow.getCardId());
-            ps3.setInt(3, borrow.getProductId());
-            ps3.setLong(4, borrow.getBorrowTime());
-            ps3.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Error occurred while returning the product");
-            return new ApiResult(false, "fail");
-        }
-        //更新product表
-        try (PreparedStatement ps1 = connector.getConn().prepareStatement("select * from product where productId=?")) {
-            ps1.setInt(1, borrow.getProductId());
-            ResultSet rs1 = ps1.executeQuery();
-            if (!rs1.next()) {
-                System.out.println("The product does not exist");
-                return new ApiResult(false, "fail");
-            }
-            //更新库存
-            //incProductStock(productId, int deltaStock);
-        }
-        catch (Exception e){
-            return new ApiResult(false, "fail");
-        }
-        return incProductStock(borrow.getProductId(), 1);
-
-    }
-
-
-    @Override
-    public ApiResult showBorrowHistory(int cardId) {
-        List<BorrowHistories.Item> resultlist = new ArrayList<BorrowHistories.Item>();
-        try (PreparedStatement ps = connector.getConn().prepareStatement("select * from borrow where card_id=? ")) {
-            //List<BorrowHistories.Item> resultlist = new ArrayList<BorrowHistories.Item>();
-            ps.setInt(1, cardId);
-            ResultSet rs = ps.executeQuery();
-            //rs.next();
-            //System.out.println (rs.getInt(1));
-            // int count=0;
-            while (rs.next()) {
-                //   count++;
-                // System.out.println (count);
-                Product newproduct = new Product();
-                Borrow newborrow = new Borrow();
-                newborrow.setProductId(rs.getInt("productId"));
-                newborrow.setCardId(rs.getInt("card_id"));
-                newborrow.setBorrowTime(rs.getLong("borrow_time"));
-                newborrow.setReturnTime(rs.getLong("return_time"));
-                try (PreparedStatement ps1 = connector.getConn().prepareStatement("select * from product where productId=?")) {
-                    ps1.setInt(1, rs.getInt("productId"));
-                    ResultSet rs2 = ps1.executeQuery();
-                    while (rs2.next()) {
-                        newproduct.setProductId(rs2.getInt("productId"));
-                        newproduct.setComment(rs2.getString("comment"));
-                        newproduct.setTitle(rs2.getString("title"));
-                        newproduct.setShop(rs2.getString("shop"));
-                        newproduct.setDeal(rs2.getString("deal"));
-                        newproduct.setImg(rs2.getString("img_url"));
-                        newproduct.setPrice(rs2.getDouble("price"));
-                        newproduct.setSource(rs2.getString("source"));
-                        BorrowHistories.Item newitem = new BorrowHistories.Item(cardId, newproduct, newborrow);
-                        resultlist.add(newitem);
-                    }
-                }
-
-
-            }
-            Comparator<BorrowHistories.Item> byBorrowTime = Comparator.comparing(BorrowHistories.Item::getBorrowTime).reversed();
-            Comparator<BorrowHistories.Item> byId = Comparator.comparing(BorrowHistories.Item::getProductId);
-            Comparator<BorrowHistories.Item> byBorrowTimeAndId = byBorrowTime.thenComparing(byId);
-            resultlist.sort(byBorrowTimeAndId);
-            BorrowHistories result=new BorrowHistories(resultlist);
-            commit(connector.getConn());
-            return new ApiResult(true, "success",result);
-        }catch(SQLException e ){
-            return new ApiResult(false, "fail");
-        }
-    }
-
-    @Override
-    public ApiResult registerCard(Card card) {
-        String insertSQL = "INSERT INTO card VALUES (null, ?, ?, ?)";
-        try (PreparedStatement statement = this.connector.getConn().prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
-            // Set parameters
-            statement.setString(1, card.getName());
-            statement.setString(2, card.getDepartment());
-            statement.setString(3, card.getType().getStr());
-            // Execute insertion
-            if (isCardDuplicate(card)) {
-                return new ApiResult(false, "该借书证已存在，无法重复注册。");
-            } else {
-                int affectedRows = statement.executeUpdate();
-                if (affectedRows > 0) {
-                    // Get the generated primary key
-                    try (ResultSet rs = statement.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            int id = rs.getInt(1);
-                            card.setCardId(id);
-                            commit(connector.getConn());
-                            return new ApiResult(true, id); // 获取生成的 card_id
-                        } else {
-                            return new ApiResult(false, "借书证注册失败，未获取到ID。");
-                        }
-                    }
-                } else {
-                    return new ApiResult(false, "借书证注册失败，未影响任何行。");
-                }
-            }
-        } catch (Exception e) {
-            return new ApiResult(false, "未实现的功能");
-        }
-    }
-
-    private boolean isCardDuplicate(Card card) throws SQLException {
-        Connection conn = this.connector.getConn();
-        String checkSql = "SELECT * FROM card WHERE name = ? AND department = ? AND type = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
-            stmt.setString(1, card.getName());
-            stmt.setString(2, card.getDepartment());
-            stmt.setString(3, card.getType().getStr());
-            try (ResultSet rs = stmt.executeQuery()) {
-                // 如果查询有结果，则表示书籍重复
-                return rs.next(); // 只需要检查是否有至少一行数据，因为我们已经通过所有关键列进行了查询
-            }
-        }
-    }
-    @Override
-    public ApiResult removeCard(int cardId) {
-        try(PreparedStatement select_sql = connector.getConn().prepareStatement("select * from borrow where card_id = ?")){
-            select_sql.setInt(1,cardId);
-            ResultSet rs2= select_sql.executeQuery();
-            while(rs2.next()){
-                if(rs2.getLong("return_time")==0){
-                    System.out.println ("here 1");
-                    return new ApiResult(false, "fail");
-                }
-            }}
-        catch(SQLException e ){
-            System.out.println ("here 2"+cardId);
-            e.printStackTrace();
-        }
-
-        try(PreparedStatement select_card_sql = connector.getConn().prepareStatement("select * from card where card_id = ?")) {
-            select_card_sql.setInt(1,cardId);
-            ResultSet rs=select_card_sql.executeQuery();
-            if(!rs.next()){
-                System.out.println ("this is"+cardId);
-                return new ApiResult(false, "fail");
-            }
-            try(PreparedStatement delete_card_sql = connector.getConn().prepareStatement("delete from card where card_id=?")){
-                delete_card_sql.setInt(1,cardId);
-                delete_card_sql.executeUpdate();
-                commit(connector.getConn());
-                System.out.println ("here 3"+cardId);
-                return new ApiResult(true, "success");
-            }
-        }
-        catch(SQLException e ){
-            System.out.println ("here 4"+cardId);
-            e.printStackTrace();
-        }
-        System.out.println ("here 5"+cardId);
-        return new ApiResult(false, "fail");
-    }
-
-
-    @Override
-    public ApiResult showCards() {
-        try(PreparedStatement ps = connector.getConn().prepareStatement("select * from card")){
-            ResultSet rs=ps.executeQuery();
-            List<Card> ResultList = new ArrayList<Card>();
-
-            while(rs.next()){
-                Card newcard= new Card();
-                newcard.setCardId(rs.getInt("card_id"));
-                newcard.setName(rs.getString("name"));
-                newcard.setDepartment(rs.getString("department"));
-                String s=rs.getString("type");
-                if(Objects.equals(s, "S")){
-                    s="Student";
-                }
-                else{
-                    s="Teacher";
-                }
-                Card.CardType c =Card.CardType.valueOf(s);
-                newcard.setType(c);
-                ResultList.add(newcard);
-
-            }
-            ResultList.sort(Comparator.comparingInt(Card::getCardId));
-            CardList Results=new CardList(ResultList);
-            commit(connector.getConn());
-            return new ApiResult(true, "success",Results);
-        }
-        catch(SQLException e ){
-            return new ApiResult(false, "fail");
-        }
-    }
-    @Override
-    public ApiResult ModifyCard(int cardId, String name, String department, String type){
-        try(PreparedStatement ps = connector.getConn().prepareStatement("update card set name=?,department=?,type=? where card_id=?")){
-            ps.setString(1,name);
-            ps.setString(2,department);
-            ps.setString(3,type);
-            ps.setInt(4,cardId);
-            if(ps.executeUpdate()==0){
-                System.out.println("fail here 1");
-                return new ApiResult(false, "fail");
-            }
-
-        }
-        catch(SQLException e ){
-            System.out.println("fail here 2"+e);
-            return new ApiResult(false, "fail");
-        }
-
-        commit(connector.getConn());
-        return new ApiResult(true, "success");
-    }
 
     @Override
     public ApiResult resetDatabase() {

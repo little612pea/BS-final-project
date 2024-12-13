@@ -407,27 +407,8 @@ export default {
               console.error("未知错误状态");
           }
         console.groupEnd(); // 结束分组
-        const errorMessage = err.response?.data?.message || err.message || "未知错误";
-        ElMessage.error(`搜索执行失败，请检查网络或后端状态: ${errorMessage}`);
         eventSource.close(); // 关闭连接以防止意外行为
       };
-    },
-    DetailedProductInfo(){
-      axios.post("/book/",
-          { // 请求体
-            id: this.DetailedProductInfo.id,
-            card_id:this.DetailedProductInfo.card_id
-          })
-          .then(response => {
-            ElMessage.success("图书借阅成功") // 显示消息提醒
-            this.borrowBookVisible = false // 将对话框设置为不可见
-            this.QueryBooks() // 重新查询图书以刷新页面
-          })
-          .catch(error=>{
-            ElMessage.error("图书借阅失败,可能借书证无效")
-            this.borrowBookVisible = false
-            this.QueryBorrows()
-          })
     },
     Multi_condition_search(){
       this.priceHistoryVisible = false;
@@ -460,7 +441,9 @@ export default {
     QueryProducts() {
       this.products = [] // 清空列表
       console.log("QueryProducts called")
-      axios.get('/home/product') // 向/product发出GET请求
+      axios.get('/home/product',
+          { params: { // 请求体
+              user_name:this.$store.state.username} }) // 向/product发出GET请求
           .then(response => {
             // let cleanedData = response.data.replace(/[\n\r\t]/g, '');
             let products = response.data;
@@ -474,6 +457,7 @@ export default {
       console.log("StoreSearchResults called")
       axios.post('/home/product/', {
         params: {
+          user_name: this.$store.state.username,
           product: this.products
         }
       }).then(res => {
@@ -542,6 +526,7 @@ export default {
       console.log("toggleFavorite called")
       axios.post('/home/product/', {
         params: {
+          user_name: this.$store.state.username,
           like: product
         }
       }).then(res => {

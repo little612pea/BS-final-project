@@ -17,6 +17,8 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ProductHandler implements HttpHandler {
     private static DatabaseConnector connector = null;
@@ -95,8 +97,11 @@ public class ProductHandler implements HttpHandler {
         String query = requestedUri.getRawQuery();
         System.out.println("query to fetch from db: " + query);
         String response = "[";
-        if(query==null){
-            ApiResult result = ProductHandler.library.queryProduct(new ProductQueryConditions());
+            //parse user_name
+            int nameStartIndex = query.indexOf("user_name=") + 10; // 获取 "user_name=" 后的索引位置
+            int nameEndIndex = query.length();
+            String user_name = query.substring(nameStartIndex, nameEndIndex); // 提取 user_name 的值
+            ApiResult result = ProductHandler.library.queryProduct(user_name,new ProductQueryConditions());
             ProductQueryResults resProductList = (ProductQueryResults) result.payload;
             System.out.println(resProductList.getCount());
             for (int i = 0; i < resProductList.getCount(); i++) {
@@ -107,101 +112,6 @@ public class ProductHandler implements HttpHandler {
                 //{\"id\": " + o2.getProductId() + ", \"name\": \"" + o2.getName() + "\", \"department\": \"" + o2.getDepar response.append("{\"id\": ").append(o2.getProductId()).append(", \"name\": \"").append(o2.getName()).append("\", \"department\": \"").append(o2.getDepartment()).append("\", \"type\": \"").append(o2.getType()).append("\"}");
             }
             response += "]";
-        }
-        else if(query.contains("title") && query.contains("comment")){
-            System.out.println("multi condition query:");
-            // 格式为：category=shelbyHU&title=shelbyHU&shop=shelbyHU&minPublishYear=1145&maxPublishYear=14&img_url=shelbyHU&minPrice=1&maxPrice=919
-            ProductQueryConditions productQueryConditions = new ProductQueryConditions();
-            //将query中可能的中文编码转化为utf-8格式:
-            query = URLDecoder.decode(query, "UTF-8");
-            // 输出解码后的字符串
-            System.out.println(query); // 输出： 原码
-            // 解析 comment
-            int categoryStartIndex = query.indexOf("comment") + 9; // 获取 "comment" 后的索引位置
-            int categoryEndIndex = query.indexOf("&", categoryStartIndex); // 获取第一个逗号的位置
-            String comment;
-            if(categoryStartIndex!=categoryEndIndex){
-                comment = query.substring(categoryStartIndex, categoryEndIndex);
-                System.out.println(comment);
-                productQueryConditions.setComment(comment);
-            }
-            // 解析 title
-            int titleStartIndex = query.indexOf("title") + 6; // 获取 "title" 后的索引位置
-            int titleEndIndex = query.indexOf("&", titleStartIndex); // 获取第一个逗号的位置
-            String title;
-            if(titleStartIndex!=titleEndIndex){
-                title = query.substring(titleStartIndex, titleEndIndex);
-                System.out.println(title);
-                productQueryConditions.setTitle(title);
-            }
-            // 解析 shop
-            int pressStartIndex = query.indexOf("shop") + 6; // 获取 "shop" 后的索引位置
-            int pressEndIndex = query.indexOf("&", pressStartIndex); // 获取第一个逗号的位置
-            String shop;
-            if(pressStartIndex!=pressEndIndex){
-                shop = query.substring(pressStartIndex, pressEndIndex);
-                System.out.println(shop);
-                productQueryConditions.setShop(shop);
-            }
-            // 解析 minPublishYear
-            int minPublishYearStartIndex = query.indexOf("minPublishYear") + 15; // 获取 "minPublishYear" 后的索引位置
-            int minPublishYearEndIndex = query.indexOf("&", minPublishYearStartIndex); // 获取第一个逗号的位置
-            int minPublishYear;
-            if(minPublishYearStartIndex!=minPublishYearEndIndex){
-                minPublishYear = Integer.parseInt(query.substring(minPublishYearStartIndex, minPublishYearEndIndex));
-                System.out.println(minPublishYear);
-                productQueryConditions.setMinPublishYear(minPublishYear);
-            }
-            // 解析 maxPublishYear
-            int maxPublishYearStartIndex = query.indexOf("maxPublishYear") + 15; // 获取 "maxPublishYear" 后的索引位置
-            int maxPublishYearEndIndex = query.indexOf("&", maxPublishYearStartIndex); // 获取第一个逗号的位置
-            int maxPublishYear;
-            if(maxPublishYearStartIndex!=maxPublishYearEndIndex){
-                maxPublishYear = Integer.parseInt(query.substring(maxPublishYearStartIndex, maxPublishYearEndIndex));
-                System.out.println(maxPublishYear);
-                productQueryConditions.setMaxPublishYear(maxPublishYear);
-            }
-            // 解析 img_url
-            int authorStartIndex = query.indexOf("img_url") + 7; // 获取 "img_url" 后的索引位置
-            int authorEndIndex = query.indexOf("&", authorStartIndex); // 获取第一个逗号的位置
-            String img_url;
-            if(authorStartIndex!=authorEndIndex){
-                img_url = query.substring(authorStartIndex, authorEndIndex);
-                System.out.println(img_url);
-                productQueryConditions.setImg(img_url);
-            }
-            // 解析 minPrice
-            int minPriceStartIndex = query.indexOf("minPrice") + 9; // 获取 "minPrice" 后的索引位置
-            int minPriceEndIndex = query.indexOf("&", minPriceStartIndex); // 获取第一个逗号的位置
-            double minPrice;
-            if(minPriceStartIndex!=minPriceEndIndex){
-                minPrice = Integer.parseInt(query.substring(minPriceStartIndex, minPriceEndIndex));
-                System.out.println(minPrice);
-                productQueryConditions.setMinPrice(minPrice);
-            }
-            // 解析 maxPrice
-            int maxPriceStartIndex = query.indexOf("maxPrice") + 9; // 获取 "maxPrice" 后的索引位置
-            int maxPriceEndIndex = query.length(); // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-            double maxPrice;
-            if(maxPriceStartIndex!=maxPriceEndIndex){
-                maxPrice = Integer.parseInt(query.substring(maxPriceStartIndex, maxPriceEndIndex));
-                System.out.println(maxPrice);
-                productQueryConditions.setMaxPrice(maxPrice);
-            }
-            //打印productQueryConditions:
-            System.out.printf("comment:%s,title:%s,shop:%s,minPublishYear:%d,maxPublishYear:%d,img_url:%s,minPrice:%f,maxPrice:%f\n", productQueryConditions.getComment(), productQueryConditions.getTitle(), productQueryConditions.getShop(), productQueryConditions.getMinPublishYear(), productQueryConditions.getMaxPublishYear(), productQueryConditions.getImg(), productQueryConditions.getMinPrice(), productQueryConditions.getMaxPrice());
-            ApiResult result = ProductHandler.library.queryProduct(productQueryConditions);
-            ProductQueryResults resProductList = (ProductQueryResults) result.payload;
-            System.out.println(resProductList.getCount());
-            for (int i = 0; i < resProductList.getCount(); i++) {
-                Product o2 = resProductList.getResults().get(i);
-                response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": \""+o2.getDeal()+ "\", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": "+o2.getSource()+"}";
-                if (i != resProductList.getCount() - 1)
-                    response += ",";
-            }
-            response += "]";
-
-        }
         // 写
         System.out.printf("Response: %s\n", response);
         try {
@@ -236,6 +146,17 @@ public class ProductHandler implements HttpHandler {
         if( product_Info.contains("like")){
             Product product_to_create = new Product();
             String productInfo1 = product_Info;
+            int nameStartIndex = product_Info.indexOf("user_name:") + 12; // 获取 "title" 后的索引位置
+            int nameEndIndex = product_Info.indexOf(",", nameStartIndex); // 获取第一个逗号的位置
+            String user_name = product_Info.substring(nameStartIndex, nameEndIndex);
+            Pattern pattern = Pattern.compile("\"user_name\":\"([^\"]+)\"");
+            Matcher matcher = pattern.matcher(user_name);
+            if (matcher.find()) {
+                user_name = matcher.group(1);  // 获取匹配的用户名部分
+                System.out.println("Extracted username: " + user_name);
+            } else {
+                System.out.println("No username found.");
+            }
             // 解析 productId
             int IdStartIndex = productInfo1.indexOf("id") + 4; // 获取 "productId" 后的索引位置
             int IdEndIndex = productInfo1.indexOf(",", IdStartIndex); // 获取第一个逗号的位置
@@ -295,7 +216,7 @@ public class ProductHandler implements HttpHandler {
             System.out.println("parsed favorite result: "+favorite);
             product_to_create.setFavorite(favorite);
 //                System.out.println(price);
-            ApiResult result = ProductHandler.library.modifyLikeStatus(product_to_create);
+            ApiResult result = ProductHandler.library.modifyLikeStatus(user_name,product_to_create);
             if (result.ok) {
                 exchange.sendResponseHeaders(200, 0);
                 System.out.println("Store all products successfully");
@@ -307,6 +228,17 @@ public class ProductHandler implements HttpHandler {
         else if (product_Info.contains("product")){
             //如果product_Info有id字段，调用updateProduct函数，否则调用createProduct函数：
             // 解析 product_Info：格式为 text/plain:[{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"},{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}]
+            int nameStartIndex = product_Info.indexOf("user_name:") + 12; // 获取 "title" 后的索引位置
+            int nameEndIndex = product_Info.indexOf(",", nameStartIndex); // 获取第一个逗号的位置
+            String user_name = product_Info.substring(nameStartIndex, nameEndIndex);
+            Pattern pattern = Pattern.compile("\"user_name\":\"([^\"]+)\"");
+            Matcher matcher = pattern.matcher(user_name);
+            if (matcher.find()) {
+                user_name = matcher.group(1);  // 获取匹配的用户名部分
+                System.out.println("Extracted username: " + user_name);
+            } else {
+                System.out.println("No username found.");
+            }
             int productInfoStartIndex = product_Info.indexOf("[{") + 1; // 获取第一个 `[` 的索引位置
             int productInfoEndIndex = product_Info.indexOf("]"); // 获取最后一个 `]` 的索引位置
             String productInfo = product_Info.substring(productInfoStartIndex, productInfoEndIndex);
@@ -385,7 +317,7 @@ public class ProductHandler implements HttpHandler {
                 }
             }
             System.out.println("new_products: " + new_products);
-            ApiResult result = ProductHandler.library.storeProduct(new_products);
+            ApiResult result = ProductHandler.library.storeProduct(user_name,new_products);
             System.out.println("store multi product result: " + result.toString());
             if (result.ok) {
                 exchange.sendResponseHeaders(200, 0);

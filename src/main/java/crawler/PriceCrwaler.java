@@ -35,6 +35,8 @@ public class PriceCrwaler {
     private static LibraryManagementSystem library = null;
     private static ConnectConfig connectConfig = null;
 
+    private static String user_name = null;
+
     static {
         try {
             // parse connection config from "resources/application.yaml"
@@ -232,7 +234,7 @@ public class PriceCrwaler {
             // 调用数据库
             ApiResult result = null;
             if(new_price!=-1){
-                result = library.modifyPrice(product_modify_price);
+                result = library.modifyPrice(user_name,product_modify_price);
             }
 
             if (result.ok) {
@@ -256,8 +258,10 @@ public class PriceCrwaler {
         }
     }
 
-    public static Map<Integer, Double> craw(List<Integer> ids, List<Double> prices,List<String> titles, List<String> sources) {
+    public static Map<Integer, Double> craw(List<Integer> ids, List<Double> prices,List<String> titles, List<String> sources, String user_name) {
         try{
+            //set user_name
+            PriceCrwaler.user_name = user_name;
             System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
 //            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
             // 配置 Chrome 选项

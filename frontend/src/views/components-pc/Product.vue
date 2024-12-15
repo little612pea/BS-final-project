@@ -369,7 +369,6 @@ export default {
       // 创建一个 EventSource 对象，连接到后端的 /search 路径
       const eventSource = new EventSource(`http://localhost:8000/search?keyword=${encodeURIComponent(this.keyword)}`);
       //打印eventSource
-      ElMessage.success("eventSource: "+eventSource.url)
       // 当接收到数据时触发 'message' 事件
       eventSource.onmessage = function(event) {
         this.loadingVisible = false;

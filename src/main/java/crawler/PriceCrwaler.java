@@ -178,7 +178,7 @@ public class PriceCrwaler {
         return priceUpdates;
     }
 
-    public static void getGoods(int id, double price, int type,String old_title, Map priceUpdates) {
+    public static void getGoods(int id, double price, int type, String old_title, Map priceUpdates) {
         System.out.println("getGoods--price_crawler");
         Product product_modify_price = new Product();
         try {
@@ -198,16 +198,22 @@ public class PriceCrwaler {
                 System.out.println("items--" + items.size());
                 for (Element item : items) {
                     // 定位商品标题
-                    if(item.select(".title--qJ7Xg_90").text().equals(old_title))
-                    {
-                        String title = item.select(".title--qJ7Xg_90").text();
-                        // 定位价格
-                        String priceInt = item.select(".priceInt--yqqZMJ5a").text();
-                        String priceFloat = item.select(".priceFloat--XpixvyQ1").text();
-                        double raw_price = (priceInt.isEmpty() || priceFloat.isEmpty()) ? 0.0 : Double.parseDouble(priceInt + priceFloat);
-                        new_price = Math.round(raw_price * 10) / 10.0;
-                        System.out.println("new_price tb--" + new_price);
+//                    if(item.select(".title--qJ7Xg_90").text().equals(old_title))
+//                    {
+                    String title = item.select(".title--qJ7Xg_90").text();
+                    // 定位价格
+                    String priceInt = item.select(".priceInt--yqqZMJ5a").text();
+                    String priceFloat = item.select(".priceFloat--XpixvyQ1").text();
+                    double raw_price = (priceInt.isEmpty() || priceFloat.isEmpty()) ? 0.0 : Double.parseDouble(priceInt + priceFloat);
+                    if (raw_price == 0.0) {
+                        continue;
                     }
+                    new_price = Math.round(raw_price * 10) / 10.0;
+                    System.out.println("new_price tb--" + new_price);
+                    if(new_price!=-1 && new_price!=0.0){
+                        break;
+                    }
+//                    }
                 }
             }
             else{
@@ -245,6 +251,8 @@ public class PriceCrwaler {
 
         } catch (Exception e) {
             System.out.println("Error while scraping goods: " + e.getMessage());
+            //print stack trace:
+            e.printStackTrace();
         }
     }
 

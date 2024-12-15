@@ -8,6 +8,9 @@ import crawler.PriceCrwaler;
 import database.LibraryManagementSystem;
 import database.LibraryManagementSystemImpl;
 import entities.Product;
+import queries.ApiResult;
+import queries.ProductQueryConditions;
+import queries.ProductQueryResults;
 import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
@@ -15,15 +18,19 @@ import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.*;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import static utils.JsonUtils.extractValue;
 
 public class PriceUpdateHandler implements HttpHandler {
     private Map<String, String> verificationCodes = new HashMap<>();
@@ -31,7 +38,7 @@ public class PriceUpdateHandler implements HttpHandler {
     private static LibraryManagementSystem library = null;
     private static ConnectConfig connectConfig = null;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
+    private static ScheduledFuture<?> currentTask = null;
     static {
         try {
             // parse connection config from "resources/application.yaml"
@@ -80,7 +87,11 @@ public class PriceUpdateHandler implements HttpHandler {
         if (requestMethod.equals("POST")) {
             // 处理POST
             handlePostRequest(exchange);
-        }else if (requestMethod.equals("OPTIONS")) {
+        }else if (requestMethod.equals("GET")) {
+            // 处理GET
+            handleGetRequest(exchange);
+        }
+        else if (requestMethod.equals("OPTIONS")) {
             handleOptionsRequest(exchange);
         }
 
@@ -144,32 +155,10 @@ public class PriceUpdateHandler implements HttpHandler {
         List<String> titles = new ArrayList<>();
         for (String productInfo1 : productInfos) {
             try {
-                int idStartIndex = productInfo1.indexOf("id") + 4; // 获取 "title" 后的索引位置
-                int idEndIndex = productInfo1.indexOf(",", idStartIndex); // 获取第一个逗号的位置
-                int id = Integer.parseInt(productInfo1.substring(idStartIndex, idEndIndex));
-                System.out.println(id);
-                ids.add(id); // 存储id
-                // 解析 price
-                int priceStartIndex = productInfo1.indexOf("price") + 7; // 获取 "price" 后的索引位置
-                int priceEndIndex = productInfo1.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-                double price = Double.parseDouble(productInfo1.substring(priceStartIndex, priceEndIndex));
-                System.out.println(price);
-                prices.add(price); // 存储price
-                // 解析 title
-                int titleStartIndex = productInfo1.indexOf("title") + 8; // 获取 "title" 后的索引位置
-                int titleEndIndex = productInfo1.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-                String title = productInfo1.substring(titleStartIndex, titleEndIndex - 1);
-                titles.add(title); // 存储title
-                // 解析 source
-                int stockStartIndex = productInfo1.indexOf("source") + 9; // 获取 "source" 后的索引位置
-                int stockEndIndex = productInfo1.indexOf(",", stockStartIndex); // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                String source = productInfo1.substring(stockStartIndex, stockEndIndex);
-                if(source.endsWith("\"")) {
-                    source = source.substring(0, source.length() - 1); // 去除首尾的双引号
-                }
-                System.out.println(source);
-                sources.add(source); // 存储source
-
+                ids.add(extractValue(productInfo1, "id", Integer::parseInt));
+                prices.add(extractValue(productInfo1, "price", Double::parseDouble));
+                titles.add(extractValue(productInfo1, "title", String::valueOf));
+                sources.add(extractValue(productInfo1, "source", String::valueOf));
             } catch (Exception e) {
                 System.out.println("error in parsing productInfo1");
                 e.printStackTrace();
@@ -185,25 +174,27 @@ public class PriceUpdateHandler implements HttpHandler {
         String email = RegisterHandler.library.searchEmail(user_name).message.toString();
         System.out.println("email: " + email);
         //如果price_updates中的price比原来的price低，发送邮件
+        boolean need_to_send = false;
         for (int i = 0; i < ids.size(); i++) {
             int productId = ids.get(i);
             double originalPrice = prices.get(i);  // 获取原始价格
             double newPrice = price_updates.getOrDefault(productId, originalPrice);  // 获取新的价格
 
             // 如果新的价格比原始价格低，则发送邮件
-            if (newPrice < originalPrice) {
+            if (newPrice < originalPrice && newPrice != -1.0) {
                 emailContent += String.format(
                         "商品ID: %d\n原价格: ￥%.2f\n现价格: ￥%.2f\n商品链接: %s",
                         productId, originalPrice, newPrice, sources.get(i)
                 );
+                need_to_send = true;
             }
         }
         boolean mailSent = false;
-        if(ids.size()>0){
+        if(ids.size()>0 && need_to_send){
             mailSent = sendMail(email, emailContent, "商品价格更新通知");
             System.out.println("emailContent: " + emailContent);
         }
-        if (mailSent | ids.size() == 0) {
+        if (mailSent | ids.size() == 0 | !need_to_send) {
             System.out.println("updated successfully");
 
             // Convert price_updates map to JSON
@@ -238,7 +229,7 @@ public class PriceUpdateHandler implements HttpHandler {
      * @param title 标题
      */
     /* 发送验证信息的邮件 */
-    public boolean sendMail(String to, String text, String title){
+    public static boolean sendMail(String to, String text, String title){
         try {
             final Properties props = new Properties();
             props.put("mail.smtp.ssl.enable", "true");
@@ -290,26 +281,26 @@ public class PriceUpdateHandler implements HttpHandler {
         return false;
     }
     //执行定时任务
-    public void startScheduledTask() {
+    public static void startScheduledTask(int time_interval, String userName) {
+        // 如果已有任务正在运行，先取消它
+        if (currentTask != null && !currentTask.isCancelled()) {
+            currentTask.cancel(false); // 取消当前任务（不打断正在执行的任务）
+        }
+
         Runnable task = () -> {
             try {
                 System.out.println("Executing scheduled task to check price updates...");
-
-                // 遍历所有用户并执行价格更新操作
-                List<String> allUsers = (List<String>) RegisterHandler.library.getAllUsernames().payload; // 假设有方法获取所有用户名
-                for (String userName : allUsers) {
-                    handlePriceUpdateForUser(userName);
-                }
+                handlePriceUpdateForUser(userName);
             } catch (Exception e) {
                 System.err.println("Error occurred while executing scheduled task: " + e.getMessage());
                 e.printStackTrace();
             }
         };
 
-        // 每10分钟执行一次
-        scheduler.scheduleAtFixedRate(task, 0, 10, TimeUnit.MINUTES);
+        // 启动新的定时任务，并保存返回的 `ScheduledFuture`
+        currentTask = scheduler.scheduleAtFixedRate(task, 0, time_interval, TimeUnit.SECONDS);
     }
-    private void handlePriceUpdateForUser(String userName) {
+    private static void handlePriceUpdateForUser(String userName) {
         try {
             // 获取用户收藏的商品信息
             List<Integer> ids = new ArrayList<>();
@@ -362,6 +353,37 @@ public class PriceUpdateHandler implements HttpHandler {
             }
         } catch (Exception e) {
             System.err.println("Error while handling price update for user " + userName + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void handleGetRequest(HttpExchange exchange) throws IOException {
+        System.out.println("GET request received");
+        exchange.getResponseHeaders().set("Content-Type", "application/json");
+        // 状态码为200，也就是status ok
+        exchange.sendResponseHeaders(200, 0);
+        // 获取输出流，java用流对象来进行io操作
+        OutputStream outputStream = exchange.getResponseBody();
+        // 构建JSON响应数据，这里简化为字符串
+        URI requestedUri = exchange.getRequestURI();
+        // 解析查询字符串
+        String query = requestedUri.getRawQuery();
+        System.out.println("query to fetch from db: " + query);
+        String response = "ok";
+        //parse user_name
+        int nameStartIndex = query.indexOf("user_name=") + 10; // 获取 "user_name=" 后的索引位置
+        int nameEndIndex = query.indexOf("&", nameStartIndex); // 获取第一个逗号的位置
+        String user_name = query.substring(nameStartIndex, nameEndIndex); // 提取 user_name 的值
+        int intervalStartIndex = query.indexOf("interval=") + 9; // 获取 "interval=" 后的索引位置
+        int intervalEndIndex = query.length(); // 获取最后一个字符前的索引位置（排除末尾的 `}`)
+        String interval = query.substring(intervalStartIndex, intervalEndIndex); // 提取 interval 的值
+        System.out.println("user_name: " + user_name);
+        System.out.println("interval: " + interval);
+        startScheduledTask(Integer.parseInt(interval), user_name);
+        try {
+            outputStream.write(response.getBytes());
+            outputStream.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

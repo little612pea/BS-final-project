@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static utils.JsonUtils.extractValue;
 
 public class ProductHandler implements HttpHandler {
     private static DatabaseConnector connector = null;
@@ -97,26 +98,24 @@ public class ProductHandler implements HttpHandler {
         String query = requestedUri.getRawQuery();
         System.out.println("query to fetch from db: " + query);
         String response = "[";
-            //parse user_name
-            int nameStartIndex = query.indexOf("user_name=") + 10; // 获取 "user_name=" 后的索引位置
-            int nameEndIndex = query.length();
-            String user_name = query.substring(nameStartIndex, nameEndIndex); // 提取 user_name 的值
-            ApiResult result = ProductHandler.library.queryProduct(user_name,new ProductQueryConditions());
-            ProductQueryResults resProductList = (ProductQueryResults) result.payload;
-            System.out.println(resProductList.getCount());
-            for (int i = 0; i < resProductList.getCount(); i++) {
-                Product o2 = resProductList.getResults().get(i);
-                response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": \""+o2.getDeal()+ "\", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": \""+o2.getSource()+"\", \"favorite\": "+o2.getFavorite()+"}";
-                if (i != resProductList.getCount() - 1)
-                    response += ",";
-                //{\"id\": " + o2.getProductId() + ", \"name\": \"" + o2.getName() + "\", \"department\": \"" + o2.getDepar response.append("{\"id\": ").append(o2.getProductId()).append(", \"name\": \"").append(o2.getName()).append("\", \"department\": \"").append(o2.getDepartment()).append("\", \"type\": \"").append(o2.getType()).append("\"}");
-            }
-            response += "]";
-        // 写
+        //parse user_name
+        int nameStartIndex = query.indexOf("user_name=") + 10; // 获取 "user_name=" 后的索引位置
+        int nameEndIndex = query.length();
+        String user_name = query.substring(nameStartIndex, nameEndIndex); // 提取 user_name 的值
+        ApiResult result = ProductHandler.library.queryProduct(user_name,new ProductQueryConditions());
+        ProductQueryResults resProductList = (ProductQueryResults) result.payload;
+        System.out.println(resProductList.getCount());
+        for (int i = 0; i < resProductList.getCount(); i++) {
+            Product o2 = resProductList.getResults().get(i);
+            response += "{\"id\": " + o2.getProductId()+ ", \"comment\": \"" +o2.getComment()+ "\", \"title\": \""+o2.getTitle()+ "\", \"shop\": \""+o2.getShop()+ "\", \"deal\": \""+o2.getDeal()+ "\", \"img_url\": \""+o2.getImg()+ "\", \"price\": "+o2.getPrice()+ ", \"source\": \""+o2.getSource()+"\", \"favorite\": "+o2.getFavorite()+"}";
+            if (i != resProductList.getCount() - 1)
+                response += ",";
+        }
+        response += "]";
+
         System.out.printf("Response: %s\n", response);
         try {
             outputStream.write(response.getBytes());
-            // 流一定要close！！！小心泄漏
             outputStream.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -157,65 +156,20 @@ public class ProductHandler implements HttpHandler {
             } else {
                 System.out.println("No username found.");
             }
-            // 解析 productId
-            int IdStartIndex = productInfo1.indexOf("id") + 4; // 获取 "productId" 后的索引位置
-            int IdEndIndex = productInfo1.indexOf(",", IdStartIndex); // 获取第一个逗号的位置
-            int productId = Integer.parseInt(productInfo1.substring(IdStartIndex, IdEndIndex));
-//                System.out.println(productId);
-            product_to_create.setProductId(productId);
-//                System.out.println(productId);
 
-            int titleStartIndex = productInfo1.indexOf("title") + 8; // 获取 "title" 后的索引位置
-            int titleEndIndex = productInfo1.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-            String title = productInfo1.substring(titleStartIndex, titleEndIndex - 1);
-            product_to_create.setTitle(title);
-//                System.out.println(title);
-            // 解析 shop
-            int pressStartIndex = productInfo1.indexOf("shop") + 7; // 获取 "shop" 后的索引位置
-            int pressEndIndex = productInfo1.indexOf(",", pressStartIndex - 1); // 获取第一个逗号的位置
-            String shop = productInfo1.substring(pressStartIndex, pressEndIndex - 1);
-            product_to_create.setShop(shop);
-//                System.out.println(shop);
-            // 解析 img_url
-            int authorStartIndex = productInfo1.indexOf("img_url") + 10; // 获取 "img_url" 后的索引位置
-            int authorEndIndex = productInfo1.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
-            String img_url = productInfo1.substring(authorStartIndex, authorEndIndex-1 );
-            product_to_create.setImg(img_url);
-//                System.out.println(img_url);
-            // 解析 price
-            int priceStartIndex = productInfo1.indexOf("price") + 7; // 获取 "price" 后的索引位置
-            int priceEndIndex = productInfo1.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-            double price = Double.parseDouble(productInfo1.substring(priceStartIndex, priceEndIndex));
-            product_to_create.setPrice(price);
-//                System.out.println(price);
-            // 解析 source
-            int stockStartIndex = productInfo1.indexOf("source") + 9; // 获取 "source" 后的索引位置
-            int stockEndIndex = productInfo1.indexOf(",", stockStartIndex); // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-            String source = productInfo1.substring(stockStartIndex, stockEndIndex);
-            product_to_create.setSource(source);
-//                System.out.println(source);
+            product_to_create.setProductId(extractValue(productInfo1, "\"id", Integer::parseInt));
+            product_to_create.setTitle(extractValue(productInfo1, "title", String::valueOf));
+            product_to_create.setShop(extractValue(productInfo1, "shop", String::valueOf));
+            product_to_create.setImg(extractValue(productInfo1, "img_url", String::valueOf));
+            product_to_create.setPrice(extractValue(productInfo1, "price", Double::parseDouble));
+            product_to_create.setSource(extractValue(productInfo1, "source", String::valueOf));
             if(productInfo1.contains("comment")){
-                // 解析 comment
-                int categoryStartIndex = productInfo1.indexOf("comment") + 10; // 获取 "comment" 后的索引位置
-                int categoryEndIndex = productInfo1.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
-                String comment = productInfo1.substring(categoryStartIndex, categoryEndIndex - 1);
-                product_to_create.setComment(comment);
-//                    System.out.printf("comment:%s,title:%s,shop:%s,img_url:%s,price:%f,source:%s\n", comment, title, shop, img_url, price, source);
+                product_to_create.setComment(extractValue(productInfo1, "comment", String::valueOf));
             }
             else if (productInfo1.contains("deal")){
-                // 解析 deal
-                int publishYearStartIndex = productInfo1.indexOf("deal") + 7; // 获取 "deal" 后的索引位置
-                int publishYearEndIndex = productInfo1.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
-                String deal = productInfo1.substring(publishYearStartIndex, publishYearEndIndex - 1);
-                product_to_create.setDeal(deal);
-//                    System.out.printf("title:%s,shop:%s,deal:%s,img_url:%s,price:%f,source:%s\n", title, shop, deal, img_url, price, source);
+                product_to_create.setDeal(extractValue(productInfo1, "deal", String::valueOf));
             }
-            int favStartIndex = productInfo1.indexOf("favorite") + 10; // 获取 "price" 后的索引位置
-            int favEndIndex = productInfo1.length() - 3; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-            int favorite = Integer.parseInt(productInfo1.substring(favStartIndex, favEndIndex));
-            System.out.println("parsed favorite result: "+favorite);
-            product_to_create.setFavorite(favorite);
-//                System.out.println(price);
+            product_to_create.setFavorite(extractValue(productInfo1, "favorite", Integer::parseInt));
             ApiResult result = ProductHandler.library.modifyLikeStatus(user_name,product_to_create);
             if (result.ok) {
                 exchange.sendResponseHeaders(200, 0);
@@ -250,65 +204,18 @@ public class ProductHandler implements HttpHandler {
             for (String productInfo1 : productInfos) {
                 try {
                     Product product_to_create = new Product();
-                    //格式为：{"comment":"cate","title":"productname","shop":"pub","deal":"2024","img_url":"img_url","price":"123","source":"321"}
-                    // 解析 title,如果包含comment/deal字段分别处理
-                    int titleStartIndex = productInfo1.indexOf("title") + 8; // 获取 "title" 后的索引位置
-                    int titleEndIndex = productInfo1.indexOf(",", titleStartIndex); // 获取第一个逗号的位置
-                    String title = productInfo1.substring(titleStartIndex, titleEndIndex - 1);
-                    product_to_create.setTitle(title);
-                    System.out.println(title);
-                    // 解析 shop
-                    int pressStartIndex = productInfo1.indexOf("shop") + 7; // 获取 "shop" 后的索引位置
-                    int pressEndIndex = productInfo1.indexOf(",", pressStartIndex - 1); // 获取第一个逗号的位置
-                    String shop = productInfo1.substring(pressStartIndex, pressEndIndex - 1);
-                    product_to_create.setShop(shop);
-                    System.out.println(shop);
-                    // 解析 img_url
-                    int authorStartIndex = productInfo1.indexOf("img_url") + 10; // 获取 "img_url" 后的索引位置
-                    int authorEndIndex = productInfo1.indexOf(",", authorStartIndex); // 获取第一个逗号的位置
-                    String img_url = productInfo1.substring(authorStartIndex, authorEndIndex-1 );
-                    product_to_create.setImg(img_url);
-                    System.out.println(img_url);
-                    // 解析 price
-                    int priceStartIndex = productInfo1.indexOf("price") + 7; // 获取 "price" 后的索引位置
-                    int priceEndIndex = productInfo1.indexOf(",", priceStartIndex); // 获取第一个逗号的位置
-                    double price = Double.parseDouble(productInfo1.substring(priceStartIndex, priceEndIndex));
-                    product_to_create.setPrice(price);
-                    System.out.println(price);
-                    // 解析 source
-                    int stockStartIndex = productInfo1.indexOf("source") + 9; // 获取 "source" 后的索引位置
-                    int stockEndIndex = productInfo1.indexOf(",", stockStartIndex); // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                    String source = productInfo1.substring(stockStartIndex, stockEndIndex);
-                    if(source.endsWith("\"")) {
-                        source = source.substring(0, source.length() - 1); // 去除首尾的双引号
-                    }
-                    product_to_create.setSource(source);
-                    System.out.println(source);
+                    product_to_create.setTitle(extractValue(productInfo1, "title", String::valueOf));
+                    product_to_create.setShop(extractValue(productInfo1, "shop", String::valueOf));
+                    product_to_create.setImg(extractValue(productInfo1, "img_url", String::valueOf));
+                    product_to_create.setPrice(extractValue(productInfo1, "price", Double::parseDouble));
+                    product_to_create.setSource(extractValue(productInfo1, "source", String::valueOf));
                     if(productInfo1.contains("comment")){
-                        // 解析 comment
-                        int categoryStartIndex = productInfo1.indexOf("comment") + 10; // 获取 "comment" 后的索引位置
-                        int categoryEndIndex = productInfo1.indexOf(",", categoryStartIndex); // 获取第一个逗号的位置
-                        String comment = productInfo1.substring(categoryStartIndex, categoryEndIndex - 1);
-                        product_to_create.setComment(comment);
-                        System.out.printf("comment:%s,title:%s,shop:%s,img_url:%s,price:%f,source:%s\n", comment, title, shop, img_url, price, source);
+                        product_to_create.setComment(extractValue(productInfo1, "comment", String::valueOf));
                     }
                     else if (productInfo1.contains("deal")){
-                        // 解析 deal
-                        int publishYearStartIndex = productInfo1.indexOf("deal") + 7; // 获取 "deal" 后的索引位置
-                        int publishYearEndIndex = productInfo1.indexOf(",", publishYearStartIndex); // 获取第一个逗号的位置
-                        String deal = productInfo1.substring(publishYearStartIndex, publishYearEndIndex - 1);
-                        product_to_create.setDeal(deal);
-                        System.out.printf("title:%s,shop:%s,deal:%s,img_url:%s,price:%f,source:%s\n", title, shop, deal, img_url, price, source);
+                        product_to_create.setDeal(extractValue(productInfo1, "deal", String::valueOf));
                     }
-                    int favStartIndex = productInfo1.indexOf("favorite") + 10; // 获取 "price" 后的索引位置
-                    int favEndIndex = productInfo1.length() - 1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-                    if(product_count==product_num-1){
-                        favEndIndex = productInfo1.length() - 2;
-                    }
-                    String favoriteStr = productInfo1.substring(favStartIndex, favEndIndex);
-                    int favorite = "true".equalsIgnoreCase(favoriteStr) ? 1 : 0;
-                    product_to_create.setFavorite(favorite);
-                    System.out.println(price);
+                    product_to_create.setFavorite(extractValue(productInfo1, "favorite", Integer::parseInt));
                     new_products.add(product_to_create);
                     product_count++;
                 } catch (Exception e) {
@@ -327,13 +234,7 @@ public class ProductHandler implements HttpHandler {
                 System.out.println("Store product failed");
             }
         }
-        // 2. 插入数据库
-        // 响应头
         exchange.getResponseHeaders().set("Content-Type", "text/plain");
-        // 响应状态码200
-
-
-        // 剩下三个和GET一样
         OutputStream outputStream = exchange.getResponseBody();
         outputStream.write("Product created successfully".getBytes());
         outputStream.close();

@@ -361,9 +361,8 @@ export default {
       this.loadingVisible = true;
       this.$emit("search", ['search', this.keyword])
       // 创建一个 EventSource 对象，连接到后端的 /search 路径
-      const eventSource = new EventSource(`http://localhost:8000/search?keyword=${encodeURIComponent(this.keyword)}`);
+      const eventSource = new EventSource(`http://10.162.146.92:8000/search?keyword=${encodeURIComponent(this.keyword)}`);
       //打印eventSource
-      ElMessage.success("eventSource: "+eventSource.url)
       // 当接收到数据时触发 'message' 事件
       eventSource.onmessage = function(event) {
         this.loadingVisible = false;

@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 
+import static utils.JsonUtils.extractValue;
+
 public class RegisterHandler implements HttpHandler {
     private Map<String, String> verificationCodes = new HashMap<>();
     private static DatabaseConnector connector = null;
@@ -140,21 +142,10 @@ public class RegisterHandler implements HttpHandler {
         // 1. 解析请求体，获取卡片信息
         String register_Info = requestBodyBuilder.toString();
         //解析请求体，获取卡片信息
-        // 解析 username
-        int usernameStartIndex = register_Info.indexOf("name") + 7; // 获取 "username" 后的索引位置
-        int usernameEndIndex = register_Info.indexOf(",", usernameStartIndex)-1; // 获取第一个逗号的位置
-        String username = register_Info.substring(usernameStartIndex, usernameEndIndex);
-        // 解析 password
-        int passwordStartIndex = register_Info.indexOf("password") + 11; // 获取 "password" 后的索引位置
-        int passwordEndIndex = register_Info.indexOf(",", passwordStartIndex)-1; // 获取最后一个字符前的索引位置（排除末尾的 `}`)
-        String password = register_Info.substring(passwordStartIndex, passwordEndIndex);
-        // 解析 email
-        int emailStartIndex = register_Info.indexOf("email") + 8;
-        int emailEndIndex = register_Info.length() - 3;
-        String email = register_Info.substring(emailStartIndex, emailEndIndex);
-        //调用register函数
-        System.out.printf("username:%s,password:%s\n", username
-                , password, email);
+        String username = extractValue(register_Info, "name", String::toString);
+        String password = extractValue(register_Info, "password", String::toString);
+        String email = extractValue(register_Info, "email", String::toString);
+        System.out.printf("username:%s,password:%s\n", username, password, email);
 
         ApiResult result = RegisterHandler.library.register(username, password, email);
         System.out.println("Register result: " + result.toString());

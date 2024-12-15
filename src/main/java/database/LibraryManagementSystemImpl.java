@@ -286,6 +286,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             System.out.println("favor:"+favor);
             ps.setInt(1,favor);
             ps.setInt(2,product.getProductId());
+            System.out.println(product.getProductId());
             if(ps.executeUpdate()==0){
                 System.out.println("fail here 1");
                 return new ApiResult(false, "fail");

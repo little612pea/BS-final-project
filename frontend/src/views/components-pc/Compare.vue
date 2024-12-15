@@ -20,10 +20,83 @@
         <span>空空如也...</span>
       </div>
     </div>
+    <div>
+      <!-- 设置更新时间间隔按钮 -->
+
+
+      <!-- el-dialog 弹出框 -->
+      <el-dialog
+          title="设置商品更新时间间隔"
+          v-model:="dialogVisible"
+          width="400px"
+          @close="handleClose"
+      >
+        <!-- 标题分隔线 -->
+        <div style="border-bottom: 1px solid #e0e0e0; margin-bottom: 20px;"></div>
+
+        <!-- 启用更新的滑块 -->
+        <div style="margin-bottom: 20px; text-align: center;">
+          <el-switch
+              v-model="isEnabled"
+              active-text="启用"
+              inactive-text="禁用"
+              active-color="#ec4a18"
+              inactive-color="#ec4a18"
+          ></el-switch>
+        </div>
+
+        <!-- 表单内容 -->
+        <el-form
+            v-if="isEnabled"
+            label-width="120px"
+            style="margin-top: 10px;"
+        >
+          <p v-if="intervalSet">当前更新时间间隔：{{ displayInterval }}</p>
+          <!-- 选择更新时间间隔 -->
+          <el-form-item label="更新时间间隔">
+            <el-select
+                v-model="selectedInterval"
+                placeholder="选择更新时间间隔"
+                style="width: 100%;"
+            >
+              <el-option label="30分钟" value="1800000"></el-option>
+              <el-option label="1小时" value="3600000"></el-option>
+              <el-option label="2小时" value="7200000"></el-option>
+              <el-option label="4小时" value="14400000"></el-option>
+              <el-option label="自定义时间" value="custom"></el-option>
+            </el-select>
+          </el-form-item>
+
+          <!-- 自定义时间输入框 -->
+          <el-form-item v-if="selectedInterval === 'custom'" label="自定义时间">
+            <el-input
+                v-model="customInterval"
+                placeholder="输入自定义时间（分钟）"
+                type="number"
+                style="width: 100%;"
+            />
+          </el-form-item>
+        </el-form>
+
+        <!-- 按钮区域 -->
+        <div slot="footer" class="dialog-footer" style="text-align: right;">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" class="button-gradient" @click="saveInterval">确定</el-button>
+        </div>
+      </el-dialog>
+
+    </div>
     <div style="margin-top: 20px; margin-left: 40px; font-size: 2em; font-weight: bold; ">降价商品爬取
       <el-input v-model="toSearch" :prefix-icon="Search"
                 style=" width: 15vw;min-width: 150px; margin-left: 30px; margin-right: 30px; float: right;" clearable />
       <!--在button文字的前面加上icon-->
+      <el-button @click="openDialog"
+                 style="float: right;margin-right: 10px"
+                 type="primary"
+                 icon="UploadFilled"
+                 class="button-gradient">
+        设置更新时间间隔
+      </el-button>
       <el-button
           @click="QueryProducts"
           style="float: right;margin-right: 10px"
@@ -92,23 +165,40 @@
         </div>
 
         <!-- 价格部分 -->
-        <div style="width: 150px; text-align: right;">
-          <p style="font-size: 20px; font-weight: bold; color: #e74c3c; margin: 0;">
-            旧价格: ￥{{ product.price }}<br />
-            新价格: ￥<span v-if="this.priceUpdates">{{ this.priceUpdates[product.id] }}</span><span v-else>？</span>
+        <div style="width: 250px; text-align: left; display: flex; flex-direction: column; justify-content: center;">
+          <!-- 旧价格 -->
+          <p style="font-size: 20px; font-weight: normal; color: #888; margin: 0;">
+            旧价格：
+            <span style="color: #e74c3c;">
+      ￥{{ product.price }}
+    </span>
+          </p>
+
+          <!-- 新价格 -->
+          <p style="font-size: 20px; font-weight: bold; color: #ec4a18; margin-top: 5px;">
+            新价格：
+            <span v-if="this.priceUpdates">{{ this.priceUpdates[product.id] }}</span>
+            <span v-else style="color: #f39c12;">？</span>
           </p>
         </div>
-
-        <!-- 删除按钮 -->
-        <div style="margin-left: 10px;">
-          <button
+        <div style="display: flex; flex-direction: column; margin-left: 10px; justify-content: center; align-items: flex-end;">
+          <!-- 删除按钮 -->
+          <el-button
               @click.stop="product.favorite = 0; products = products.filter(p => p.favorite !== 0);"
+              icon="Delete"
               @click="toggleFavorite(product)"
-              style="background-color: #e74c3c; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-            删除
-          </button>
-        </div>
+              style="background-color: #e8b9b5; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; width: 150px;">
+            取消收藏商品
+          </el-button>
 
+          <!-- 爬取最新价格按钮 -->
+          <el-button
+              @click="CrawNewPrices_single(product)"
+              icon="UploadFilled"
+              style="background-color: #fa8035; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; margin-top: 5px; width: 150px;">
+            爬取最新价格
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -116,90 +206,6 @@
 
 
 
-    <el-dialog
-        v-model="detailedProductVisible"
-        title="查看商品详细信息"
-        :width="'90%'"
-        :style="{ height: '90%' }"
-    >
-      <div style="display: flex; align-items: flex-start;">
-        <!-- 左侧放置商品图片和简要信息 -->
-        <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
-          <!-- 商品图片 -->
-          <img :src="detailedProductInfo.img_url" alt="商品图片" style="width: 100%; height: auto; max-width: 300px;" />
-
-          <!-- 商品简要信息 -->
-          <div style="margin-top: 20px;">
-            <p style="font-weight: bold; font-size: 18px;">
-              <span v-if="detailedProductInfo.source.includes('jd')" style="color: #e74c3c;font-weight: bold;">京东 </span>
-              <span v-else-if="detailedProductInfo.source.includes('tmall') || detailedProductInfo.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝 </span>
-              {{ detailedProductInfo.title }}
-            </p>
-            <p style="font-size: 14px; color: #555;">
-              <span style="font-weight: bold;">店铺：</span>{{ detailedProductInfo.shop }}
-            </p>
-            <p style="font-size: 14px; color: #555;">
-              <span style="font-weight: bold;">价格：￥</span>{{ detailedProductInfo.price }}
-            </p>
-          </div>
-        </div>
-
-        <!-- 右侧显示标签页 -->
-        <div style="flex: 2; padding: 20px; display: flex; flex-direction: column;">
-          <!-- 动画节点 -->
-          <div id="loader-wrapper"  v-show="loading_history_Visible" >
-            <div id="loader"></div>
-            <div class="load_title" >正在加载,请耐心等待<br><span>爬取该商品历史价格中...</span></div>
-          </div>
-          <!-- 标签页切换 -->
-          <el-tabs v-model="activeTab" @tab-click="handleTabClick" style="margin-bottom: 20px;">
-            <!-- 历史记录查询 Tab -->
-            <el-tab-pane label="历史记录查询" name="history">
-              <div>
-                <img v-show="priceHistoryVisible" :src="history_img_src" alt="历史价格走向图" style="margin-top: 10px; max-width: 100%; height: auto;" />
-              </div>
-
-            </el-tab-pane>
-
-            <!-- 相似产品列表 Tab -->
-            <el-tab-pane label="相似产品列表" name="similar">
-              <div style="margin-bottom: 20px;">
-                <el-input v-model="searchQuery" placeholder="搜索商品" clearable style="width: 300px; margin-right: 10px;"></el-input>
-                <el-select v-model="sortMethod" placeholder="选择排序方式" style="width: 200px; margin-right: 10px;">
-                  <el-option label="价格升序" value="priceAsc"></el-option>
-                  <el-option label="价格降序" value="priceDesc"></el-option>
-                  <el-option label="标题排序" value="title"></el-option>
-                </el-select>
-                <el-button type="primary" @click="sortedProducts" style="width: 60px;">确定</el-button>
-              </div>
-              <div style="max-height: 500px; overflow-y: auto;">
-                <el-row :gutter="20">
-                  <el-col v-for="(product, index) in filteredProductsList" :key="index" :span="24" style="margin-bottom: 15px;">
-                    <el-card>
-                      <div style="display: flex; align-items: center;">
-                        <img :src="product.img_url" alt="商品图片" style="width: 100px; height: 100px; object-fit: cover;" />
-                        <div style="flex: 1; padding-left: 20px;">
-                          <p style="font-weight: bold; font-size: 16px; color: #333;">
-                            <span v-if="product.source.includes('jd')" style="color: #e74c3c;font-weight: bold;">京东</span>
-                            <span v-else-if="product.source.includes('tmall') || product.source.includes('taobao')" style="color: #e74c3c;font-weight: bold;">淘宝</span>
-                            {{ product.title }}
-                          </p>
-                          <p style="font-size: 14px; color: #555;">店铺：{{ product.shop }}</p>
-                          <p style="font-size: 14px; color: #555;">价格：￥{{ product.price }}</p>
-                        </div>
-                        <a :href="product.source" target="_blank" style="color: #3498db; text-decoration: none;">
-                          跳转到原网页
-                        </a>
-                      </div>
-                    </el-card>
-                  </el-col>
-                </el-row>
-              </div>
-            </el-tab-pane>
-          </el-tabs>
-        </div>
-      </div>
-    </el-dialog>
 
 
 
@@ -231,6 +237,19 @@ export default {
     },
     filteredProductsList() {
       return this.filter ? this.filteredProducts : this.similarProducts;
+    },
+    displayInterval() {
+      if (this.selectedInterval && this.selectedInterval !== "custom") {
+        let hours = Math.floor(this.selectedInterval / 3600000);
+        let minutes = (this.selectedInterval % 3600000) / 60000;
+        return `${hours}小时 ${minutes}分钟`;
+      }
+      if (this.selectedInterval === 'custom' && this.customInterval) {
+        let hours = Math.floor(this.customInterval / 3600);
+        let minutes = (this.customInterval % 3600) / 60;
+        return `${hours}小时 ${minutes}分钟`;
+      }
+      return "未设置";
     }
   },
   data() {
@@ -240,6 +259,7 @@ export default {
       filteredProducts: [], // 过滤后的商品列表
       updatedProducts:[],
       compareProducts: [], // 收藏商品列表
+      compareProducts_single:[],
       priceUpdates: {}, // 价格更新
       Delete,
       Edit,
@@ -276,7 +296,13 @@ export default {
         maxPrice:'',
         minPrice:'',
         source:''
-      }
+      },
+      selectedInterval: '', // 选择的更新时间间隔
+      isEnabled: false, // 是否启用更新
+      dialogVisible: false, // 控制对话框显示与否
+      customInterval: null, // 自定义时间（秒）
+      updateInterval: null, // 存储定时器ID
+      intervalSet: false, // 用于显示当前更新时间间隔的状态
     }
   },
   watch: {
@@ -295,6 +321,9 @@ export default {
     }
   },
   methods: {
+    openDialog() {
+      this.dialogVisible = true;
+    },
     getMostSimilarProducts(products, targetIndex, topN = 3) {
       // 计算 Jaccard 相似性
       function jaccardIndex(set1, set2) {
@@ -394,34 +423,6 @@ export default {
             this.QueryBorrows()
           })
     },
-    Multi_condition_search(){
-      this.priceHistoryVisible = false;
-      this.products = [] // 清空列表
-      axios.get(
-          '/home/product/',
-          { params: { // 请求体
-              id: this.multi_cond_ProductInfo.id,
-              title: this.multi_cond_ProductInfo.title, // 请求体
-              shop: this.multi_cond_ProductInfo.shop, // 请求体
-              minPrice: this.multi_cond_ProductInfo.minPrice,
-              maxPrice: this.multi_cond_ProductInfo.maxPrice,
-              source: this.multi_cond_ProductInfo.source
-            } }
-
-      )
-          .then(response => {
-            ElMessage.success("多条件商品查询成功") // 显示消息提醒
-            this.multiCondProductVisible = false // 将对话框设置为不可见
-            let products = response.data // 接收响应负载
-            products.forEach(product => { // 对于每个商品
-              this.products.push(product) // 将其加入到列表中
-            })
-          })
-          .catch(error=>{
-            ElMessage.error("多条件商品查询失败")
-            this.multiCondProductVisible = false
-          })
-    },
     QueryProducts() {
       this.products = [] // 清空列表
       console.log("QueryProducts called")
@@ -458,6 +459,65 @@ export default {
       }).catch(err => {
         ElMessage.error("更新商品价格失败")
       })
+    },
+    CrawNewPrices_single(product){
+      this.compareProducts_single = [];
+      console.log("CrawNewPrices called")
+      this.compareProducts_single.push(product)
+      axios.post('/update', {
+        params: {
+          user_name:this.$store.state.username,
+          product: this.compareProducts_single
+        }
+      }).then(res => {
+        console.log(res.data)
+        this.priceUpdates = res.data;
+        ElMessage.success("更新商品价格成功")
+      }).catch(err => {
+        ElMessage.error("更新商品价格失败")
+      })
+    },
+    saveInterval() {
+      let intervalInSeconds;
+      if (this.selectedInterval === 'custom' && this.customInterval) {
+        // 用户选择了自定义时间，并且输入了分钟数
+        intervalInSeconds = this.customInterval * 60; // 将分钟转换为秒
+        this.displayInterval = `${this.customInterval} 分钟`;
+      } else {
+        // 从预设选项中获取秒数，并格式化显示
+        intervalInSeconds = this.getIntervalInSeconds(this.selectedInterval);
+      }
+      this.intervalSet = true;
+      this.dialogVisible = false;
+
+      // 输出定时器的秒数，可以用来执行定时更新功能
+      console.log('定时器设置的秒数: ', intervalInSeconds);
+      axios.get('/update/',{
+        params: { // 请求体
+          user_name: this.$store.state.username,
+          interval: intervalInSeconds  } }) // 向/product发出GET请求
+          .then(response => {
+          console.log("set interval success")
+            ElMessage.success("设置商品更新时间间隔成功") // 显示消息提醒
+          })
+          .catch(error=>{
+            ElMessage.error("设置商品更新时间间隔失败")
+          })
+    },
+
+    getIntervalInSeconds(interval) {
+      // 这里假设获取秒数的函数会根据传入的值返回对应的秒数
+      const intervals = {
+        '1800000': 30 * 60,  // 30分钟
+        '3600000': 60 * 60,  // 1小时
+        '7200000': 2 * 60 * 60, // 2小时
+        '14400000': 4 * 60 * 60, // 4小时
+      };
+
+      // 如果是自定义，返回分钟数转换为秒数
+      if (interval === 'custom') return this.customInterval * 60;
+
+      return intervals[interval] || 0;
     },
     sortedProducts() {
       let filteredProducts = this.similarProducts;
@@ -516,6 +576,7 @@ export default {
       console.log("toggleFavorite called")
       axios.post('/home/product/', {
         params: {
+          user_name: this.$store.state.username,
           like: product
         }
       }).then(res => {

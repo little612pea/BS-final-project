@@ -49,7 +49,7 @@
                 </el-icon>
                 <span>商品比价</span>
               </el-menu-item>
-              <el-menu-item index="card">
+              <el-menu-item index="compare">
                 <el-icon>
                   <Postcard />
                 </el-icon>

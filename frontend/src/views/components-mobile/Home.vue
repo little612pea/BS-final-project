@@ -60,7 +60,7 @@
           <span style="display: block;">商品比价</span>
         </el-menu-item>
 
-        <el-menu-item index="card">
+        <el-menu-item index="compare">
           <el-icon style="display: block; margin-bottom: 5px;">
             <Reading />
           </el-icon>

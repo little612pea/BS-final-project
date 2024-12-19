@@ -12,6 +12,7 @@ import org.jsoup.select.Elements;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +43,8 @@ public class TBCrwaler {
             driver.get("https://www.taobao.com");
             driver.manage().deleteAllCookies();
             System.out.println("searchGoods--loading cookies");
-            File file = new File("D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\cookies_tb.txt");
-//            File file = new File("/app/cookies_tb.txt");
+//            File file = new File("D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\cookies_tb.txt");
+            File file = new File("/app/cookies_tb.txt");
 
             BufferedReader reader = new BufferedReader(new FileReader(file));
             StringBuilder content = new StringBuilder();
@@ -85,7 +86,9 @@ public class TBCrwaler {
             WebElement submit = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#J_TSearchForm > div.search-button > button")));
             input.sendKeys(keyword);
             submit.click();
-
+            if(keyword.endsWith(".png")){
+                return keyword;
+            }
             // 等待搜索完成
             TimeUnit.SECONDS.sleep(10);
 
@@ -140,7 +143,19 @@ public class TBCrwaler {
 
             // 提取所有商品的共同父元素
             Elements items = doc.select(".doubleCardWrapperAdapt--mEcC7olq");
+            Elements items2 = doc.select(".shopNameText--DmtlsDKm");
+            Elements items3 = doc.select(".realSales--XZJiepmt");
+            List<String> shopList = new ArrayList<>();
+            List<String> dealList = new ArrayList<>();
+            for(Element item: items2){
+                shopList.add(item.text());
+            }
+            for (Element item: items3){
+                dealList.add(item.text());
+            }
             System.out.println("items--" + items.size());
+            int i = 0;
+            int j = 0;
             for (Element item : items) {
                 // 定位商品标题
                 String title = item.select(".title--qJ7Xg_90").text();
@@ -153,10 +168,22 @@ public class TBCrwaler {
                 double raw_price = (priceInt.isEmpty() || priceFloat.isEmpty()) ? 0.0 : Double.parseDouble(priceInt + priceFloat);
                 double price = Math.round(raw_price * 10) / 10.0;
                 // 定位交易量
-                String deal = item.select(".realSales--XZJiepmt").text();
-
+                String deal ="";
+                String shop ="";
                 // 定位店名
-                String shop = item.select(".shopNameText--DmtlsDKm").text();
+                if (i/5 < shopList.size()) {
+                    shop = shopList.get(i++/5);
+                    // 继续处理 shop
+                } else {
+                    // i 超出范围，进行适当的处理
+                    System.out.println("Index out of bounds: i = " + i);
+                }
+
+                if(j/5 < dealList.size()){
+                    deal = dealList.get(j++/5);
+                }else{
+                    System.out.println("Index out of bounds: i = " + i);
+                }
 
                 // 定位 img_url
                 String img_url = item.select(".mainPic--Ds3X7I8z").attr("src");
@@ -252,21 +279,21 @@ public class TBCrwaler {
         try{
             keyword = URLDecoder.decode(keyword, StandardCharsets.UTF_8.name());
             System.out.println("Crawling Taobao for keyword: " + keyword);
-            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
-//            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
+//            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
             // 配置 Chrome 选项
             ChromeOptions options = new ChromeOptions();
-                        options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
-//            options.setBinary("/usr/bin/chromium-browser");
+//                        options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+            options.setBinary("/usr/bin/chromium-browser");
             options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "blink-settings=imagesEnabled=false");
-//            options.addArguments("--headless");
+            options.addArguments("--headless");
             options.addArguments("--remote-allow-origins=*");
             options.addArguments("excludeSwitches", "enable-automation");
             driver = new ChromeDriver(options);
             driver.manage().window().maximize();
             wait = new WebDriverWait(driver, Duration.ofSeconds(10));
             System.out.println("searchGoods");
-            searchGoods(1, 2, keyword);
+            searchGoods(1, 4, keyword);
         }
         catch (Exception e){
             System.out.println("Error: " + e);

@@ -1,5 +1,5 @@
 import ProductVue from '@/views/components-pc/Product.vue'
-import CardVue from '@/views/components-pc/Compare.vue'
+import CompareVue from '@/views/components-pc/Compare.vue'
 import SpaceVue from "@/views/components-pc/Space.vue";
 import LoginVue from '@/views/components-pc/Login.vue'
 import HomeVue from "@/views/components-pc/Home.vue";
@@ -26,8 +26,8 @@ export const pc = [
                         component: ProductVue,
                     },
                     {
-                        path: '/home/card', // 第二个tab
-                        component: CardVue,
+                        path: '/home/compare', // 第二个tab
+                        component: CompareVue,
                     },
                     {
                         path: '/home/space',

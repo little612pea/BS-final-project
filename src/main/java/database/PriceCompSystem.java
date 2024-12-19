@@ -1,8 +1,6 @@
 package database;
 
 import entities.Product;
-import entities.Borrow;
-import entities.Card;
 import queries.ApiResult;
 import queries.ProductQueryConditions;
 
@@ -15,7 +13,7 @@ import java.util.List;
  *          transaction. this means that after successfully completing
  *          all operations in a function, you need to call commit(),
  *          or call rollback() if one of the operations in a function fails.
- *          as an example, you can see {@link LibraryManagementSystemImpl#resetDatabase}
+ *          as an example, you can see {@link PriceCompSystemImpl#resetDatabase}
  *          to find how to use commit() and rollback().
  *      (2) for each function, you need to briefly introduce how to
  *          achieve this function and how to solve challenges in your
@@ -23,7 +21,7 @@ import java.util.List;
  *      (3) if you don't know what the function means, or what it is
  *          supposed to do, looking to the test code might help.
  */
-public interface LibraryManagementSystem {
+public interface PriceCompSystem {
 
     /* Interface for products */
 

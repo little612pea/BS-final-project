@@ -1,6 +1,5 @@
 package crawler;
 
-import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 import entities.Product;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,19 +22,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import database.LibraryManagementSystem;
-import database.LibraryManagementSystemImpl;
+
+import database.PriceCompSystem;
+import database.PriceCompSystemImpl;
 
 public class PriceCrwaler {
     private static WebDriver driver;
     private static WebDriverWait wait;
     private static DatabaseConnector connector = null;
-    private static LibraryManagementSystem library = null;
+    private static PriceCompSystem library = null;
     private static ConnectConfig connectConfig = null;
 
-    private static String user_name = null;
+    static String user_name = null;
 
     static {
         try {
@@ -55,7 +53,7 @@ public class PriceCrwaler {
         try {
             // connect to database
             connector = new DatabaseConnector(connectConfig);
-            library = new LibraryManagementSystemImpl(connector);
+            library = new PriceCompSystemImpl(connector);
             System.out.println("Successfully init class ProductTest.");
         } catch (Exception e) {
             e.printStackTrace();
@@ -82,15 +80,16 @@ public class PriceCrwaler {
             driver.get("https://www.taobao.com/");
             driver.manage().deleteAllCookies();
             System.out.println("pricecrawler--loading cookies for tb");
-            file = new File("D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\cookies_tb.txt");
-//            File file = new File("/app/cookies_jd.txt");
+//            file = new File("D:\\home\\BS\\BS-final-project\\src\\crawler\\tb\\cookies_tb.txt");
+            file = new File("/app/cookies_tb.txt");
             type = 0;
         }
         else if (url.contains("jd")) {
             driver.get("https://www.jd.com/");
             driver.manage().deleteAllCookies();
             System.out.println("pricecrawler--loading cookies for jd");
-            file = new File("D:\\home\\BS\\BS-final-project\\src\\crawler\\jd\\cookies_jd.txt");
+            // file = new File("D:\\home\\BS\\BS-final-project\\src\\crawler\\jd\\cookies_jd.txt");
+            file = new File("/app/cookies_jd.txt");
             type = 1;
         }
 
@@ -196,24 +195,44 @@ public class PriceCrwaler {
                 // 淘宝
                 Elements items = doc.select(".doubleCardWrapperAdapt--mEcC7olq");
                 System.out.println("items--" + items.size());
+                int got_price = 0;
                 for (Element item : items) {
                     // 定位商品标题
-//                    if(item.select(".title--qJ7Xg_90").text().equals(old_title))
-//                    {
-                    String title = item.select(".title--qJ7Xg_90").text();
-                    // 定位价格
-                    String priceInt = item.select(".priceInt--yqqZMJ5a").text();
-                    String priceFloat = item.select(".priceFloat--XpixvyQ1").text();
-                    double raw_price = (priceInt.isEmpty() || priceFloat.isEmpty()) ? 0.0 : Double.parseDouble(priceInt + priceFloat);
-                    if (raw_price == 0.0) {
-                        continue;
+                    if(item.select(".title--qJ7Xg_90").text().equals(old_title))
+                    {
+                        String title = item.select(".title--qJ7Xg_90").text();
+                        // 定位价格
+                        String priceInt = item.select(".priceInt--yqqZMJ5a").text();
+                        String priceFloat = item.select(".priceFloat--XpixvyQ1").text();
+                        double raw_price = (priceInt.isEmpty() || priceFloat.isEmpty()) ? 0.0 : Double.parseDouble(priceInt + priceFloat);
+                        if (raw_price == 0.0) {
+                            continue;
+                        }
+                        new_price = Math.round(raw_price * 10) / 10.0;
+                        System.out.println("new_price tb--" + new_price);
+                        if(new_price!=-1 && new_price!=0.0){
+                            got_price = 1;
+                            break;
+                        }
                     }
-                    new_price = Math.round(raw_price * 10) / 10.0;
-                    System.out.println("new_price tb--" + new_price);
-                    if(new_price!=-1 && new_price!=0.0){
-                        break;
+                }
+                if(got_price==0){
+                    for (Element item : items) {
+                        String title = item.select(".title--qJ7Xg_90").text();
+                        // 定位价格
+                        String priceInt = item.select(".priceInt--yqqZMJ5a").text();
+                        String priceFloat = item.select(".priceFloat--XpixvyQ1").text();
+                        double raw_price = (priceInt.isEmpty() || priceFloat.isEmpty()) ? 0.0 : Double.parseDouble(priceInt + priceFloat);
+                        if (raw_price == 0.0) {
+                            continue;
+                        }
+                        new_price = Math.round(raw_price * 10) / 10.0;
+                        System.out.println("new_price tb--" + new_price);
+                        if(new_price!=-1 && new_price!=0.0){
+                            got_price = 1;
+                            break;
+                        }
                     }
-//                    }
                 }
             }
             else{
@@ -270,14 +289,14 @@ public class PriceCrwaler {
         try{
             //set user_name
             PriceCrwaler.user_name = user_name;
-            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
-//            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
+//            System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+            System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
             // 配置 Chrome 选项
             ChromeOptions options = new ChromeOptions();
-            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
-//            options.setBinary("/usr/bin/chromium-browser");
+//            options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+            options.setBinary("/usr/bin/chromium-browser");
             options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "blink-settings=imagesEnabled=false");
-//            options.addArguments("--headless");
+            options.addArguments("--headless");
             options.addArguments("--remote-allow-origins=*");
             options.addArguments("excludeSwitches", "enable-automation");
             driver = new ChromeDriver(options);

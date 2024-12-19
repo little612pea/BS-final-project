@@ -16,7 +16,7 @@
             <div class="num_number">{{ fanCounts }}</div>
             <span class="num_text">信息修改</span>
           </div>
-          <div style="cursor: pointer" @click="myfollow">
+          <div style="cursor: pointer" @click="goto_compare">
             <div class="num_number">{{ followCounts }}</div>
             <span class="num_text">推送设置</span>
           </div>
@@ -29,7 +29,7 @@
     </div>
     <div class="person_body">
       <el-card class="info-card" :body-style="{ padding: '30px', backgroundColor: '#f9f9f9' }"
-               style="width: 100%; height: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.crawler);">
+               style="width: 100%; height: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0);">
         <div class="card-header" style="font-size: 20px; font-weight: bold; text-align: center; color: #333; margin-bottom: 20px;">
           个人信息
         </div>
@@ -38,11 +38,11 @@
             <el-col :span="12" style="margin-bottom: 10px;">
               <div class="info-item" style="margin-bottom: 10px;">
                 <strong style="color: #555;">用户ID:</strong>
-                <span style="color: #777;">       user_3</span>
+                <span style="color: #777;">1</span>
               </div>
               <div class="info-item" style="margin-bottom: 10px;">
                 <strong style="color: #555;">用户名:</strong>
-                <span style="color: #777;">        little612pea</span>
+                <span style="color: #777;">{{this.$store.state.username}}</span>
               </div>
               <div class="info-item" style="margin-bottom: 10px;">
                 <strong style="color: #555;">邮箱:</strong>
@@ -112,6 +112,7 @@ export default {
   data() {
     return {
       dialogVisible: false,
+      userid:"",
       form: {
         avatar: 'https://example.com/avatar.jpg', // 头像的占位符
         oldPassword: '',      // 原始密码
@@ -147,6 +148,9 @@ export default {
     }
   },
   methods: {
+    goto_compare(){
+      this.$router.push('/home/compare');
+    },
     // 提交表单
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {

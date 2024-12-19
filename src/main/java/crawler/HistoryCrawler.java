@@ -39,12 +39,12 @@ public class HistoryCrawler {
     private static WebDriverWait wait;
 
     public static void searchGoods(String shortUrl) {
-        System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
-//        System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
+//        System.setProperty("webdriver.chrome.driver", "C:\\Users\\23828\\.cache\\selenium\\chromedriver\\win64\\130.0.6723.116\\chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
         // 配置 Chrome 选项
         ChromeOptions options = new ChromeOptions();
-        options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
-//        options.setBinary("/usr/bin/chromium-browser");
+//        options.setBinary("C:\\Users\\23828\\.cache\\selenium\\chrome\\win64\\130.0.6723.116\\chrome.exe");
+        options.setBinary("/usr/bin/chromium-browser");
         options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu");
         options.addArguments("--remote-allow-origins=*");
         options.addArguments("--headless");

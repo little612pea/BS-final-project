@@ -6,8 +6,8 @@ import com.sun.net.httpserver.HttpHandler;
 import crawler.HistoryCrawler;
 import crawler.JDCrawler;
 import crawler.TBCrwaler;
-import database.LibraryManagementSystem;
-import database.LibraryManagementSystemImpl;
+import database.PriceCompSystem;
+import database.PriceCompSystemImpl;
 import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 
 public class SearchHandeler implements HttpHandler {
     private static DatabaseConnector connector = null;
-    private static LibraryManagementSystem library = null;
+    private static PriceCompSystem library = null;
     private static ConnectConfig connectConfig = null;
 
     static {
@@ -39,7 +39,7 @@ public class SearchHandeler implements HttpHandler {
         try {
             // connect to database
             connector = new DatabaseConnector(connectConfig);
-            library = new LibraryManagementSystemImpl(connector);
+            library = new PriceCompSystemImpl(connector);
             System.out.println("Successfully init class ProductTest.");
         } catch (Exception e) {
             e.printStackTrace();

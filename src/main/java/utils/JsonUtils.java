@@ -23,7 +23,6 @@ public class JsonUtils {
             keyEndIndex++;
         }
         String rawValue = input.substring(keyStartIndex, keyEndIndex).trim();
-        System.out.println("raw:"+rawValue);
         while (rawValue.endsWith("}")) {
             rawValue = rawValue.substring(0, rawValue.length() - 1).trim();
         }

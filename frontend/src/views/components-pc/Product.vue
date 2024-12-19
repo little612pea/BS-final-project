@@ -5,6 +5,9 @@
 
   <el-scrollbar height="100%" style="width: 100%;">
     <!-- 动画节点 -->
+    <div>
+      <PhotoSearch ref="TakePhotos" @refreshDataList="refreshDataList" />
+    </div>
     <div id="loader-wrapper" v-show="loadingVisible">
       <div id="loader"></div>
 
@@ -32,6 +35,45 @@
             prefix-icon="el-icon-search"
             style="width: 350px;margin-right: 10px"
             clearable></el-input>
+
+        <!-- 上传图片或拍照的按钮 -->
+        <el-button type="primary"
+                   @click="triggerFileInput"
+                   icon="CameraFilled"
+                   class="button-gradient"
+                   style="margin-right: 10px">
+        </el-button>
+
+        <!-- 隐藏的文件输入框 -->
+        <input
+            type="file"
+            ref="fileInput"
+            accept="image/*"
+            capture="environment"
+            @change="handleFileChange"
+            style="display: none;"
+        />
+
+        <!-- 显示上传的图片 -->
+      <div v-if="imageUrl" style="display: flex; align-items: center; margin-top: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+        <!-- 左侧显示图片 -->
+        <img :src="imageUrl" alt="Uploaded Image" style="max-width: 60px; height: auto; margin-right: 20px; border: 1px solid #ddd; border-radius: 5px;" />
+
+        <!-- 右侧提示文字 -->
+        <div>
+          <p style="margin: 0; font-size: 14px; color: #333;"><--您上传的图片</p>
+        </div>
+        <el-button
+            :disabled="disabled"
+            icon="Search"
+            type="primary"
+            @click="PhotoSearch"
+            class="button-gradient"
+            style="height: 40px;font-size: 15px;margin-left: 10px">
+          执行按图搜索
+        </el-button>
+      </div>
+
       <el-button
           :disabled="disabled"
           icon="Search"
@@ -301,6 +343,8 @@ export default {
       },
       uploadFileInfo:'',
       keyword:'',
+      pic_path:"",
+      imageUrl: null, // 存储上传的图片URL
       multi_cond_ProductInfo:{
         productID:'',
         title:'',
@@ -327,6 +371,10 @@ export default {
     }
   },
   methods: {
+    refreshDataList(imgSrc) {
+      // 这里返回服务器图片的地址
+      console.log(imgSrc)
+    },
     getMostSimilarProducts(products, targetIndex, topN = 3) {
   // 计算 Jaccard 相似性
   function jaccardIndex(set1, set2) {
@@ -413,7 +461,7 @@ export default {
       this.priceHistoryVisible = false;
       this.products = [] // 清空列表
       axios.get(
-          '/home/product/',
+          '/product/',
           { params: { // 请求体
               id: this.multi_cond_ProductInfo.id,
               title: this.multi_cond_ProductInfo.title, // 请求体
@@ -440,7 +488,7 @@ export default {
     QueryProducts() {
       this.products = [] // 清空列表
       console.log("QueryProducts called")
-      axios.get('/home/product',
+      axios.get('/product',
           { params: { // 请求体
               user_name:this.$store.state.username} }) // 向/product发出GET请求
           .then(response => {
@@ -454,7 +502,7 @@ export default {
     },
     StoreSearchResults(){
       console.log("StoreSearchResults called")
-      axios.post('/home/product/', {
+      axios.post('/product/', {
         params: {
           user_name: this.$store.state.username,
           product: this.products
@@ -523,7 +571,7 @@ export default {
     toggleFavorite(product) {
       //切换商品的收藏状态
       console.log("toggleFavorite called")
-      axios.post('/home/product/', {
+      axios.post('/product/', {
         params: {
           user_name: this.$store.state.username,
           like: product
@@ -533,8 +581,100 @@ export default {
       }).catch(err => {
         ElMessage.error("修改商品收藏状态失败")
       })
+    },
+    // 触发隐藏的文件输入框
+    triggerFileInput() {
+      this.$refs.fileInput.click();
+    },
+    // 处理文件选择或拍照后的图片
+    handleFileChange(event) {
+      const file = event.target.files[0];
+      if (file) {
+        // 将图片转为本地URL显示
+        this.imageUrl = URL.createObjectURL(file);
+      }
+      this.saveImage(file);
+    },
+    PhotoSearch() {
+      ElMessage.success("正在执行搜索") // 显示消息提醒
+      this.products = [] // 清空列表
+      this.loadingVisible = true;
+      // this.pic_path = "D:\\home\\BS\\BS-final-project\\PhotoSearch.png";
+      this.pic_path = "/app/PhotoSearch.png";
+      // this.$emit("search", ['search',"D:\\home\\BS\\BS-final-project\\PhotoSearch.png" ])
+      this.$emit("search", ['search',this.pic_path ])
+      // 创建一个 EventSource 对象，连接到后端的 /search 路径
+      const eventSource = new EventSource(`http://localhost:8000/search?keyword=${encodeURIComponent(this.pic_path)}`);
+      //打印eventSource
+      // 当接收到数据时触发 'message' 事件
+      eventSource.onmessage = function(event) {
+        this.loadingVisible = false;
+        const product = JSON.parse(event.data);
+        console.log(product);
+        this.products.push(product);
+      }.bind(this);
+      ElMessage.success("正在打开连接") // 显示消息提醒
+      // 当连接关闭时触发
+      eventSource.onopen = function() {
+        console.log("连接已打开");
+      };
+
+      eventSource.onclose = function() {
+        ElMessage.success("搜索执行成功") // 显示消息提醒
+        console.log("连接已关闭");
+        eventSource.close(); // 关闭连接
+        // 可以在这里执行一些清理操作，或者重新连接等
+      };
+      // 当发生错误时触发
+      eventSource.onerror = function(error) {
+        console.group("EventSource Error"); // 打开一个分组日志
+        console.error("发生错误:");
+        console.error("错误详情：", error); // 打印完整错误对象
+
+        console.error("连接状态:", error.target.readyState); // 打印连接状态
+        switch (error.target.readyState) {
+          case EventSource.CONNECTING:
+            console.warn("尝试重新连接...");
+            break;
+          case EventSource.CLOSED:
+            console.error("连接已关闭，无法恢复");
+            break;
+          default:
+            console.error("未知错误状态");
+        }
+        console.groupEnd(); // 结束分组
+        eventSource.close(); // 关闭连接以防止意外行为
+      };
+    },
+    async saveImage(file) {
+      try {
+        // 创建一个 FileReader 实例，用于将图片转为 base64 数据
+        const reader = new FileReader();
+
+        // 在图片读取完成后处理
+        reader.onloadend = async () => {
+          // 提取 base64 数据
+          const base64Data = reader.result.split(',')[1];
+          // 发起 POST 请求，将图片发送到后端
+          const response = await axios.post('/pic', {
+            image: base64Data,
+            name: file.name // 使用上传的文件名
+          });
+
+          if (response.status === 200) {
+            alert('图片已成功保存到服务器！');
+          } else {
+            alert('保存失败！');
+          }
+        };
+        // 读取文件为 DataURL（base64）
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('图片保存失败', error);
+        alert('图片保存失败');
+      }
     }
-}
+ }
 }
 
 </script>
@@ -811,6 +951,5 @@ export default {
 .button-gradient:active {
   background: linear-gradient(to bottom, #fd8c4c, #ffb84d); /* 激活时恢复原渐变色 */
 }
-
 
 </style>

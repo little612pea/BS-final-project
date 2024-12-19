@@ -426,7 +426,7 @@ export default {
     QueryProducts() {
       this.products = [] // 清空列表
       console.log("QueryProducts called")
-      axios.get('/home/product',{
+      axios.get('/product/',{
         params: { // 请求体
         user_name:this.$store.state.username} }) // 向/product发出GET请求
           .then(response => {
@@ -574,7 +574,7 @@ export default {
     toggleFavorite(product) {
       //切换商品的收藏状态
       console.log("toggleFavorite called")
-      axios.post('/home/product/', {
+      axios.post('/product//', {
         params: {
           user_name: this.$store.state.username,
           like: product

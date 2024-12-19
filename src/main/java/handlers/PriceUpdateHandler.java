@@ -5,12 +5,9 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import crawler.PriceCrwaler;
-import database.LibraryManagementSystem;
-import database.LibraryManagementSystemImpl;
+import database.PriceCompSystem;
+import database.PriceCompSystemImpl;
 import entities.Product;
-import queries.ApiResult;
-import queries.ProductQueryConditions;
-import queries.ProductQueryResults;
 import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
@@ -23,7 +20,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,7 +31,7 @@ import static utils.JsonUtils.extractValue;
 public class PriceUpdateHandler implements HttpHandler {
     private Map<String, String> verificationCodes = new HashMap<>();
     private static DatabaseConnector connector = null;
-    private static LibraryManagementSystem library = null;
+    private static PriceCompSystem library = null;
     private static ConnectConfig connectConfig = null;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static ScheduledFuture<?> currentTask = null;
@@ -57,7 +53,7 @@ public class PriceUpdateHandler implements HttpHandler {
         try {
             // connect to database
             connector = new DatabaseConnector(connectConfig);
-            library = new LibraryManagementSystemImpl(connector);
+            library = new PriceCompSystemImpl(connector);
             System.out.println("Successfully init class ProductTest.");
         } catch (Exception e) {
             e.printStackTrace();

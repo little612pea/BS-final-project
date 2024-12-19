@@ -1,51 +1,18 @@
-import com.google.gson.Gson;
-import crawler.HistoryCrawler;
-import crawler.JDCrawler;
-import crawler.TBCrwaler;
-import crawler.PriceCrwaler;
-import database.LibraryManagementSystem;
-import database.LibraryManagementSystemImpl;
-import entities.Product;
-import entities.Borrow;
-import entities.Card;
-import queries.*;
 import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.logging.Logger;
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.Headers;
 
-
-import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import java.util.Properties;
-import java.nio.charset.StandardCharsets;
-
-import java.util.List;
-
-import java.util.Map;
-
-import java.util.HashMap;
-
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import handlers.LoginHandler;
 import handlers.RegisterHandler;
 import handlers.SearchHandeler;
 import handlers.PriceUpdateHandler;
 import handlers.ProductHandler;
+import handlers.PicHandler;
 
 public class Main {
 
@@ -68,12 +35,14 @@ public class Main {
             RegisterHandler registerHandler = new RegisterHandler();
             SearchHandeler searchHandeler = new SearchHandeler();
             PriceUpdateHandler priceUpdateHandler = new PriceUpdateHandler();
+            PicHandler picHandler = new PicHandler();
             HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
-            server.createContext("/home/product", productHandler);
+            server.createContext("/product", productHandler);
             server.createContext("/login", loginHandler);
             server.createContext("/register", registerHandler);
             server.createContext("/search", searchHandeler);
             server.createContext("/update", priceUpdateHandler);
+            server.createContext("/pic",picHandler);
             server.setExecutor(null);
             server.start();
             log.info("Server is listening on port 8000.");

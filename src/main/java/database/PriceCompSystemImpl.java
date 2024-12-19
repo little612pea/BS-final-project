@@ -1,15 +1,10 @@
 package database;
 
-import com.google.protobuf.Api;
 import entities.Product;
-import entities.Borrow;
-import entities.Card;
 import javafx.util.Pair;
-import queries.*;
 import utils.DBInitializer;
 import utils.DatabaseConnector;
 
-import java.util.Objects;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,11 +15,11 @@ import queries.ProductQueryResults;
 import queries.SortOrder;
 
 
-public class LibraryManagementSystemImpl implements LibraryManagementSystem {
+public class PriceCompSystemImpl implements PriceCompSystem {
 
     private final DatabaseConnector connector;
 
-    public LibraryManagementSystemImpl(DatabaseConnector connector) {
+    public PriceCompSystemImpl(DatabaseConnector connector) {
         this.connector = connector;
     }
 

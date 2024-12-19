@@ -3,8 +3,8 @@ package handlers;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import database.LibraryManagementSystem;
-import database.LibraryManagementSystemImpl;
+import database.PriceCompSystem;
+import database.PriceCompSystemImpl;
 import entities.Product;
 import queries.ApiResult;
 import queries.ProductQueryConditions;
@@ -14,7 +14,6 @@ import utils.DatabaseConnector;
 
 import java.io.*;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -23,7 +22,7 @@ import static utils.JsonUtils.extractValue;
 
 public class ProductHandler implements HttpHandler {
     private static DatabaseConnector connector = null;
-    private static LibraryManagementSystem library = null;
+    private static PriceCompSystem library = null;
     private static ConnectConfig connectConfig = null;
 
     static {
@@ -44,7 +43,7 @@ public class ProductHandler implements HttpHandler {
         try {
             // connect to database
             connector = new DatabaseConnector(connectConfig);
-            library = new LibraryManagementSystemImpl(connector);
+            library = new PriceCompSystemImpl(connector);
             System.out.println("Successfully init class ProductTest.");
         } catch (Exception e) {
             e.printStackTrace();

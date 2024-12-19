@@ -97,8 +97,10 @@ public class JDCrawler {
                 WebElement input = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#key")));
                 WebElement submit = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#search > div > div.form > button")));
                 if (mode==0){
-                    input.sendKeys(keyword);
-                    submit.click();
+//                    input.sendKeys(keyword);
+//                    submit.click();
+                    //改成拼接url的方式：
+                    driver.get("https://search.jd.com/Search?keyword="+keyword);
                 }
                 else if(mode==1){
                     input.sendKeys("手机");
@@ -180,7 +182,6 @@ public class JDCrawler {
             System.out.println("getGoods");
             String html = driver.getPageSource();
             Document doc = Jsoup.parse(html);
-
             // Extract all products
             List<WebElement> items = driver.findElements(By.cssSelector(".gl-item"));
             for (WebElement item : items) {
@@ -206,7 +207,7 @@ public class JDCrawler {
 
                 // Get comment count
                 String comment = item.findElement(By.cssSelector(".p-commit")).getText();
-                String title = item.findElement(By.cssSelector(".p-name p-name-type3")).getText();
+                String title = item.findElement(By.cssSelector(".p-name a")).getText();
 
                 // Get shop name
                 String shop = item.findElement(By.cssSelector(".p-shop")).getText();

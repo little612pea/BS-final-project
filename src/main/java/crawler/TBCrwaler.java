@@ -40,6 +40,9 @@ public class TBCrwaler {
     }
     public static String searchGoods(int startPage, int totalPages, String keyword) {
         try {
+            if(keyword.endsWith(".png")){
+                return keyword;
+            }
             driver.get("https://www.taobao.com");
             driver.manage().deleteAllCookies();
             System.out.println("searchGoods--loading cookies");
@@ -84,11 +87,10 @@ public class TBCrwaler {
 
             WebElement input = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#q")));
             WebElement submit = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#J_TSearchForm > div.search-button > button")));
-            input.sendKeys(keyword);
-            submit.click();
-            if(keyword.endsWith(".png")){
-                return keyword;
-            }
+//            input.sendKeys(keyword);
+//            submit.click();
+            //改成输入url：
+            driver.get("https://s.taobao.com/search?q=" + keyword);
             // 等待搜索完成
             TimeUnit.SECONDS.sleep(10);
 

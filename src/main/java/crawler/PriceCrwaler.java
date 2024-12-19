@@ -144,15 +144,18 @@ public class PriceCrwaler {
                     WebElement input = null;
                     WebElement submit = null;
                     if(type==0){
-                        input = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#q")));
-                        submit = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#J_TSearchForm > div.search-button > button")));
+//                        input = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#q")));
+//                        submit = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#J_TSearchForm > div.search-button > button")));
+                        driver.get("https://s.taobao.com/search?q=" + title_cur);
                     }
                     else{
-                        input = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#key")));
-                        submit = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#search > div > div.form > button")));
+//                        input = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#key")));
+//                        submit = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#search > div > div.form > button")));
+                        driver.get("https://search.jd.com/Search?keyword="+title_cur);
                     }
-                    input.sendKeys(title_cur);
-                    submit.click();}
+//                    input.sendKeys(title_cur);
+//                    submit.click();
+                }
                 catch (Exception e) {
                     System.out.println("searchGoods: error");
                     e.printStackTrace();

@@ -1,51 +1,3 @@
-<div class="cover" style="page-break-after:always;font-family:方正公文仿宋;width:100%;height:100%;border:none;margin: 0 auto;text-align:center;">
-    </br></br></br></br></br></br></br>
-    <div style="width:60%;margin: 0 auto;height:0;padding-bottom:10%;">
-        </br>
-        <img src="https://gitee.com/nenhang/Document-Templates/raw/main/typora-markdown/mylatex/project-template/images/zju-name.svg" alt="校名" style="width:110%;"/>
-    </div>
-    </br></br></br></br></br>
-    <p style="font-family:华文中宋;text-align:center;font-size:30pt;margin: 0 auto">本科实验报告 </p>
-    </br></br></br></br></br></br></br></br></br>
-    <table style="border:none;margin-left:-crawler%;text-align:center;width:80%;font-family:仿宋;font-size:16px;">
-    <tbody style="font-family:方正公文仿宋;font-size:15pt;">
-    <tbody style="font-family:方正公文仿宋;font-size:15pt;">
-        <tr style="font-weight:normal;"> 
-            <td style="width:20%;text-align:right;">课程名称</td>
-            <td style="width:2%">：</td> 
-            <td style="width:30%;font-weight:normal;border-bottom: 1px solid;text-align:center;font-family:华文仿宋">B/S 体系软件设计</td>     </tr>
-        <tr style="font-weight:normal;"> 
-            <td style="width:20%;text-align:right;">姓　　名</td>
-            <td style="width:2%">：</td> 
-            <td style="width:30%;font-weight:normal;border-bottom: 1px solid;text-align:center;font-family:华文仿宋"> 胡集源</td>     </tr>
-        <tr style="font-weight:normal;"> 
-            <td style="width:20%;text-align:right;">学   院</td>
-            <td style="width:2%">：</td> 
-            <td style="width:30%;font-weight:normal;border-bottom: 1px solid;text-align:center;font-family:华文仿宋">计算机科学与技术学院</td>     </tr>
-        <tr style="font-weight:normal;"> 
-            <td style="width:20%;text-align:right;">专   业</td>
-            <td style="width:2%">：</td> 
-            <td style="width:30%;font-weight:normal;border-bottom: 1px solid;text-align:center;font-family:华文仿宋">计算机科学与技术</td>     </tr>
-        <tr style="font-weight:normal;"> 
-            <td style="width:20%;text-align:right;">学   号</td>
-            <td style="width:2%">：</td> 
-            <td style="width:30%;font-weight:normal;border-bottom: 1px solid;text-align:center;font-family:华文仿宋">3220104116</td>     </tr>
-        <tr style="font-weight:normal;"> 
-            <td style="width:20%;text-align:right;">指导教师</td>
-            <td style="width:2%">：</td> 
-            <td style="width:30%;font-weight:normal;border-bottom: 1px solid;text-align:center;font-family:华文仿宋">胡晓军</td>     </tr>
-    </tbody>              
-    </table>
-	</br></br></br></br>
-	<p style="text-align:center;font-size:17pt;margin: 0 auto;font-family:华文仿宋">2024 年 7 月 11 日 </p>                       
-	</br></br></br></br></br></br></br>
-</div>
-
-
-
-#    浙江大学实验报告
-
-
 ## 功能要求
 
 本次大作业要求任选Web开发技术实现一个商品价格比较的网站。
@@ -133,7 +85,6 @@ create table product
 
 ## 页面安排
 
-![image-20241114174432514](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241114174432514.png)
 
 各个页面之间的流程图设计如上
 
@@ -141,11 +92,10 @@ create table product
 
 - **注册页面**：用户填写注册信息，包括用户名、密码、电子邮件等。需要进行前端验证（如密码强度、邮箱格式）和后端验证（如用户名和邮箱的唯一性）。
 
-![image-20241112140627599](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241112140627599.png)
 
 - **登录页面**：用户输入用户名和密码进行登录。
 
-![image-20241112140602194](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241112140602194.png)
+
 
 ### 商品查询，比较页面
 
@@ -153,11 +103,6 @@ create table product
 - **查询结果展示**：展示从不同平台查询到的商品价格，处理多个查询结果的展示。
 - **比较视图**：用户可以选择多个商品进行价格比较，显示不同平台的价格差异。
 
-![image-20241111192936499](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241111192936499.png)
-
-![image-20241115191626663](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241115191626663.png)
-
-![image-20241115191656789](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241115191656789.png)
 
 ### 商品库管理/历史记录查询页面
 
@@ -172,9 +117,6 @@ create table product
 - **扫码查询**：在App中集成相机功能，允许用户通过拍摄商品图片或扫描条码来查询商品信息。
 - **个人信息展示**：展示部分个人信息
 
-![image-20241112142500599](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241112142500599.png)
-
-![image-20241112143230460](C:\Users\23828\AppData\Roaming\Typora\typora-user-images\image-20241112143230460.png)
 
 提供个人信息（头像，密码）修改的界面
 

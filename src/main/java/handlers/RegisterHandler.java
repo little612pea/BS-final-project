@@ -167,8 +167,8 @@ public class RegisterHandler implements HttpHandler {
 
         }
     }
-    private static final String USER = "2382825693@qq.com"; // 发件人称号，同邮箱地址※
-    private static final String PASSWORD = "vnqjkjevngeceafb"; // 授权码，开启SMTP时显示※
+    private static final String USER = "238*****693@qq.com"; // 发件人称号，同邮箱地址※
+    private static final String PASSWORD = "vn*************afb"; // 授权码，开启SMTP时显示※
     public String generateVerificationCode(int length) {
         Random random = new Random();
         StringBuilder code = new StringBuilder(length);

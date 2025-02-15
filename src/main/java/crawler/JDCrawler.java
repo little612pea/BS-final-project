@@ -103,8 +103,7 @@ public class JDCrawler {
                     driver.get("https://search.jd.com/Search?keyword="+keyword);
                 }
                 else if(mode==1){
-                    input.sendKeys("手机");
-                    submit.click();
+                    driver.get("https://search.jd.com/Search?keyword=iphone");
                     randomSleep(2, 3);
                     driver.get("https://www.jd.com/");
                     input = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"search-img-upload\"]/input")));

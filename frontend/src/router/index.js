@@ -5,7 +5,7 @@ import { pc } from './pc'
 const routes = pc
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   // path和component对应关系的位置
   routes,
   // 路由滚动行为定制

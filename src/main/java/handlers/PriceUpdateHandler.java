@@ -216,8 +216,8 @@ public class PriceUpdateHandler implements HttpHandler {
             outputStream.close();
         }
     }
-    private static final String USER = "2382825693@qq.com"; // 发件人称号，同邮箱地址※
-    private static final String PASSWORD = "vnqjkjevngeceafb"; // 授权码，开启SMTP时显示※
+    private static final String USER = "238*****693@qq.com"; // 发件人称号，同邮箱地址※
+    private static final String PASSWORD = "vn*************afb"; // 授权码，开启SMTP时显示※
     /**
      *
      * @param to 收件人邮箱

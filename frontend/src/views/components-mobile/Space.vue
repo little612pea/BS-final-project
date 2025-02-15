@@ -46,7 +46,7 @@
               </div>
               <div class="info-item" style="margin-bottom: 10px;">
                 <strong style="color: #555;">邮箱:</strong>
-                <span style="color: #777;">         3220104116@zju.edu.cn</span>
+                <span style="color: #777;">         322010****@zju.edu.cn</span>
               </div>
               <div class="info-item" style="margin-bottom: 10px;">
                 <strong style="color: #555;">手机:</strong>
